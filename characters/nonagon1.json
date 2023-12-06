@@ -1,1 +1,1 @@
-{"name":"Eleanor Thatcher / Amelia","stats":{"str":15,"dex":16,"con":11,"int":14,"wis":17,"cha":11}}
+{"name":"Eleanor Thatcher / Amelia","stats":{"str":15,"dex":16,"con":11,"int":14,"wis":17,"cha":11},"race":"Human","background":"Noble","hp":20,"maxHp":33,"classes":[{"class":"Ranger","level":6,"savingThrows":["str","dex"],"hitDice":10}],"proficiencies":["Athletics","History","Investigation","Persuasion","Stealth"]}
