@@ -1,0 +1,14 @@
+{
+  "name": "dnd-character-sheet",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Liam Bloom",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mime-types": "^2.1.35"
+  }
+}

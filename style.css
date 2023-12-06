@@ -1,0 +1,38 @@
+.stat {
+    border: 3px solid black;
+    border-radius: 5px;
+    font-size: 24px;
+    width: 36px;
+    height: 48px;
+    text-align: center;
+    position: relative;
+    margin-bottom: 15px;
+}
+.stat-val {
+    width: 100%;
+    max-width: 100%;
+    text-overflow: clip;
+    white-space: nowrap;
+    overflow:hidden;
+    outline: none;
+    border: none;
+    display: inline-block;
+    margin-top: 5px;
+}
+.invalid, .invalid .inherit-invalid {
+    border-color: red;
+    box-shadow: 0 0 10px red;
+}
+.stat-mod {
+    border: 3px solid black;
+    font-size: 14px;
+    width: 20px;
+    height: 16px;
+    border-radius: 50%;
+    text-align: center;
+    background-color: white;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%, 50%);
+}
