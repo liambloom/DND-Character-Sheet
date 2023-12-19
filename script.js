@@ -32,7 +32,10 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
             return this.getValue();
         }
 
-        // TODO add setter
+        set value(v) {
+            this.value = v;
+            this.update();
+        }
 
         update() {
             const value = this.element.innerText = this.value;
