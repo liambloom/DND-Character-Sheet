@@ -4,40 +4,72 @@
         <title>Character Sheet</title>
         <meta charset="UTF-8">
         <link rel="stylesheet" href="style.css">
+        <script>
+            // https://stackoverflow.com/a/42405694/11326662
+
+            const React = {
+                createElement: function (tag, attrs, children) {
+                    var element = document.createElement(tag);
+
+                    for (let name in attrs) {
+                        if (name && attrs.hasOwnProperty(name)) {
+                            let value = attrs[name];
+                            if (value === true) {
+                                element.setAttribute(name, name);
+                            } else if (value !== false && value != null) {
+                                element.setAttribute(name, value.toString());
+                            }
+                        }
+                    }
+                    for (let i = 2; i < arguments.length; i++) {
+                        let child = arguments[i];
+                        element.appendChild(
+                            child.nodeType == null ?
+                                document.createTextNode(child.toString()) : child);
+                    }
+                    return element;
+                }
+            };
+        </script>
         <script defer src="script.js"></script>
     </head>
     <body>
         <button id="save" type="button">Save</button>
         <h1 id="name"></h1>
+        <div id="classAndLvl" contenteditable="plaintext-only"></div>
         <div id="hp">
             <span id="current-hp" contenteditable="plaintext-only"></span>
+            /
             <span id="max-hp" contenteditable="plaintext-only"></span>
         </div>
         <div id="stats">
-            <div class="stat" id="str">
-                <div class="stat-val" contenteditable="plaintext-only"></div>
+            <!-- <div class="stat" id="str">
+                <div class="stat-val" data-validateOn="#str" contenteditable="plaintext-only"></div>
                 <div class="stat-mod inherit-invalid"></div>
             </div>
             <div class="stat" id="dex">
-                <div class="stat-val" contenteditable="plaintext-only"></div>
+                <div class="stat-val" data-validateOn="#dex" contenteditable="plaintext-only"></div>
                 <div class="stat-mod inherit-invalid"></div>
             </div>
             <div class="stat" id="con">
-                <div class="stat-val" contenteditable="plaintext-only"></div>
+                <div class="stat-val" data-validateOn="#con" contenteditable="plaintext-only"></div>
                 <div class="stat-mod inherit-invalid"></div>
             </div>
             <div class="stat" id="int">
-                <div class="stat-val" contenteditable="plaintext-only"></div>
+                <div class="stat-val" data-validateOn="#int" contenteditable="plaintext-only"></div>
                 <div class="stat-mod inherit-invalid"></div>
             </div>
             <div class="stat" id="wis">
-                <div class="stat-val" contenteditable="plaintext-only"></div>
+                <div class="stat-val" data-validateOn="#wis" contenteditable="plaintext-only"></div>
                 <div class="stat-mod inherit-invalid"></div>
             </div>
             <div class="stat" id="cha">
-                <div class="stat-val" contenteditable="plaintext-only"></div>
+                <div class="stat-val" data-validateOn="#cha" contenteditable="plaintext-only"></div>
                 <div class="stat-mod inherit-invalid"></div>
-            </div>
+            </div> -->
+        </div>
+        <div id="proficiencyBonus"></div>
+        <div id="skills">
         </div>
     </body>
 </html>

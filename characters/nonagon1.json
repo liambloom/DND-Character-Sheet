@@ -10,24 +10,19 @@
     },
     "race": "Human",
     "background": "Noble",
-    "hp": 20,
+    "hp": 21,
     "maxHp": 33,
     "classes": [
         {
             "class": "Ranger",
-            "level": 6,
-            "savingThrows": [
-                "str",
-                "dex"
-            ],
-            "hitDice": 10
+            "level": 6
         }
     ],
     "proficiencies": [
-        "Athletics",
-        "History",
         "Investigation",
         "Persuasion",
-        "Stealth"
+        "Athletics",
+        "Stealth",
+        "History"
     ]
 }

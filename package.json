@@ -4,11 +4,19 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npx babel script.jsx --out-file script.js",
+    "listen": "npx nodemon --watch script.jsx --exec \"npx rimraf script.js && npm run build\""
   },
   "author": "Liam Bloom",
   "dependencies": {
     "express": "^4.18.2",
     "mime-types": "^2.1.35"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.23.4",
+    "@babel/core": "^7.23.6",
+    "@babel/preset-react": "^7.23.3",
+    "rimraf": "^5.0.5"
   }
 }

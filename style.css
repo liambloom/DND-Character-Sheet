@@ -47,12 +47,6 @@
     transform: translate(-50%, 50%);
 }
 
-#current-hp {
-    font-size: 14;
-}
-#max-hp {
-    font-size: 12;
-}
-#max-hp::before {
-    content: "/";
+#hp {
+    font-size: 20px;
 }
