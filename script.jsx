@@ -22,9 +22,9 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
     document.getElementById("save").addEventListener("click", save);
 
     class CalculatedDataDisplay {
-        constructor({elements, dataObject = characterData, property, getValue = () => dataObject[property], dataToString = v => "" + v, listenTo = []}) {
+        constructor({element, dataObject = characterData, property, getValue = () => dataObject[property], dataToString = v => "" + v, listenTo = []}) {
             this.changeListeners = [];
-            this.elements = elements;
+            this.element = element;
             this.getValue = getValue;
             this.dataToString = dataToString
 
@@ -40,12 +40,13 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
         }
 
         update() {
-            const value = this.dataToString(this.value);
-            for (let element of this.elements) {
-                element.innerText = value;
-            }
+            const valueExists = !this.dataObject || this.property in this.dataObject;
+            const value = valueExists ? this.value : undefined;
+            const str = valueExists ? this.dataToString(this.value) : undefined
+            this.element.innerText = str;
+
             for (let listener of this.changeListeners) {
-                listener(value);
+                listener(value, str, valueExists);
             }
         }
 
@@ -58,27 +59,20 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
         }
     }
 
-    const displayFirst = Symbol();
-
     class EditableDataDisplay extends CalculatedDataDisplay {
         constructor(args) {
             super(args);
 
-            const {
-                validate = () => true,
-                setValue = v => (args.dataObject || characterData)[args.property] = v, 
-                dataFromString = v => v, 
-                allowNewlines = false, 
-                getFallback 
-            } = args;
-            this.setValue = v => setValue(v);
-            this.setRawVale
-            this.validate = validate;
+            const { dataFromString = v => v } = args;
+            this.dataObject = args.dataObject || characterData;
+            this.property = args.property;
+            this.validate = args.validate || (() => true);
             this.parse = v => {
                 try {
+                    console.log(v);
                     const val = dataFromString(v);
                     return {
-                        isValid: validate(val),
+                        isValid: this.validate(val),
                         value: val,
                     };
                 }
@@ -86,86 +80,79 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
                     return { isValid: false };
                 }
             };
-            this.allowNewlines = allowNewlines;
-            this.getFallback = getFallback;
+            this.allowNewlines = args.allowNewlines || false;
+            this.getFallback = args.getFallback;
+            this.getDefault = args.getDefault;
 
-            for (let element of this.elements) {
-                console.log(element);
-                const dataValidateOn = element.dataset.validateon;
-                console.log(dataValidateOn);
-                const validateElement = dataValidateOn ? document.querySelector(dataValidateOn) : element;
-                if (validateElement === null) {
-                    console.log(validateElement);
-                    throw new Error("Validate Element is null");
+            console.log(this.element);
+            const dataValidateOn = this.element.dataset.validateon;
+            console.log(dataValidateOn);
+            this.validateElement = dataValidateOn ? document.querySelector(dataValidateOn) : this.element;
+            if (this.validateElement === null) {
+                throw new Error(`Element ${dataValidateOn} does not exist`);
+            }
+
+            this.element.addEventListener("input", () => {
+                this.checkElementValidity();
+            });
+
+            this.element.addEventListener("focus", () => {
+                this.validateElement.classList.add("editor-focused");
+            });
+
+            this.element.addEventListener("blur", () => {
+                this.validateElement.classList.remove("editor-focused");
+                if (this.element.innerText === "") {
+                    delete this.dataObject[this.property];
                 }
-
-                element.addEventListener("input", () => {
-                    if (element.innerText === "" || this.parse(element.innerText).isValid) {
-                        validateElement.classList.remove("invalid");
-                    }
-                    else {
-                        validateElement.classList.add("invalid");
-                    }
-                })
-    
-                element.addEventListener("blur", () => {
-                    validateElement.classList.remove("invalid");
-                    const parse = this.parse(element.innerText);
+                else {
+                    const parse = this.parse(this.element.innerText);
                     if (parse.isValid) {
-                        this.setValue(parse.value);
+                        this.dataObject[this.property] = parse.value;
                     }
-                    this.update();
-                });
-                if (!this.allowNewlines) {
-                    element.addEventListener("keydown", event => {
-                        if (event.key === "Enter" && !(event.ctrlKey || event.altKey || event.shiftKey || event.metaKey)) {
-                            element.blur();
-                        }
-                    });
                 }
+                this.update();
+            });
+            if (!this.allowNewlines) {
+                this.element.addEventListener("keydown", event => {
+                    if (event.key === "Enter" && !(event.ctrlKey || event.altKey || event.shiftKey || event.metaKey)) {
+                        this.element.blur();
+                    }
+                });
             }
 
             this.update();
         }
 
-        get value() {
-            let val = this.getValue();
-            if (!this.validate(val)) {
-                if (this.getFallback) {
-                    val = this.getFallback();
-                    if (!this.validate(val)) {
-                        if (!(displayFirst in this)) {
-                            invalidJson();
-                        }
-                        throw new Error("Calculated value and fallback value were both invalid");
-                    }
-                    else {
-                        this.setValue(val);
-                    }
-                }
-                else {
-                    if (!(displayFirst in this)) {
-                        invalidJson();
-                    }
-                    throw new Error("Calculated value was invalid and no fallback was available");
-                }
+        checkElementValidity() {
+            if (this.element.innerText === "" || this.parse(this.element.innerText).isValid) {
+                this.validateElement.classList.remove("invalid");
             }
-            this[displayFirst] = undefined;
-            return val;
+            else {
+                this.validateElement.classList.add("invalid");
+            }
+        }
+
+        get value() {
+            return this.dataObject[this.property] = this.getValue();
         }
 
         update() {
             if ("validate" in this) {
                 super.update();
+                if (this.getDefault) {
+                    this.element.dataset.default = this.getDefault();
+                }
+                this.checkElementValidity();
             }
         }
     }
 
     const name = new EditableDataDisplay({
-        elements: [ document.getElementById("name") ],
+        element: document.getElementById("name"),
         property: "name"
     });
-    name.addChangeListener(val => document.title = val + " Character Sheet");
+    name.addChangeListener((_, str) => document.title = str + " Character Sheet");
     
     document.title = characterData.name + " Character Sheet";
 
@@ -180,14 +167,14 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
 
         stats[statName] = {};
         const stat = stats[statName].stat = new EditableDataDisplay({
-            elements: [ block.getElementsByClassName("stat-val")[0] ],
+            element: block.getElementsByClassName("stat-val")[0],
             validate: n => n > 0 && n <= 20,
             dataObject: characterData.stats, 
             property: statName, 
             dataFromString: parseInt,
         });
         const mod = stats[statName].mod = new CalculatedDataDisplay({
-            elements: [ block.getElementsByClassName("stat-mod")[0] ],
+            element: block.getElementsByClassName("stat-mod")[0],
             getValue: () => Math.floor((stat.value - 10) / 2),
             dataToString: n => n > 0 ? "+" + n : n,
             listenTo: [ stat ],
@@ -195,14 +182,14 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
     }
 
     const maxHp = new EditableDataDisplay({
-        elements: [ document.getElementById("max-hp") ],
+        element: document.getElementById("max-hp"),
         validate: n => n > 0,
         property: "maxHp",
         dataFromString: parseInt,
     });
 
     const currentHp = new EditableDataDisplay({
-        elements: [ document.getElementById("current-hp") ],
+        element: document.getElementById("current-hp"),
         validate: n => n >= 0 && n <= maxHp.value,
         getFallback: () => maxHp.value,
         property: "hp",
@@ -213,7 +200,7 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
     const characterLevel = classes => classes.reduce((total, c) => total + c.level, 0);
 
     const classAndLvl = new EditableDataDisplay({
-        elements: [ document.getElementById("classAndLvl") ],
+        element: document.getElementById("classAndLvl"),
         property: "classes",
         dataFromString: str => {
             const regex = /(?<=^|\/)\s*([^\n/]+?)\s+(1?[1-9]|[12]0)\s*(?:\/|$)/g;
@@ -247,7 +234,7 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
     });
 
     const proficiencyBonus = new CalculatedDataDisplay({
-        elements: [ document.getElementById("proficiencyBonus") ],
+        element: document.getElementById("proficiencyBonus"),
         getValue: () => Math.floor((classAndLvl.characterLevel - 1) / 4) + 2,
         dataToString: n => "+" + n,
         listenTo: [ classAndLvl ],
@@ -283,10 +270,10 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
         const block = <div class="skill" id={skill}>
             <input id={skill + "Checkbox"} type="checkbox" name="proficiencyCheckbox" class="proficiencyCheckbox"></input>
             <label for={skill + "Checkbox"}>{skill} <span class="skillBonus"></span></label>
-        </div>
+        </div>;
         const statMod = stats[skillsToStatMap.get(skill)].mod;
         const skillBonus = new CalculatedDataDisplay({
-            elements: [ block.getElementsByClassName("skillBonus")[0] ],
+            element: block.getElementsByClassName("skillBonus")[0],
             getValue: () => (statMod.value 
                 + (characterData.proficiencies.indexOf(skill) === -1 ? 0 : proficiencyBonus.value)),
             dataToString: n => "+" + n,
