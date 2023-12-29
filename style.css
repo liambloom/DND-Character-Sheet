@@ -6,7 +6,7 @@
     border: none;
     border-bottom: 1px solid transparent;
 }
-[contentEditable="true"] {
+[contentEditable="true"], [contentEditable="plaintext-only"] {
     background-color: #ddd;
     border-bottom-color: black;
 }

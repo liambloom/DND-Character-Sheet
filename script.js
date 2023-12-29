@@ -5,6 +5,7 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
   const characterData = await charResponse.json();
   window.characterData = characterData;
   let editing = false;
+  const newlineRegex = /[\n\r\u2028\u2029]/g;
   const editable = {
     always: Symbol(),
     inEditingMode: Symbol(),
@@ -159,9 +160,61 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
       if (this.validateElement === null) {
         throw new Error(`Element ${dataValidateOn} does not exist`);
       }
-      this.element.addEventListener("input", () => {
-        if (this.element.innerText !== this.element.innerHTML) {
-          this.element.innerText = this.element.innerText;
+      this.element.addEventListener("paste", event => {
+        event.preventDefault();
+        const selection = getSelection();
+        let first = true;
+        for (let i = 0; i < selection.rangeCount; i++) {
+          const range = selection.getRangeAt(i);
+          console.log(range.startContainer);
+          if (range.startContainer === this.element.childNodes[0]) {
+            range.deleteContents();
+            range.insertNode(document.createTextNode(event.clipboardData.getData("text/plain").replace(newlineRegex, "")));
+            range.collapse();
+            this.element.normalize();
+            if (!first) {
+              selection.removeRange(prevRange);
+            }
+            first = false;
+          }
+        }
+        this.checkElementValidity();
+      });
+      let index;
+      this.element.addEventListener("beforeinput", event => {
+        this.element.normalize();
+        const selection = getSelection();
+        const repeatedOffset = event.data ? event.data.replace(newlineRegex, "").length : 0;
+        index = selection.getRangeAt(0).startOffset + repeatedOffset;
+        for (let i = 0; i < selection.rangeCount; i++) {
+          const range = selection.getRangeAt(i);
+          if (range.startContainer === this.element.childNodes[0]) {
+            index = range.startOffset + repeatedOffset;
+            break;
+          }
+        }
+      });
+      this.element.addEventListener("input", event => {
+        if (newlineRegex.test(this.element.innerText)) {
+          for (let element of this.element.getElementsByTagName("br")) {
+            element.remove();
+          }
+          this.element.innerText = this.element.innerText.replace(newlineRegex, "");
+          this.element.normalize();
+          const selection = getSelection();
+          const node = this.element.childNodes[0];
+          for (let i = 0; i < selection.rangeCount; i++) {
+            const range = selection.getRangeAt(i);
+            console.log(range.startContainer);
+            console.log(node);
+            if (range.startContainer === this.element || range.startContainer === node) {
+              selection.removeRange(range);
+            }
+          }
+          const range = document.createRange();
+          range.setStart(node, index);
+          range.setEnd(node, index);
+          selection.addRange(range);
         }
         this.checkElementValidity();
       });
@@ -175,12 +228,12 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
       this.element.addEventListener("blur", () => {
         this.validateElement.classList.remove("editor-focused");
         let doListeners;
-        if (this.element.innerText === "") {
+        if (this.getDefault && this.element.innerText === "") {
           delete this.dataObject[this.property];
           doListeners = true;
         } else {
           const parse = this.parse(this.element.innerText);
-          if (parse.isValid && this.dataObject[this.property] !== parse.value && (this.allowNewlines || !/\n|\r|\u2028|\u2029/.test(this.element.innerText))) {
+          if (parse.isValid && this.dataObject[this.property] !== parse.value && (this.allowNewlines || !newlineRegex.test(this.element.innerText))) {
             this.dataObject[this.property] = parse.value;
             characterChanged();
             doListeners = true;
@@ -244,7 +297,7 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 276,
+        lineNumber: 335,
         columnNumber: 23
       }
     }, /*#__PURE__*/React.createElement("div", {
@@ -253,7 +306,7 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 277,
+        lineNumber: 336,
         columnNumber: 13
       }
     }), /*#__PURE__*/React.createElement("div", {
@@ -261,7 +314,7 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 278,
+        lineNumber: 337,
         columnNumber: 13
       }
     }));
@@ -358,7 +411,7 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 376,
+        lineNumber: 435,
         columnNumber: 23
       }
     }, /*#__PURE__*/React.createElement("input", {
@@ -370,7 +423,7 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 377,
+        lineNumber: 436,
         columnNumber: 13
       }
     }), /*#__PURE__*/React.createElement("label", {
@@ -378,7 +431,7 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 378,
+        lineNumber: 437,
         columnNumber: 13
       }
     }, skill, " ", /*#__PURE__*/React.createElement("span", {
@@ -386,7 +439,7 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 378,
+        lineNumber: 437,
         columnNumber: 53
       }
     })));
