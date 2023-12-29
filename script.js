@@ -4,6 +4,19 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
   const charResponse = await fetch(characterJson);
   const characterData = await charResponse.json();
   window.characterData = characterData;
+  let editing = false;
+  const editable = {
+    always: Symbol(),
+    inEditingMode: Symbol(),
+    never: Symbol()
+  };
+  const editingMode = [];
+  const editingModeInputs = [];
+  const invalid = [];
+  const testElement = document.createElement("div");
+  testElement.setAttribute("contentEditable", "PLAINTEXT-ONLY");
+  const supportsPlaintextOnly = testElement.contentEditable === "plaintext-only";
+  const contentEditableValue = supportsPlaintextOnly ? "plaintext-only" : "true";
   function save() {
     fetch(characterJson, {
       method: "POST",
@@ -13,10 +26,50 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
       body: JSON.stringify(characterData)
     });
   }
+  function startEditing() {
+    console.log("foo");
+    editing = true;
+    console.log(editingMode);
+    for (let element of editingMode) {
+      element.contentEditable = contentEditableValue;
+    }
+    for (let element of editingModeInputs) {
+      element.disabled = false;
+    }
+  }
+  function stopEditing() {
+    if (invalid.length !== 0) {
+      alert("The character sheet contained invalid data and could not be saved");
+      return;
+    }
+    editing = false;
+    save();
+    for (let element of editingMode) {
+      element.contentEditable = "false";
+    }
+    for (let element of editingModeInputs) {
+      element.disabled = true;
+    }
+    for (let element of document.getElementsByClassName("changed")) {
+      element.classList.remove("changed");
+    }
+  }
+  function characterChanged() {
+    if (!editing) {
+      save();
+      console.log("Saving...");
+    }
+  }
   function invalidJson() {
     alert("The character sheet is invalid");
   }
-  document.getElementById("save").addEventListener("click", save);
+  function betterParseInt(str) {
+    if (/^(?:\+|-)?\d+$/.test(str)) {
+      return parseInt(str);
+    } else throw Error("Invalid int " + str);
+  }
+  document.getElementById("save").addEventListener("click", stopEditing);
+  document.getElementById("edit").addEventListener("click", startEditing);
   class CalculatedDataDisplay {
     constructor({
       element,
@@ -31,20 +84,33 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
       this.getValue = getValue;
       this.dataToString = dataToString;
       for (let e of listenTo) {
-        e.addChangeListener(() => this.update());
+        e.addChangeListener(() => {
+          if (editing && this.getDefault && this.valueExists) {
+            this.element.classList.add("changed");
+          }
+          this.update();
+        });
       }
+      element.contentEditable = "false";
       this.update();
     }
     get value() {
       return this.getValue();
     }
-    update() {
-      const valueExists = !this.dataObject || this.property in this.dataObject;
+    get valueExists() {
+      return true;
+    }
+    update(doListeners = true) {
+      const valueExists = this.valueExists;
       const value = valueExists ? this.value : undefined;
       const str = valueExists ? this.dataToString(this.value) : undefined;
-      this.element.innerText = str;
-      for (let listener of this.changeListeners) {
-        listener(value, str, valueExists);
+      if (valueExists) {
+        this.element.innerText = str;
+      }
+      if (doListeners) {
+        for (let listener of this.changeListeners) {
+          listener(value, str, valueExists);
+        }
       }
     }
     addChangeListener(callback) {
@@ -65,7 +131,6 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
       this.validate = args.validate || (() => true);
       this.parse = v => {
         try {
-          console.log(v);
           const val = dataFromString(v);
           return {
             isValid: this.validate(val),
@@ -80,30 +145,50 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
       this.allowNewlines = args.allowNewlines || false;
       this.getFallback = args.getFallback;
       this.getDefault = args.getDefault;
-      console.log(this.element);
+      this.editable = args.editable || editable.inEditingMode;
+      switch (this.editable) {
+        case editable.always:
+          this.element.contentEditable = contentEditableValue;
+          break;
+        case editable.inEditingMode:
+          editingMode.push(this.element);
+          break;
+      }
       const dataValidateOn = this.element.dataset.validateon;
-      console.log(dataValidateOn);
       this.validateElement = dataValidateOn ? document.querySelector(dataValidateOn) : this.element;
       if (this.validateElement === null) {
         throw new Error(`Element ${dataValidateOn} does not exist`);
       }
       this.element.addEventListener("input", () => {
+        if (this.element.innerText !== this.element.innerHTML) {
+          this.element.innerText = this.element.innerText;
+        }
         this.checkElementValidity();
       });
       this.element.addEventListener("focus", () => {
         this.validateElement.classList.add("editor-focused");
+        this.element.classList.remove("changed");
+      });
+      this.element.addEventListener("click", event => {
+        event.preventDefault();
       });
       this.element.addEventListener("blur", () => {
         this.validateElement.classList.remove("editor-focused");
+        let doListeners;
         if (this.element.innerText === "") {
           delete this.dataObject[this.property];
+          doListeners = true;
         } else {
           const parse = this.parse(this.element.innerText);
-          if (parse.isValid) {
+          if (parse.isValid && this.dataObject[this.property] !== parse.value && (this.allowNewlines || !/\n|\r|\u2028|\u2029/.test(this.element.innerText))) {
             this.dataObject[this.property] = parse.value;
+            characterChanged();
+            doListeners = true;
+          } else {
+            doListeners = false;
           }
         }
-        this.update();
+        this.update(doListeners);
       });
       if (!this.allowNewlines) {
         this.element.addEventListener("keydown", event => {
@@ -117,20 +202,31 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
     checkElementValidity() {
       if (this.element.innerText === "" || this.parse(this.element.innerText).isValid) {
         this.validateElement.classList.remove("invalid");
+        return true;
       } else {
         this.validateElement.classList.add("invalid");
+        return false;
       }
     }
-    get value() {
-      return this.dataObject[this.property] = this.getValue();
+    get valueExists() {
+      return !this.dataObject || this.property in this.dataObject;
     }
-    update() {
+    update(doListeners) {
       if ("validate" in this) {
-        super.update();
+        super.update(doListeners);
         if (this.getDefault) {
-          this.element.dataset.default = this.getDefault();
+          this.element.dataset.default = this.dataToString(this.getDefault());
         }
-        this.checkElementValidity();
+        const index = invalid.indexOf(this);
+        if (this.checkElementValidity()) {
+          if (index >= 0) {
+            invalid.splice(index, 1);
+          }
+        } else {
+          if (index === -1) {
+            invalid.push(this);
+          }
+        }
       }
     }
   }
@@ -148,17 +244,16 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 162,
+        lineNumber: 276,
         columnNumber: 23
       }
     }, /*#__PURE__*/React.createElement("div", {
       class: "stat-val",
       "data-validateOn": "#" + statName,
-      contenteditable: "plaintext-only",
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 163,
+        lineNumber: 277,
         columnNumber: 13
       }
     }), /*#__PURE__*/React.createElement("div", {
@@ -166,7 +261,7 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 164,
+        lineNumber: 278,
         columnNumber: 13
       }
     }));
@@ -177,7 +272,7 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
       validate: n => n > 0 && n <= 20,
       dataObject: characterData.stats,
       property: statName,
-      dataFromString: parseInt
+      dataFromString: betterParseInt
     });
     const mod = stats[statName].mod = new CalculatedDataDisplay({
       element: block.getElementsByClassName("stat-mod")[0],
@@ -190,39 +285,30 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
     element: document.getElementById("max-hp"),
     validate: n => n > 0,
     property: "maxHp",
-    dataFromString: parseInt
+    dataFromString: betterParseInt
   });
   const currentHp = new EditableDataDisplay({
     element: document.getElementById("current-hp"),
     validate: n => n >= 0 && n <= maxHp.value,
     getFallback: () => maxHp.value,
     property: "hp",
-    dataFromString: parseInt,
-    listenTo: [maxHp]
+    dataFromString: betterParseInt,
+    listenTo: [maxHp],
+    editable: editable.always
   });
   const characterLevel = classes => classes.reduce((total, c) => total + c.level, 0);
   const classAndLvl = new EditableDataDisplay({
     element: document.getElementById("classAndLvl"),
     property: "classes",
     dataFromString: str => {
-      const regex = /(?<=^|\/)\s*([^\n/]+?)\s+(1?[1-9]|[12]0)\s*(?:\/|$)/g;
-      let readClass;
-      let last;
+      const regex = /^\s*([^\n/]+?)\s+(1?[1-9]|[12]0)\s*$/;
       let data = [];
-      let isFirst = true;
-      while (readClass = regex.exec(str)) {
-        last = readClass;
-        if (isFirst && readClass.index !== 0) {
-          throw new Error();
-        }
-        isFirst = false;
+      for (let readClass of str.split("/")) {
+        let parsed = readClass.match(regex);
         data.push({
-          "class": readClass[1],
-          level: +readClass[2]
+          "class": parsed[1],
+          level: +parsed[2]
         });
-      }
-      if (last.index + last[0].length !== str.length) {
-        throw new Error();
       }
       return data;
     },
@@ -272,18 +358,19 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 270,
+        lineNumber: 376,
         columnNumber: 23
       }
     }, /*#__PURE__*/React.createElement("input", {
       id: skill + "Checkbox",
       type: "checkbox",
       name: "proficiencyCheckbox",
-      class: "proficiencyCheckbox",
+      class: "proficiencyCheckbox showDisabled",
+      disabled: "true",
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 271,
+        lineNumber: 377,
         columnNumber: 13
       }
     }), /*#__PURE__*/React.createElement("label", {
@@ -291,7 +378,7 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 272,
+        lineNumber: 378,
         columnNumber: 13
       }
     }, skill, " ", /*#__PURE__*/React.createElement("span", {
@@ -299,18 +386,23 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 272,
+        lineNumber: 378,
         columnNumber: 53
       }
     })));
     const statMod = stats[skillsToStatMap.get(skill)].mod;
-    const skillBonus = new CalculatedDataDisplay({
+    const skillBonus = new EditableDataDisplay({
       element: block.getElementsByClassName("skillBonus")[0],
-      getValue: () => statMod.value + (characterData.proficiencies.indexOf(skill) === -1 ? 0 : proficiencyBonus.value),
-      dataToString: n => "+" + n,
+      getDefault: () => statMod.value + (characterData.proficiencies.indexOf(skill) === -1 ? 0 : proficiencyBonus.value),
+      dataObject: characterData.skillBonuses,
+      property: skill,
+      dataToString: n => n > 0 ? "+" + n : n,
+      validate: n => !isNaN(n),
+      dataFromString: betterParseInt,
       listenTo: [statMod, proficiencyBonus]
     });
     const checkbox = block.getElementsByClassName("proficiencyCheckbox")[0];
+    editingModeInputs.push(checkbox);
     checkbox.checked = characterData.proficiencies.indexOf(skill) >= 0;
     checkbox.addEventListener("input", () => {
       if (checkbox.checked) {

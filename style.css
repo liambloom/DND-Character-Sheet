@@ -4,16 +4,21 @@
     overflow:hidden;
     outline: none;
     border: none;
+    border-bottom: 1px solid transparent;
+}
+[contentEditable="true"] {
+    background-color: #ddd;
+    border-bottom-color: black;
 }
 
 .invalid:is(:focus, .editor-focused), .invalid:is(:focus, .editor-focused) .inherit-invalid {
     border-color: red;
     box-shadow: 0 0 10px red;
 }
-.invalid:not(:is(:focus, .editor-focused))::after {
+.invalid:not(:is(:focus, .editor-focused))::after, .changed::after {
     content: "!";
     font-size: 0.9em;
-    border-color: #d00 transparent;
+    border-color: transparent;
     border-style: none solid solid;
     border-width: 1em 0.5773em; /* 0.5773 = 1/sqrt(3) */
     width: 0;
@@ -24,6 +29,12 @@
     font-weight: bold;
     margin-left: 5px;
 }
+.changed::after {
+    border-bottom-color: blue;
+}
+.invalid:not(:is(:focus, .editor-focused))::after {
+    border-bottom-color: #d00;
+}
 
 [data-default] {
     display: inline-block;
@@ -32,6 +43,9 @@
 [data-default]:empty::before {
     content: attr(data-default);
     color: gray;
+}
+[data-default][contentEditable="false"]:empty::before {
+    color: black;
 }
 
 #stats {
