@@ -7,6 +7,15 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
     let editing = false;
 
     const newlineRegex = /[\n\r\u2028\u2029]/g;
+    const statNames = ["str", "dex", "con", "int", "wis", "cha"];
+    const statFullNames = {
+        "str": "Strength",
+        "dex": "Dexterity",
+        "con": "Constitution",
+        "int": "Intelligence",
+        "wis": "Wisdom",
+        "cha": "Charisma",
+    };
 
     const editable = {
         always: Symbol(),
@@ -33,10 +42,8 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
     }
 
     function startEditing() {
-        console.log("foo");
         editing = true;
 
-        console.log(editingMode);
         for (let element of editingMode) {
             element.contentEditable = contentEditableValue;
         }
@@ -84,6 +91,8 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
         else 
             throw Error("Invalid int " + str);
     }
+
+    const signedIntToStr = n => n > 0 ? "+" + n : n;
 
     document.getElementById("save").addEventListener("click", stopEditing);
     document.getElementById("edit").addEventListener("click", startEditing);
@@ -187,10 +196,13 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
                 let first = true;
                 for (let i = 0; i < selection.rangeCount; i++) {
                     const range = selection.getRangeAt(i);
-                    console.log(range.startContainer);
                     if (range.startContainer === this.element.childNodes[0]) {
                         range.deleteContents();
-                        range.insertNode(document.createTextNode(event.clipboardData.getData("text/plain").replace(newlineRegex, "")));
+                        let content = event.clipboardData.getData("text/plain");
+                        if (!this.allowNewlines) {
+                            content = content.replace(newlineRegex, "");
+                        }
+                        range.insertNode(document.createTextNode(content));
                         range.collapse();
                         this.element.normalize();
 
@@ -220,18 +232,16 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
             });
 
             this.element.addEventListener("input", event => {
-                if (newlineRegex.test(this.element.innerText)) {
+                if (!this.allowNewlines && newlineRegex.test(this.element.innerText)) {
                     for (let element of this.element.getElementsByTagName("br")) {
                         element.remove();
                     }
                     this.element.innerText = this.element.innerText.replace(newlineRegex, "");
                     this.element.normalize();
                     const selection = getSelection();
-                    const node = this.element.childNodes[0];
+                    const node = this.element.childNodes[0] || this.element;
                     for (let i = 0; i < selection.rangeCount; i++) {
                         const range = selection.getRangeAt(i);
-                        console.log(range.startContainer);
-                        console.log(node);
                         if (range.startContainer === this.element || range.startContainer === node) {
                             selection.removeRange(range);
                         }
@@ -331,7 +341,7 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
 
     const stats = {};
 
-    for (let statName in characterData.stats) {
+    for (let statName of statNames) {
         const block = <div class="stat" id={statName}>
             <div class="stat-val" data-validateOn={"#" + statName}></div>
             <div class="stat-mod inherit-invalid"></div>
@@ -349,7 +359,7 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
         const mod = stats[statName].mod = new CalculatedDataDisplay({
             element: block.getElementsByClassName("stat-mod")[0],
             getValue: () => Math.floor((stat.value - 10) / 2),
-            dataToString: n => n > 0 ? "+" + n : n,
+            dataToString: signedIntToStr,
             listenTo: [ stat ],
         });
     }
@@ -405,7 +415,7 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
         listenTo: [ classAndLvl ],
     });
 
-    const skills = {
+    const skillsByStat = {
         "str": ["Athletics"],
         "dex": ["Acrobatics", "Slight of Hand", "Stealth"],
         "int": ["Arcana", "History", "Investigation", "Nature", "Religion"],
@@ -415,57 +425,76 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
     const skillFlat = [];
     const skillsToStatMap = new Map();
 
-    for (let stat in skills) {
-        skillFlat.push(...skills[stat]);
-        for (let skill of skills[stat]) {
+    for (let stat in skillsByStat) {
+        skillFlat.push(...skillsByStat[stat]);
+        for (let skill of skillsByStat[stat]) {
             skillsToStatMap.set(skill, stat);
         }
     }
 
     // skillFlat.sort();
 
-    for (let skill of characterData.proficiencies) {
+    for (let skill of characterData.skills.proficiencies) {
         if (skillFlat.indexOf(skill) === -1) {
             invalidJson();
             throw new Error(`Cannot have proficiency in ${skill} because no such skill exists`);
         }
     }
 
-    for (let skill of skillFlat) {
-        const block = <div class="skill" id={skill}>
-            <input id={skill + "Checkbox"} type="checkbox" name="proficiencyCheckbox" class="proficiencyCheckbox showDisabled" disabled="true"></input>
-            <label for={skill + "Checkbox"}>{skill} <span class="skillBonus"></span></label>
-        </div>;
-        const statMod = stats[skillsToStatMap.get(skill)].mod;
-        const skillBonus = new EditableDataDisplay({
-            element: block.getElementsByClassName("skillBonus")[0],
-            getDefault: () => (statMod.value 
-                + (characterData.proficiencies.indexOf(skill) === -1 ? 0 : proficiencyBonus.value)),
-            dataObject: characterData.skillBonuses,
-            property: skill,
-            dataToString: n => n > 0 ? "+" + n : n,
-            validate: n => !isNaN(n),
-            dataFromString: betterParseInt,
-            listenTo: [ statMod, proficiencyBonus ],
-        });
+    class Proficiency {
+        constructor(group, name, stat, defaultMap = n => n) {
+            const block = this.element = <div class={group} id={name}>
+                <input id={name + "Checkbox"} type="checkbox" name={group + "Checkbox"}
+                    class={group + "Checkbox proficiencyCheckbox"} disabled="true"></input>
+                <label for={name + "Checkbox"}>{name} <span class={group + "Bonus proficiencyBonus"}>
+                    </span></label>
+            </div>;
+            const statMod = stats[stat].mod;
+            const bonus = this.bonus = new EditableDataDisplay({
+                element: block.getElementsByClassName("proficiencyBonus")[0],
+                getDefault: () => defaultMap(statMod.value 
+                    + (characterData[group].proficiencies.indexOf(name) === -1 ? 0 : proficiencyBonus.value)),
+                dataObject: characterData[group].bonuses,
+                property: name,
+                dataToString: signedIntToStr,
+                dataFromString: betterParseInt,
+                validate: n => !isNaN(n),
+                listenTo: [ statMod, proficiencyBonus ],
+            });
 
-        const checkbox = block.getElementsByClassName("proficiencyCheckbox")[0];
+            const checkbox = this.checkbox = block.getElementsByClassName("proficiencyCheckbox")[0];
 
-        editingModeInputs.push(checkbox);
+            editingModeInputs.push(checkbox);
 
-        checkbox.checked = characterData.proficiencies.indexOf(skill) >= 0;
+            checkbox.checked = characterData[group].proficiencies.indexOf(name) >= 0;
 
-        checkbox.addEventListener("input", () => {
-            if (checkbox.checked) {
-                characterData.proficiencies.push(skill);
-            }
-            else {
-                characterData.proficiencies.splice(characterData.proficiencies.indexOf(skill), 1);
-            }
+            checkbox.addEventListener("input", () => {
+                if (checkbox.checked) {
+                    characterData[group].proficiencies.push(name);
+                }
+                else {
+                    characterData[group].proficiencies.splice(characterData[group].proficiencies.indexOf(name), 1);
+                }
 
-            skillBonus.update();
-        });
-
-        document.getElementById("skills").appendChild(block);
+                bonus.update();
+            });
+        }
     }
+
+    const skills = [];
+    for (let skill of skillFlat) {
+        const skillData = new Proficiency("skills", skill, skillsToStatMap.get(skill));
+        skills.push(skillData);
+        document.getElementById("skills").appendChild(skillData.element);
+    }
+
+    const savingThrows = [];
+    for (let stat of statNames) {
+        const savingThrowData = new Proficiency("savingThrows", statFullNames[stat], stat);
+        savingThrows.push(savingThrowData);
+        document.getElementById("savingThrows").appendChild(savingThrowData.element);
+    }
+
+    const perception = new Proficiency("perception", "Perception", "wis", n => n + 10);
+    document.body.replaceChild(perception.element, document.getElementById("perception"));
 })()

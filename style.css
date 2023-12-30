@@ -16,7 +16,6 @@
     box-shadow: 0 0 10px red;
 }
 .invalid:not(:is(:focus, .editor-focused))::after, .changed::after {
-    content: "!";
     font-size: 0.9em;
     border-color: transparent;
     border-style: none solid solid;
@@ -28,6 +27,7 @@
     color: white;
     font-weight: bold;
     margin-left: 5px;
+    content: "!";
 }
 .changed::after {
     border-bottom-color: blue;
@@ -36,10 +36,13 @@
     border-bottom-color: #d00;
 }
 
-[data-default] {
+/* [data-default] { 
+    I don't know why this existed, but in firefox, an empty inlinne-block element automaticall
+    gets a <br> inserted into it, but an emtpy inline element doesn't. This was messing up 
+    input, so I changed content-editables backto inline
     display: inline-block;
     vertical-align: bottom;
-}
+} */
 [data-default]:empty::before {
     content: attr(data-default);
     color: gray;

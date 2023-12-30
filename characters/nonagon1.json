@@ -1,1 +1,47 @@
-{"name":"Eleanor Thatcher / Amelia","stats":{"str":15,"dex":16,"con":11,"int":14,"wis":17,"cha":19},"race":"Human","background":"Noble","hp":11,"maxHp":36,"classes":[{"class":"Ranger","level":6},{"class":"cleric","level":1}],"proficiencies":["Investigation","Persuasion","Athletics","Stealth","Acrobatics"],"skillBonuses":{"Stealth":8,"Slight of Hand":8}}
+{
+    "name": "Eleanor Thatcher / Amelia",
+    "stats": {
+        "str": 15,
+        "dex": 16,
+        "con": 11,
+        "int": 14,
+        "wis": 17,
+        "cha": 19
+    },
+    "race": "Human",
+    "background": "Noble",
+    "hp": 11,
+    "maxHp": 36,
+    "classes": [
+        {
+            "class": "Ranger",
+            "level": 6
+        },
+        {
+            "class": "cleric",
+            "level": 1
+        }
+    ],
+    "skills": {
+        "proficiencies": [
+            "Investigation",
+            "Persuasion",
+            "Athletics",
+            "Stealth",
+            "Acrobatics",
+            "History"
+        ],
+        "bonuses": {
+            "Stealth": 8,
+            "Slight of Hand": 9
+        }
+    },
+    "savingThrows": {
+        "proficiencies": [],
+        "bonuses": {}
+    },
+    "perception": {
+        "proficiencies": [],
+        "bonuses": {}
+    }
+}
