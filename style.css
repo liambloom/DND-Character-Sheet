@@ -11,11 +11,11 @@
     border-bottom-color: black;
 }
 
-.invalid:is(:focus, .editor-focused), .invalid:is(:focus, .editor-focused) .inherit-invalid {
+.invalid:not(.ignore-invalid):focus-within, .invalid:not(.ignore-invalid):focus-within .inherit-invalid {
     border-color: red;
     box-shadow: 0 0 10px red;
 }
-.invalid:not(:is(:focus, .editor-focused))::after, .changed::after {
+.invalid:not(:focus-within)::after, .changed::after {
     font-size: 0.9em;
     border-color: transparent;
     border-style: none solid solid;
@@ -32,7 +32,7 @@
 .changed::after {
     border-bottom-color: blue;
 }
-.invalid:not(:is(:focus, .editor-focused))::after {
+.invalid:not(:focus-within)::after {
     border-bottom-color: #d00;
 }
 

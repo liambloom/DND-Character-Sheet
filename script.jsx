@@ -1,35 +1,45 @@
 const characterJson = "characters" + new URL(location).pathname + ".json";
 
+let editing = false;
+const newlineRegex = /[\n\r\u2028\u2029]/g;
+const statNames = ["str", "dex", "con", "int", "wis", "cha"];
+const statFullNames = {
+    "str": "Strength",
+    "dex": "Dexterity",
+    "con": "Constitution",
+    "int": "Intelligence",
+    "wis": "Wisdom",
+    "cha": "Charisma",
+};
+
+const editable = {
+    always: Symbol(),
+    inEditingMode: Symbol(),
+    never: Symbol(),
+}
+const editingMode = [];
+const editingModeInputs = [];
+const invalid = [];
+
+const testElement = document.createElement("div");
+testElement.setAttribute("contentEditable", "PLAINTEXT-ONLY");
+const supportsPlaintextOnly = testElement.contentEditable === "plaintext-only";
+const contentEditableValue = supportsPlaintextOnly ? "plaintext-only" : "true";
+
+function betterParseInt(str) {
+    if (/^(?:\+|-)?\d+$/.test(str)) {
+        return parseInt(str);
+    }
+    else 
+        throw Error("Invalid int " + str);
+}
+
+const signedIntToStr = n => n > 0 ? "+" + n : n;
+
 (async function() {
     const charResponse = await fetch(characterJson);
     const characterData = await charResponse.json();
     window.characterData = characterData;
-    let editing = false;
-
-    const newlineRegex = /[\n\r\u2028\u2029]/g;
-    const statNames = ["str", "dex", "con", "int", "wis", "cha"];
-    const statFullNames = {
-        "str": "Strength",
-        "dex": "Dexterity",
-        "con": "Constitution",
-        "int": "Intelligence",
-        "wis": "Wisdom",
-        "cha": "Charisma",
-    };
-
-    const editable = {
-        always: Symbol(),
-        inEditingMode: Symbol(),
-        never: Symbol(),
-    }
-    const editingMode = [];
-    const editingModeInputs = [];
-    const invalid = [];
-
-    const testElement = document.createElement("div");
-    testElement.setAttribute("contentEditable", "PLAINTEXT-ONLY");
-    const supportsPlaintextOnly = testElement.contentEditable === "plaintext-only";
-    const contentEditableValue = supportsPlaintextOnly ? "plaintext-only" : "true";
 
     function save() {
         fetch(characterJson, {
@@ -80,100 +90,25 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
         }
     }
 
-    function invalidJson() {
-        alert("The character sheet is invalid");
-    }
-
-    function betterParseInt(str) {
-        if (/^(?:\+|-)?\d+$/.test(str)) {
-            return parseInt(str);
-        }
-        else 
-            throw Error("Invalid int " + str);
-    }
-
-    const signedIntToStr = n => n > 0 ? "+" + n : n;
-
     document.getElementById("save").addEventListener("click", stopEditing);
     document.getElementById("edit").addEventListener("click", startEditing);
 
-    class CalculatedDataDisplay {
-        constructor({element, dataObject = characterData, property, getValue = () => dataObject[property], dataToString = v => "" + v, listenTo = []}) {
-            this.changeListeners = [];
-            this.element = element;
-            this.getValue = getValue;
-            this.dataToString = dataToString
-
-            for (let e of listenTo) {
-                e.addChangeListener(() => {
-                    if (editing && this.getDefault && this.valueExists) {
-                        this.element.classList.add("changed");
-                    }
-                    this.update()
-                });
-            }
-
-            element.contentEditable = "false";
-
-            this.update();
-        }
-
-        get value() {
-            return this.getValue();
-        }
-
-        get valueExists() {
-            return true;
-        }
-
-        update(doListeners = true) {
-            const valueExists = this.valueExists;
-            const value = valueExists ? this.value : undefined;
-            const str = valueExists ? this.dataToString(this.value) : undefined
-            if (valueExists) {
-                this.element.innerText = str;
-            }
-
-            if (doListeners) {
-                for (let listener of this.changeListeners) {
-                    listener(value, str, valueExists);
-                }
-            }            
-        }
-
-        addChangeListener(callback) {
-            this.changeListeners.push(callback);
-        }
-
-        removeChangeListener(callback) {
-            this.changeListeners.splice(this.changeListeners.indexOf(callback));
-        }
-    }
-
-    class EditableDataDisplay extends CalculatedDataDisplay {
+    class DataDisplay {
         constructor(args) {
-            super(args);
-
-            const { dataFromString = v => v } = args;
+            this.changeListeners = [];
+            this.invalidationListeners = [];
+            this.element = args.element;
             this.dataObject = args.dataObject || characterData;
             this.property = args.property;
+            this.getValue = args.getValue || (() => this.dataObject[this.property]);
+            this.dataToString = args.dataToString || (v => "" + v);
+            this.dataFromString = args.dataFromString || (v => v);
             this.validate = args.validate || (() => true);
-            this.parse = v => {
-                try {
-                    const val = dataFromString(v);
-                    return {
-                        isValid: this.validate(val),
-                        value: val,
-                    };
-                }
-                catch (e) {
-                    return { isValid: false };
-                }
-            };
             this.allowNewlines = args.allowNewlines || false;
             this.getFallback = args.getFallback;
             this.getDefault = args.getDefault;
             this.editable = args.editable || editable.inEditingMode;
+            const { listenTo = [] } = args;
 
             switch (this.editable) {
                 case editable.always:
@@ -184,10 +119,13 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
                     break;
             }
 
-            const dataValidateOn = this.element.dataset.validateon;
-            this.validateElement = dataValidateOn ? document.querySelector(dataValidateOn) : this.element;
-            if (this.validateElement === null) {
-                throw new Error(`Element ${dataValidateOn} does not exist`);
+            for (let e of listenTo) {
+                e.addChangeListener(() => {
+                    if (editing && this.getDefault && this.valueExists) {
+                        this.element.classList.add("changed");
+                    }
+                    this.update()
+                });
             }
 
             this.element.addEventListener("paste", event => {
@@ -256,7 +194,6 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
             });
 
             this.element.addEventListener("focus", () => {
-                this.validateElement.classList.add("editor-focused");
                 this.element.classList.remove("changed");
             });
 
@@ -265,7 +202,6 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
             });
 
             this.element.addEventListener("blur", () => {
-                this.validateElement.classList.remove("editor-focused");
                 let doListeners;
                 if (this.getDefault && this.element.innerText === "") {
                     delete this.dataObject[this.property];
@@ -296,42 +232,90 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
         }
 
         checkElementValidity() {
-            if (this.element.innerText === "" || this.parse(this.element.innerText).isValid) {
-                this.validateElement.classList.remove("invalid");
-                return true;
+            const parsed = this.parse(this.element.innerText);
+            const actual = parsed.isValid;
+            const display = actual || this.element.innerText === "";
+            if (display) {
+                this.element.classList.remove("invalid");
             }
             else {
-                this.validateElement.classList.add("invalid");
-                return false;
+                this.element.classList.add("invalid");
             }
+            for (let callback of this.invalidationListeners) {
+                callback(actual, display, parsed.value);
+            }
+
+            return { actual, display };
+        }
+
+        parse(v) {
+            try {
+                const val = this.dataFromString(v);
+                return {
+                    isValid: this.validate(val),
+                    value: val,
+                };
+            }
+            catch (e) {
+                return { isValid: false };
+            }
+        }
+
+        get value() {
+            return this.getValue();
         }
 
         get valueExists() {
             return !this.dataObject || this.property in this.dataObject;
         }
 
-        update(doListeners) {
-            if ("validate" in this) {
-                super.update(doListeners);
-                if (this.getDefault) {
-                    this.element.dataset.default = this.dataToString(this.getDefault());
+        update(doListeners = true) {
+            const valueExists = this.valueExists;
+            const value = valueExists ? this.value : undefined;
+            const str = valueExists ? this.dataToString(this.value) : undefined
+            if (valueExists) {
+                this.element.innerText = str;
+            }
+
+            if (doListeners) {
+                for (let listener of this.changeListeners) {
+                    listener(value, str, valueExists);
                 }
-                const index = invalid.indexOf(this);
-                if (this.checkElementValidity()) {
-                    if (index >= 0) {
-                        invalid.splice(index, 1);
-                    }
+            }          
+            if (this.getDefault) {
+                this.element.dataset.default = this.dataToString(this.getDefault());
+            }
+            const index = invalid.indexOf(this);
+            if (this.checkElementValidity().display) {
+                if (index >= 0) {
+                    invalid.splice(index, 1);
                 }
-                else {
-                    if (index === -1) {
-                        invalid.push(this);
-                    }
+            }
+            else {
+                if (index === -1) {
+                    invalid.push(this);
                 }
             }
         }
+
+        addChangeListener(callback) {
+            this.changeListeners.push(callback);
+        }
+
+        removeChangeListener(callback) {
+            this.changeListeners.splice(this.changeListeners.indexOf(callback));
+        }
+
+        addInvalidationListener(callback) {
+            this.invalidationListeners.push(callback);
+        }
+
+        removeInvalidationListener(callback) {
+            this.invalidationListeners.splice(this.invalidationListeners.indexOf(callback), 1);
+        }
     }
 
-    const name = new EditableDataDisplay({
+    const name = new DataDisplay({
         element: document.getElementById("name"),
         property: "name",
     });
@@ -343,35 +327,40 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
 
     for (let statName of statNames) {
         const block = <div class="stat" id={statName}>
-            <div class="stat-val" data-validateOn={"#" + statName}></div>
+            <div class="stat-val ignore-invalid"></div>
             <div class="stat-mod inherit-invalid"></div>
         </div>
         document.getElementById("stats").appendChild(block);
 
         stats[statName] = {};
-        const stat = stats[statName].stat = new EditableDataDisplay({
+        const stat = stats[statName].stat = new DataDisplay({
             element: block.getElementsByClassName("stat-val")[0],
             validate: n => n > 0 && n <= 20,
             dataObject: characterData.stats, 
             property: statName, 
             dataFromString: betterParseInt,
         });
-        const mod = stats[statName].mod = new CalculatedDataDisplay({
+        const mod = stats[statName].mod = new DataDisplay({
             element: block.getElementsByClassName("stat-mod")[0],
             getValue: () => Math.floor((stat.value - 10) / 2),
             dataToString: signedIntToStr,
             listenTo: [ stat ],
+            editable: editing.never,
+        });
+
+        stat.addInvalidationListener((_, isValid) => {
+            block.classList[isValid ? "remove" : "add"]("invalid");
         });
     }
 
-    const maxHp = new EditableDataDisplay({
+    const maxHp = new DataDisplay({
         element: document.getElementById("max-hp"),
         validate: n => n > 0,
         property: "maxHp",
         dataFromString: betterParseInt,
     });
 
-    const currentHp = new EditableDataDisplay({
+    const currentHp = new DataDisplay({
         element: document.getElementById("current-hp"),
         validate: n => n >= 0 && n <= maxHp.value,
         getFallback: () => maxHp.value,
@@ -383,7 +372,7 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
 
     const characterLevel = classes => classes.reduce((total, c) => total + c.level, 0);
 
-    const classAndLvl = new EditableDataDisplay({
+    const classAndLvl = new DataDisplay({
         element: document.getElementById("classAndLvl"),
         property: "classes",
         dataFromString: str => {
@@ -408,11 +397,12 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
         enumerable: true,
     });
 
-    const proficiencyBonus = new CalculatedDataDisplay({
+    const proficiencyBonus = new DataDisplay({
         element: document.getElementById("proficiencyBonus"),
         getValue: () => Math.floor((classAndLvl.characterLevel - 1) / 4) + 2,
         dataToString: n => "+" + n,
         listenTo: [ classAndLvl ],
+        editable: editing.never,
     });
 
     const skillsByStat = {
@@ -436,7 +426,7 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
 
     for (let skill of characterData.skills.proficiencies) {
         if (skillFlat.indexOf(skill) === -1) {
-            invalidJson();
+            alert("The character sheet is invalid");
             throw new Error(`Cannot have proficiency in ${skill} because no such skill exists`);
         }
     }
@@ -450,7 +440,7 @@ const characterJson = "characters" + new URL(location).pathname + ".json";
                     </span></label>
             </div>;
             const statMod = stats[stat].mod;
-            const bonus = this.bonus = new EditableDataDisplay({
+            const bonus = this.bonus = new DataDisplay({
                 element: block.getElementsByClassName("proficiencyBonus")[0],
                 getDefault: () => defaultMap(statMod.value 
                     + (characterData[group].proficiencies.indexOf(name) === -1 ? 0 : proficiencyBonus.value)),
