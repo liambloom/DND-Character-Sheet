@@ -105,7 +105,6 @@ const signedIntToStr = n => n > 0 ? "+" + n : n;
             this.dataFromString = args.dataFromString || (v => v);
             this.validate = args.validate || (() => true);
             this.allowNewlines = args.allowNewlines || false;
-            this.getFallback = args.getFallback;
             this.getDefault = args.getDefault;
             this.editable = args.editable || editable.inEditingMode;
             const { listenTo = [] } = args;
@@ -116,6 +115,7 @@ const signedIntToStr = n => n > 0 ? "+" + n : n;
                     break;
                 case editable.inEditingMode:
                     editingMode.push(this.element);
+                    this.element.contentEditable = "false";
                     break;
             }
 
@@ -262,7 +262,7 @@ const signedIntToStr = n => n > 0 ? "+" + n : n;
         }
 
         get value() {
-            return this.getValue();
+            return this.getValue() || this.getDefault();
         }
 
         get valueExists() {
@@ -342,7 +342,7 @@ const signedIntToStr = n => n > 0 ? "+" + n : n;
         });
         const mod = stats[statName].mod = new DataDisplay({
             element: block.getElementsByClassName("stat-mod")[0],
-            getValue: () => Math.floor((stat.value - 10) / 2),
+            getDefault: () => Math.floor((stat.value - 10) / 2),
             dataToString: signedIntToStr,
             listenTo: [ stat ],
             editable: editing.never,
@@ -353,22 +353,38 @@ const signedIntToStr = n => n > 0 ? "+" + n : n;
         });
     }
 
-    const maxHp = new DataDisplay({
-        element: document.getElementById("max-hp"),
-        validate: n => n > 0,
-        property: "maxHp",
-        dataFromString: betterParseInt,
-    });
+    class Fraction {
+        constructor(element, dataObject1, property1, name1, dataObject2, property2, name2) {
+            this.element = element;
+            this.numerElement = document.createElement("span");
+            this.denomElement = document.createElement("span");
+            element.appendChild(this.numerElement)
+            element.appendChild(document.createTextNode(" / "));
+            element.appendChild(this.denomElement);
 
-    const currentHp = new DataDisplay({
-        element: document.getElementById("current-hp"),
-        validate: n => n >= 0 && n <= maxHp.value,
-        getFallback: () => maxHp.value,
-        property: "hp",
-        dataFromString: betterParseInt,
-        listenTo: [ maxHp ],
-        editable: editable.always,
-    });
+            this.denomDisplay = new DataDisplay({
+                element: this.denomElement,
+                name: name2,
+                validate: n => n > 0,
+                dataObject: dataObject2,
+                property: property2,
+                dataFromString: betterParseInt,
+            });
+
+            this.numerDisplay = new DataDisplay({
+                element: this.numerElement,
+                validate: n => n >= 0 && n <= this.denomDisplay.value,
+                name: name1,
+                dataObject: dataObject1,
+                property: property1,
+                dataFromString: betterParseInt,
+                listenTo: [ this.denomDisplay ],
+                editable: editable.always,
+            });
+        }
+    }
+
+    const hp = new Fraction(document.getElementById("hp"), characterData, "hp", "hp", characterData, "maxHp", "maxHp");
 
     const characterLevel = classes => classes.reduce((total, c) => total + c.level, 0);
 
@@ -399,7 +415,7 @@ const signedIntToStr = n => n > 0 ? "+" + n : n;
 
     const proficiencyBonus = new DataDisplay({
         element: document.getElementById("proficiencyBonus"),
-        getValue: () => Math.floor((classAndLvl.characterLevel - 1) / 4) + 2,
+        getDefault: () => Math.floor((classAndLvl.characterLevel - 1) / 4) + 2,
         dataToString: n => "+" + n,
         listenTo: [ classAndLvl ],
         editable: editing.never,

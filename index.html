@@ -34,19 +34,41 @@
         <script defer src="script.js"></script>
     </head>
     <body>
+        <main>
+            <header>
+                <h1 id="name"></h1>
+                <div id="classAndLvl"></div>
+            </header>
+            <div id="numbers">
+                <div id="stats"></div>
+                <div id="right-number-flex">
+                    <div id="proficiencyBonusContainer">
+                        <div id="proficiencyBonusValueContainer">
+                            <div id="proficiencyBonus"></div>
+                        </div>
+                        <div id="proficiencyBonusLabel">
+                            Proficiency Bonus
+                        </div>
+                    </div>
+                    <div id="savingThrowsContainer">
+                        <div id="savingThrows"></div>
+                        <span class="sectionTitle">Saving Throws</span>
+                    </div>
+                    <div id="skillContainer">
+                        <div id="skills"></div>
+                        <span class="sectionTitle">Skills</span>
+                    </div>
+                </div>
+            </div>
+            <div id="lower-proficiencies">  
+                <div id="perception"></div>
+                <div id="other-proficiencies" class="placeholder"></div>
+            </div>
+            <div id="health-et-al">
+                <div id="hp"></div>
+            </div>
+        </main>
         <button id="save" type="button">Save</button>
         <button id="edit" type="button">Edit</button>
-        <h1 id="name"></h1>
-        <div id="classAndLvl"></div>
-        <div id="hp">
-            <span id="current-hp"></span>
-            /
-            <span id="max-hp"></span>
-        </div>
-        <div id="stats"></div>
-        <div id="proficiencyBonus"></div>
-        <div id="skills"></div>
-        <div id="savingThrows"></div>
-        <div id="perception"></div>
     </body>
 </html>

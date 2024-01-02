@@ -36,13 +36,6 @@
     border-bottom-color: #d00;
 }
 
-/* [data-default] { 
-    I don't know why this existed, but in firefox, an empty inlinne-block element automaticall
-    gets a <br> inserted into it, but an emtpy inline element doesn't. This was messing up 
-    input, so I changed content-editables backto inline
-    display: inline-block;
-    vertical-align: bottom;
-} */
 [data-default]:empty::before {
     content: attr(data-default);
     color: gray;
@@ -51,21 +44,111 @@
     color: black;
 }
 
-#stats {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    width: fit-content;
-    gap: 15px;
+body {
+    background-color: #ccc;
+    font-family: Helvetica, sans-serif;
+    font-size: 12px;
 }
+main {
+    width: 8.5in;
+    height: 11in;
+    background-color: white;
+    box-shadow: 10px 10px 5px #888;
+    margin: auto;
+    display: grid;
+    grid-template-areas:
+        "header header header"
+        "numbers health character"
+        "numbers attacks features"
+        "proficiencies equipment features";
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 1fr 3fr 2fr 2fr;
+    gap: 10px;
+    padding: 0.5in;
+}
+header {
+    grid-area: header;
+    background-color: #ccc;
+    margin-bottom: 10px;
+}
+#numbers {
+    grid-area: numbers;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    grid-template-areas: "stats other";
+    gap: 7px;
+}
+#stats {
+    grid-area: stats;
+    background-color: #ccc;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+}
+#right-number-flex {
+    grid-area: other;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+#proficiencyBonusContainer {
+    width: 100%;
+    display: grid;
+    grid-template-areas: "bonus label";
+    grid-template-columns: 35px 1fr;
+    height: 35px;
+}
+#proficiencyBonusValueContainer {
+    height: 35px;
+    width: 35px;
+    grid-area: bonus;
+    border: 3px solid black;
+    border-radius: 50%;
+    position: relative;
+}
+#proficiencyBonus {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+#proficiencyBonusLabel {
+    margin: 5px 0;
+    grid-area: label;
+    text-transform: uppercase;
+    width: auto;
+    text-align: center;
+    border: 3px solid black;
+    border-radius: 0 5px 5px 0;
+    border-left: none;
+}
+#savingThrowsContainer, #skillContainer {
+    border: 3px solid black;
+    border-radius: 5px;
+    width: calc(100% - 6px);
+    text-align: center;
+}
+#savingThrows, #skills {
+    margin: 10px 5px;
+    text-align: left;
+}
+.sectionTitle {
+    font-weight: bold;
+    margin: 2px;
+    text-transform: uppercase;
+}
+
 .stat {
     border: 3px solid black;
     border-radius: 5px;
-    font-size: 24px;
-    width: 36px;
-    height: 48px;
+    font-size: 45px;
+    width: 75%;
+    height: 11%;
     text-align: center;
     position: relative;
     margin-bottom: 15px;
+    background-color: white;
 }
 .stat-val {
     width: 100%;
