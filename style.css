@@ -5,17 +5,30 @@
     outline: none;
     border: none;
     border-bottom: 1px solid transparent;
+    display: inline;
 }
 [contentEditable="true"], [contentEditable="plaintext-only"] {
     background-color: #ddd;
     border-bottom-color: black;
+}
+:is([contentEditable="true"], [contentEditable="plaintext-only"]):not([data-default]):not(:is(.invalid, .changed):not(:focus-within)):empty::before {
+    content: "00";
+    color: transparent;
 }
 
 .invalid:not(.ignore-invalid):focus-within, .invalid:not(.ignore-invalid):focus-within .inherit-invalid {
     border-color: red;
     box-shadow: 0 0 10px red;
 }
+.invalid:not(:focus-within), .changed {
+    position: relative;
+    padding-right: calc(1.1547em + 5px); /* 1.1547 = 2 / sqrt(3) */
+}
 .invalid:not(:focus-within)::after, .changed::after {
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    translate: 0 -50%;
     font-size: 0.9em;
     border-color: transparent;
     border-style: none solid solid;
@@ -26,7 +39,7 @@
     justify-content: center;
     color: white;
     font-weight: bold;
-    margin-left: 5px;
+    /*margin-left: 5px;*/
     content: "!";
 }
 .changed::after {
@@ -40,8 +53,16 @@
     content: attr(data-default);
     color: gray;
 }
-[data-default][contentEditable="false"]:empty::before {
+[data-default]:is([contentEditable="false"], :not([contenteditable])):empty::before {
     color: black;
+}
+
+.standaloneLabeledValue > :first-child > *, .stat-val, .placeholder::before,
+#misc > * > * > :not(:is(.topText, .sectionTitle)) {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
 }
 
 body {
@@ -77,84 +98,111 @@ header {
     grid-template-columns: 1fr 2fr;
     grid-template-areas: "stats other";
     gap: 7px;
+    min-width: 0;
 }
 #stats {
     grid-area: stats;
     background-color: #ccc;
     display: flex;
     flex-direction: column;
-    justify-content: space-evenly;
+    justify-content: space-around;
     align-items: center;
+    min-width: 0;
+    border-radius: 10px;
 }
 #right-number-flex {
     grid-area: other;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    min-width: 0;
 }
-#proficiencyBonusContainer {
+.standaloneLabeledValue {
     width: 100%;
     display: grid;
-    grid-template-areas: "bonus label";
-    grid-template-columns: 35px 1fr;
-    height: 35px;
+    grid-template-areas: "value label";
+    grid-template-columns: 34px 1fr;
+    height: 41px;
 }
-#proficiencyBonusValueContainer {
+.standaloneLabeledValue > :first-child {
     height: 35px;
     width: 35px;
-    grid-area: bonus;
+    grid-area: value;
     border: 3px solid black;
     border-radius: 50%;
     position: relative;
 }
-#proficiencyBonus {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-#proficiencyBonusLabel {
-    margin: 5px 0;
-    grid-area: label;
-    text-transform: uppercase;
-    width: auto;
-    text-align: center;
-    border: 3px solid black;
-    border-radius: 0 5px 5px 0;
-    border-left: none;
+.standaloneLabeledValue > :first-child > * {
+    font-size: 20px;
+    margin: 0;
 }
 #savingThrowsContainer, #skillContainer {
     border: 3px solid black;
     border-radius: 5px;
     width: calc(100% - 6px);
-    text-align: center;
 }
 #savingThrows, #skills {
-    margin: 10px 5px;
+    margin: 7px 0 7px 5px;
     text-align: left;
 }
-.sectionTitle {
+.sectionTitle, .standaloneLabeledValue > :nth-child(2) > div {
     font-weight: bold;
-    margin: 2px;
+    text-transform: uppercase;
+    font-size: 10px;
+    width: 100%;
+    text-align: center;
+    margin: 0;
+    position: absolute;
+}
+.sectionTitle:not(.staticPos) {
+    bottom: 2px;
+}
+.sectionTitle.staticPos {
+    position: initial;
+}
+.sectionTitle {
+    display: block;
+}
+.sectionTitle.staticPos:first-child {
+    margin-top: 2px;
+}
+.sectionTitle.staticPos:last-child {
+    margin-bottom: 2px;
+}
+.standaloneLabeledValue > :nth-child(2) {
+    margin: 5px 0;
+    grid-area: label;
+    width: auto;
+    border: 3px solid black;
+    border-radius: 0 5px 5px 0;
+    border-left: none;
+    position: relative;
+}
+.standaloneLabeledValue > :nth-child(2) > div {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
     text-transform: uppercase;
 }
 
+.stat > .sectionTitle {
+    font-size: 8px;
+}
 .stat {
     border: 3px solid black;
     border-radius: 5px;
-    font-size: 45px;
     width: 75%;
     height: 11%;
     text-align: center;
     position: relative;
-    margin-bottom: 15px;
     background-color: white;
 }
 .stat-val {
     width: 100%;
     max-width: 100%;
-    display: inline-block;
-    margin-top: 5px;
+    display: block;
+    font-size: 35px;
+    overflow: hidden;
 }
 .stat-mod {
     border: 3px solid black;
@@ -168,9 +216,169 @@ header {
     position: absolute;
     bottom: 0;
     left: 50%;
-    transform: translate(-50%, 50%);
+    translate: -50% 50%;
+}
+#lower-proficiencies {
+    grid-area: proficiencies;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+#other-proficiencies {
+    flex-grow: 1;
+}
+.placeholder {
+    background-color: gray;
+    position: relative;
+    min-height: 1em;
+}
+.placeholder::before {
+    content: "PLACEHOLDER";
+}
+.placeholder > .sectionTitle {
+    position: absolute;
+    bottom: 2px;
+}
+#misc {
+    background-color: #ccc;
+    grid-area: health;
+    display: grid;
+    grid-template-areas: "top" "middle" "bottom";
+    grid-template-columns: 1fr;
+    grid-template-rows: 3fr 7fr 3fr;
+    padding: 10px;
+    gap: 10px;
+    min-width: 0;
+}
+.inputLine, .topText {
+    overflow: hidden;
+    max-width: 100%;
+    white-space: nowrap;
+    text-align: center;
+}
+.topText {
+    position: relative;
+    width: min-content;
+    margin: auto;
+}
+.inputLine [contenteditable] {
+    position: static;
+}
+
+#misc > * {
+    display: grid;
+    min-width: 0;
+}
+#misc > * > * {
+    background-color: white;
+    border: 3px solid black;
+    border-radius: 5px;
+    min-width: 0;
+    position: relative;
+}
+#misc > * > * > :not(:is(.topText, .sectionTitle)) {
+    font-size: 35px;
+}
+#misc-row-1 {
+    grid-area: top;
+    grid-template-areas: "ac initiative speed";
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 1fr;
+    gap: 10px;
+}
+#ac-container {
+    grid-area: ac;
+}
+#initiative-container {
+    grid-area: initiative;
+}
+#speed-container {
+    grid-area: speed;
+}
+#misc-row-2 {
+    grid-area: middle;
+    grid-template-areas: "health" "temp";
+    grid-template-columns: 1fr;
+    grid-template-rows: 1.3fr 1fr;
+    gap: 5px;
+}
+#health {
+    grid-area: health;
+    border-radius: 5px 5px 0 0;
+}
+#temp-hp {
+    grid-area: temp;
+    border-radius: 0 0 5px 5px;
+}
+#misc-row-3 {
+    grid-area: bottom;
+    grid-template-areas: "hit-dice death-saves";
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: 1fr;
+    gap: 10px;
+}
+#hit-dice {
+    grid-area: hit-dice;
+}
+#death-saves {
+    grid-area: death-saves;
+}
+#attacks {
+    grid-area: attacks;
+}
+#equipment {
+    grid-area: equipment;
+}
+#character {
+    grid-area: character;
+}
+#features {
+    grid-area: features;
 }
 
 #hp {
     font-size: 20px;
+}
+.proficiency {
+    white-space: nowrap;
+    overflow: hidden;
+}
+.proficiencyBonusStat {
+    color: #888;
+}
+.proficiencyCheckbox {
+    margin-left: 0;
+}
+
+* {
+    outline: none;
+}
+button {
+    padding: 0;
+    border: none;
+    cursor: pointer;
+}
+#edit {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    box-shadow: 2px 2px 3px #0004;
+    background-image: url(img/edit.png); /* https://www.flaticon.com/free-icon/pencil_1828918 */
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: 50% 50%;
+}
+#edit:hover {
+    background-color: #ddd;
+}
+body[data-editing="true"] #edit {
+    background-image: url(img/save.png); /* https://www.flaticon.com/free-icon/floppy-disk_1828828 */
+}
+#saving {
+    position: fixed;
+    bottom: 2px;
+    left: 2px;
 }

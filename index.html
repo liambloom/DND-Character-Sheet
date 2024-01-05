@@ -1,37 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
         <title>Character Sheet</title>
         <meta charset="UTF-8">
         <link rel="stylesheet" href="style.css">
-        <script>
-            // https://stackoverflow.com/a/42405694/11326662
-
-            const React = {
-                createElement: function (tag, attrs, children) {
-                    var element = document.createElement(tag);
-
-                    for (let name in attrs) {
-                        if (name && attrs.hasOwnProperty(name)) {
-                            let value = attrs[name];
-                            if (value === true) {
-                                element.setAttribute(name, name);
-                            } else if (value !== false && value != null) {
-                                element.setAttribute(name, value.toString());
-                            }
-                        }
-                    }
-                    for (let i = 2; i < arguments.length; i++) {
-                        let child = arguments[i];
-                        element.appendChild(
-                            child.nodeType == null ?
-                                document.createTextNode(child.toString()) : child);
-                    }
-                    return element;
-                }
-            };
-        </script>
-        <script defer src="script.js"></script>
+        <script defer type="module" src="script.js"></script>
     </head>
     <body>
         <main>
@@ -42,33 +15,102 @@
             <div id="numbers">
                 <div id="stats"></div>
                 <div id="right-number-flex">
-                    <div id="proficiencyBonusContainer">
-                        <div id="proficiencyBonusValueContainer">
+                    <label for="inspiration" class="standaloneLabeledValue">
+                        <div>
+                            <input type="checkbox" id="inspiration">
+                        </div>
+                        <div>
+                            <div>
+                                Inspiration
+                            </div>
+                        </div>
+                    </label>
+                    <div class="standaloneLabeledValue">
+                        <div>
                             <div id="proficiencyBonus"></div>
                         </div>
-                        <div id="proficiencyBonusLabel">
-                            Proficiency Bonus
+                        <div>
+                            <div>
+                                Proficiency Bonus
+                            </div>
                         </div>
                     </div>
                     <div id="savingThrowsContainer">
                         <div id="savingThrows"></div>
-                        <span class="sectionTitle">Saving Throws</span>
+                        <span class="sectionTitle staticPos">Saving Throws</span>
                     </div>
                     <div id="skillContainer">
                         <div id="skills"></div>
-                        <span class="sectionTitle">Skills</span>
+                        <span class="sectionTitle staticPos">Skills</span>
                     </div>
                 </div>
             </div>
-            <div id="lower-proficiencies">  
-                <div id="perception"></div>
-                <div id="other-proficiencies" class="placeholder"></div>
+            <div id="lower-proficiencies">
+                <div id="perception" class="standaloneLabeledValue">
+                    <div>
+                        <div id="perceptionValue"></div>
+                    </div>
+                    <div>
+                        <div>Passive Perception</div>
+                    </div>
+                </div>
+                <div id="other-proficiencies" class="placeholder">
+                    <div class="sectionTitle">Other Proficiencies & Languages</div>
+                </div>
             </div>
-            <div id="health-et-al">
-                <div id="hp"></div>
+            <div id="misc">
+                <div id="misc-row-1">
+                    <div id="ac-container">
+                        <div class="inputLine"><div id="ac"></div></div>
+                        <div class="sectionTitle">Armor Class</div>
+                    </div>
+                    <div id="initiative-container">
+                        <div class="inputLine"><div id="initiative"></div></div>
+                        <div class="sectionTitle">Initiative</div>
+                    </div>
+                    <div id="speed-container">
+                        <div class="inputLine"><div id="speed"></div></div>
+                        <div class="sectionTitle">Speed</div>
+                    </div>
+                </div>
+                <div id="misc-row-2">
+                    <div id="health">
+                        <div class="topText inputLine">
+                            Hit Point Maximum: <span id="maxHpValue" data-denom></span>
+                        </div>
+                        <div class="inputLine"><div id="currentHp" data-numer></div></div>
+                        <div class="sectionTitle">Current Hit Points</div>
+                    </div>
+                    <div id="temp-hp">
+                        <div class="inputLine"><div id="temp-hp-value"></div></div>
+                        <div class="sectionTitle">Temporary Hit Points</div>
+                    </div>
+                </div>
+                <div id="misc-row-3">
+                    <div id="hit-dice">
+                        <div class="topText inputLine">
+                            Total: <span id="hit-dice-total" data-denom></span>
+                        </div>
+                        <div class="inputLine"><div id="hit-dice-value"></div></div>
+                        <div class="sectionTitle">Hit Dice</div>
+                    </div>
+                    <div id="death-saves" class="placeholder">
+                        <div class="sectionTitle">Death Saves</div>
+                    </div>
+                </div>
+            </div>
+            <div id="attacks" class="placeholder">
+                <div class="sectionTitle">Attacks & Spellcasting</div>
+            </div>
+            <div id="equipment" class="placeholder">
+                <div class="sectionTitle">Equipment</div>
+            </div>
+            <div id="character" class="placeholder"></div>
+            <div id="features" class="placeholder">
+                <div class="sectionTitle">Features & Traits</div>
             </div>
         </main>
-        <button id="save" type="button">Save</button>
-        <button id="edit" type="button">Edit</button>
+        <button id="edit" type="button"></button>
+        <div id="saving" style="display: none">Saving...</div>
     </body>
 </html>
