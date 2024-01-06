@@ -80,8 +80,16 @@ function betterParseInt(str) {
     else 
         throw Error("Invalid int " + str);
 }
-
+function unsignedParseInt(str) {
+    if (/^\d+$/.test(str)) {
+        return parseInt(str);
+    }
+    else 
+        throw Error("Invalid int " + str);
+}
 const signedIntToStr = n => n > 0 ? "+" + n : n;
+
+const fontCtx = document.createElement("canvas").getContext("2d");
 // #endregion
 
 // #region Editing Mode
@@ -179,6 +187,7 @@ class DataDisplay {
         this.allowNewlines = args.allowNewlines ?? false;
         this.getDefault = args.getDefault;
         this.editable = args.editable ?? editable.inEditingMode;
+        this.autoResize = args.autoResize ?? false;
         const { listenTo = [] } = args;
 
         switch (this.editable) {
@@ -267,6 +276,7 @@ class DataDisplay {
                 selection.addRange(range);
             }
 
+            this.maybeResizeFont();
             this.checkElementValidity();
         });
 
@@ -307,6 +317,47 @@ class DataDisplay {
         }
 
         this.update();
+    }
+
+    maybeResizeFont() {
+        if (this.autoResize) {
+            let element = this.element.parentElement.classList.contains("inputLine") ? this.element.parentElement : this.element;
+
+            const computedStyles = getComputedStyle(element);
+            if (!element.style.getPropertyValue("font-size")) {
+                const str = computedStyles.getPropertyValue("font-size");
+                this.initialFontSize = parseInt(str);
+            }
+            if (this.initialFontSize === undefined || isNaN(this.initialFontSize)) {
+                throw new Error("No initial font size calculated");
+            }
+            const style1 = ["style", "variant", "weight"].map(p => computedStyles.getPropertyValue("font-" + p)).join(" ");
+            const family = computedStyles.getPropertyValue("font-family");
+
+            if (computedStyles.getPropertyValue("font-stretch") !== "100%") {
+                throw new Error("I didn't write support for font auto resizing that takes into account font-stretch");
+            }
+
+            const generateFont = size => `${style1} ${size}px ${family}`;
+
+            const text = (this.element.innerText || this.element.dataset.default) ?? "";
+
+            console.log(this.initialFontSize)
+            let fontSize;
+            for (fontSize = this.initialFontSize; fontSize > 0; fontSize--) {
+                fontCtx.font = generateFont(fontSize);
+                if (fontCtx.measureText(text).width <= element.parentElement.clientWidth) {
+                    break;
+                }
+            }
+
+            if (fontSize === this.initialFontSize) {
+                element.style.removeProperty("font-size");
+            }
+            else {
+                element.style.setProperty("font-size", fontSize + "px");
+            }
+        }
     }
 
     checkElementValidity() {
@@ -352,12 +403,7 @@ class DataDisplay {
         const value = valueExists ? this.value : undefined;
         const str = valueExists ? this.dataToString(this.value) : "";
         this.element.innerText = str;
-
-        if (doListeners) {
-            for (let listener of this.changeListeners) {
-                listener(value, str, valueExists);
-            }
-        }          
+        
         if (this.getDefault) {
             const defaultVal = this.getDefault();
             if (defaultVal === null) {
@@ -376,6 +422,14 @@ class DataDisplay {
         else {
             if (index === -1) {
                 invalid.push(this);
+            }
+        }
+
+        this.maybeResizeFont();
+
+        if (doListeners) {
+            for (let listener of this.changeListeners) {
+                listener(value, str, valueExists);
             }
         }
     }
@@ -417,7 +471,7 @@ class Fraction {
             validate: n => n > 0,
             // dataObject: dataObject2,
             // property: property2,
-            dataFromString: betterParseInt,
+            dataFromString: unsignedParseInt,
             ...denomArgs,
         });
 
@@ -426,7 +480,7 @@ class Fraction {
             validate: n => n >= 0 && n <= this.denomDisplay.value,
             // dataObject: dataObject1,
             // property: property1,
-            dataFromString: betterParseInt,
+            dataFromString: unsignedParseInt,
             listenTo: [ this.denomDisplay ],
             editable: editable.always,
             ...numerArgs,
@@ -598,7 +652,7 @@ inspiration.addEventListener("change", () => {
 const ac = new DataDisplay({
     element: document.getElementById("ac"),
     property: "ac",
-    dataFromString: betterParseInt,
+    dataFromString: unsignedParseInt,
     validate: n => n > 0,
     listenTo: [ stats.Dexterity.mod ]
 });
@@ -612,13 +666,13 @@ const initiative = new DataDisplay({
 const speed = new DataDisplay({
     element: document.getElementById("speed"),
     property: "speed",
-    dataFromString: betterParseInt,
+    dataFromString: unsignedParseInt,
     validate: n => n > 0,
 });
 const tempHp = new DataDisplay({
     element: document.getElementById("temp-hp-value"),
     property: "tempHp",
-    dataFromString: betterParseInt,
+    dataFromString: unsignedParseInt,
     validate: n => n >= 0,
 });
 const hitDiceArgs = {
@@ -630,7 +684,7 @@ const hitDiceArgs = {
             if (err || !n || !d) {
                 throw new Error();
             }
-            val.push({d: betterParseInt(d), n: betterParseInt(n)});
+            val.push({d: unsignedParseInt(d), n: unsignedParseInt(n)});
         }
         return val;
     },
@@ -669,6 +723,7 @@ const hitDice = new DataDisplay({
     property: "hitDice",
     validate: val => val.map(({n}) => n).reduce((sum, v) => sum + v) <= classAndLvl.characterLevel, 
     listenTo: [ classAndLvl, totalHitDice ],
+    autoResize: true,
 });
 
 const dieAvg = (d, n) => (Math.ceil((d - 1) / 2) + 1) * n;
@@ -682,4 +737,10 @@ const hp = new Fraction(
         listenTo: [ stats.Constitution.mod, classAndLvl, totalHitDice ],
     }
 );
+
+for (let display of [ac, speed, hp.numerDisplay, hp.denomDisplay, tempHp, hitDice, totalHitDice]) {
+    display.addInvalidationListener((_, isValid) => {
+        display.element.parentElement.classList[isValid ? "remove" : "add"]("invalid");
+    });
+}
 // #endregion

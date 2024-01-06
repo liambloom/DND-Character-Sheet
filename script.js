@@ -71,7 +71,13 @@ function betterParseInt(str) {
     return parseInt(str);
   } else throw Error("Invalid int " + str);
 }
+function unsignedParseInt(str) {
+  if (/^\d+$/.test(str)) {
+    return parseInt(str);
+  } else throw Error("Invalid int " + str);
+}
 const signedIntToStr = n => n > 0 ? "+" + n : n;
+const fontCtx = document.createElement("canvas").getContext("2d");
 // #endregion
 
 // #region Editing Mode
@@ -163,6 +169,7 @@ class DataDisplay {
     this.allowNewlines = args.allowNewlines ?? false;
     this.getDefault = args.getDefault;
     this.editable = args.editable ?? editable.inEditingMode;
+    this.autoResize = args.autoResize ?? false;
     const {
       listenTo = []
     } = args;
@@ -245,6 +252,7 @@ class DataDisplay {
         range.setEnd(node, index);
         selection.addRange(range);
       }
+      this.maybeResizeFont();
       this.checkElementValidity();
     });
     this.element.addEventListener("focus", () => {
@@ -279,6 +287,39 @@ class DataDisplay {
       });
     }
     this.update();
+  }
+  maybeResizeFont() {
+    if (this.autoResize) {
+      let element = this.element.parentElement.classList.contains("inputLine") ? this.element.parentElement : this.element;
+      const computedStyles = getComputedStyle(element);
+      if (!element.style.getPropertyValue("font-size")) {
+        const str = computedStyles.getPropertyValue("font-size");
+        this.initialFontSize = parseInt(str);
+      }
+      if (this.initialFontSize === undefined || isNaN(this.initialFontSize)) {
+        throw new Error("No initial font size calculated");
+      }
+      const style1 = ["style", "variant", "weight"].map(p => computedStyles.getPropertyValue("font-" + p)).join(" ");
+      const family = computedStyles.getPropertyValue("font-family");
+      if (computedStyles.getPropertyValue("font-stretch") !== "100%") {
+        throw new Error("I didn't write support for font auto resizing that takes into account font-stretch");
+      }
+      const generateFont = size => `${style1} ${size}px ${family}`;
+      const text = (this.element.innerText || this.element.dataset.default) ?? "";
+      console.log(this.initialFontSize);
+      let fontSize;
+      for (fontSize = this.initialFontSize; fontSize > 0; fontSize--) {
+        fontCtx.font = generateFont(fontSize);
+        if (fontCtx.measureText(text).width <= element.parentElement.clientWidth) {
+          break;
+        }
+      }
+      if (fontSize === this.initialFontSize) {
+        element.style.removeProperty("font-size");
+      } else {
+        element.style.setProperty("font-size", fontSize + "px");
+      }
+    }
   }
   checkElementValidity() {
     const parsed = this.parse(this.element.innerText);
@@ -321,11 +362,6 @@ class DataDisplay {
     const value = valueExists ? this.value : undefined;
     const str = valueExists ? this.dataToString(this.value) : "";
     this.element.innerText = str;
-    if (doListeners) {
-      for (let listener of this.changeListeners) {
-        listener(value, str, valueExists);
-      }
-    }
     if (this.getDefault) {
       const defaultVal = this.getDefault();
       if (defaultVal === null) {
@@ -342,6 +378,12 @@ class DataDisplay {
     } else {
       if (index === -1) {
         invalid.push(this);
+      }
+    }
+    this.maybeResizeFont();
+    if (doListeners) {
+      for (let listener of this.changeListeners) {
+        listener(value, str, valueExists);
       }
     }
   }
@@ -376,7 +418,7 @@ class Fraction {
       validate: n => n > 0,
       // dataObject: dataObject2,
       // property: property2,
-      dataFromString: betterParseInt,
+      dataFromString: unsignedParseInt,
       ...denomArgs
     });
     this.numerDisplay = new DataDisplay({
@@ -384,7 +426,7 @@ class Fraction {
       validate: n => n >= 0 && n <= this.denomDisplay.value,
       // dataObject: dataObject1,
       // property: property1,
-      dataFromString: betterParseInt,
+      dataFromString: unsignedParseInt,
       listenTo: [this.denomDisplay],
       editable: editable.always,
       ...numerArgs
@@ -399,7 +441,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 439,
+        lineNumber: 493,
         columnNumber: 34
       }
     }, /*#__PURE__*/React.createElement("input", {
@@ -411,7 +453,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 440,
+        lineNumber: 494,
         columnNumber: 13
       }
     }), /*#__PURE__*/React.createElement("label", {
@@ -419,7 +461,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 442,
+        lineNumber: 496,
         columnNumber: 13
       }
     }, /*#__PURE__*/React.createElement("span", {
@@ -427,7 +469,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 442,
+        lineNumber: 496,
         columnNumber: 44
       }
     }), " ", name, " ", /*#__PURE__*/React.createElement("span", {
@@ -435,7 +477,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 442,
+        lineNumber: 496,
         columnNumber: 106
       }
     }, "(", stat.substring(0, 3), ")")));
@@ -492,7 +534,7 @@ for (let statName of statNames) {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 504,
+      lineNumber: 558,
       columnNumber: 19
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -500,7 +542,7 @@ for (let statName of statNames) {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 505,
+      lineNumber: 559,
       columnNumber: 9
     }
   }, statName), /*#__PURE__*/React.createElement("div", {
@@ -508,14 +550,14 @@ for (let statName of statNames) {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 506,
+      lineNumber: 560,
       columnNumber: 9
     }
   }, /*#__PURE__*/React.createElement("div", {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 506,
+      lineNumber: 560,
       columnNumber: 46
     }
   })), /*#__PURE__*/React.createElement("div", {
@@ -523,14 +565,14 @@ for (let statName of statNames) {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 507,
+      lineNumber: 561,
       columnNumber: 9
     }
   }, /*#__PURE__*/React.createElement("div", {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 507,
+      lineNumber: 561,
       columnNumber: 47
     }
   })));
@@ -616,7 +658,7 @@ inspiration.addEventListener("change", () => {
 const ac = new DataDisplay({
   element: document.getElementById("ac"),
   property: "ac",
-  dataFromString: betterParseInt,
+  dataFromString: unsignedParseInt,
   validate: n => n > 0,
   listenTo: [stats.Dexterity.mod]
 });
@@ -630,13 +672,13 @@ const initiative = new DataDisplay({
 const speed = new DataDisplay({
   element: document.getElementById("speed"),
   property: "speed",
-  dataFromString: betterParseInt,
+  dataFromString: unsignedParseInt,
   validate: n => n > 0
 });
 const tempHp = new DataDisplay({
   element: document.getElementById("temp-hp-value"),
   property: "tempHp",
-  dataFromString: betterParseInt,
+  dataFromString: unsignedParseInt,
   validate: n => n >= 0
 });
 const hitDiceArgs = {
@@ -649,8 +691,8 @@ const hitDiceArgs = {
         throw new Error();
       }
       val.push({
-        d: betterParseInt(d),
-        n: betterParseInt(n)
+        d: unsignedParseInt(d),
+        n: unsignedParseInt(n)
       });
     }
     return val;
@@ -696,7 +738,8 @@ const hitDice = new DataDisplay({
   validate: val => val.map(({
     n
   }) => n).reduce((sum, v) => sum + v) <= classAndLvl.characterLevel,
-  listenTo: [classAndLvl, totalHitDice]
+  listenTo: [classAndLvl, totalHitDice],
+  autoResize: true
 });
 const dieAvg = (d, n) => (Math.ceil((d - 1) / 2) + 1) * n;
 const hp = new Fraction(document.getElementById("health"), {
@@ -709,4 +752,9 @@ const hp = new Fraction(document.getElementById("health"), {
   }) => dieAvg(d, n)).reduce((sum, v) => sum + v, 0),
   listenTo: [stats.Constitution.mod, classAndLvl, totalHitDice]
 });
+for (let display of [ac, speed, hp.numerDisplay, hp.denomDisplay, tempHp, hitDice, totalHitDice]) {
+  display.addInvalidationListener((_, isValid) => {
+    display.element.parentElement.classList[isValid ? "remove" : "add"]("invalid");
+  });
+}
 // #endregion

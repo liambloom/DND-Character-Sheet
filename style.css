@@ -11,7 +11,7 @@
     background-color: #ddd;
     border-bottom-color: black;
 }
-:is([contentEditable="true"], [contentEditable="plaintext-only"]):not([data-default]):not(:is(.invalid, .changed):not(:focus-within)):empty::before {
+:is([contentEditable="true"], [contentEditable="plaintext-only"]):not([data-default], :is(.invalid:not(.ignore-invalid), .changed):not(:focus-within)):empty::before {
     content: "00";
     color: transparent;
 }
@@ -20,11 +20,11 @@
     border-color: red;
     box-shadow: 0 0 10px red;
 }
-.invalid:not(:focus-within), .changed {
+.invalid:not(:focus-within, .ignore-invalid), .changed {
     position: relative;
     padding-right: calc(1.1547em + 5px); /* 1.1547 = 2 / sqrt(3) */
 }
-.invalid:not(:focus-within)::after, .changed::after {
+.invalid:not(:focus-within, .ignore-invalid)::after, .changed::after {
     position: absolute;
     right: 2px;
     top: 50%;
@@ -45,7 +45,7 @@
 .changed::after {
     border-bottom-color: blue;
 }
-.invalid:not(:focus-within)::after {
+.invalid:not(:focus-within, .ignore-invalid)::after {
     border-bottom-color: #d00;
 }
 
@@ -58,7 +58,7 @@
 }
 
 .standaloneLabeledValue > :first-child > *, .stat-val, .placeholder::before,
-#misc > * > * > :not(:is(.topText, .sectionTitle)) {
+#misc > * > * > :not(.topText, .sectionTitle) {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -276,9 +276,15 @@ header {
     min-width: 0;
     position: relative;
 }
-#misc > * > * > :not(:is(.topText, .sectionTitle)) {
+#misc > * > * > :not(.topText, .sectionTitle) {
     font-size: 35px;
 }
+/* #misc > * > * > .inputLine:not(.topText, .sectionTitle) {
+    font-size: 0;
+}
+#misc > * > * > .inputLine:not(.topText, .sectionTitle) [contenteditable] {
+    font-size: 35px;
+} */
 #misc-row-1 {
     grid-area: top;
     grid-template-areas: "ac initiative speed";
