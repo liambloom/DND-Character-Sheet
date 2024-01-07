@@ -486,6 +486,16 @@ body[data-editing="true"] #edit {
     right: 0;
 }
 
+@property --base-heart-level {
+    syntax: "<length>";
+    inherits: true;
+    initial-value: 0px;
+}
+
+:root[data-failed-death-saves] {
+    transition: --base-heart-level 1s ease-in-out;
+}
+
 :root[data-failed-death-saves="0"] {
     --base-heart-level: 25px;
 }
