@@ -154,7 +154,6 @@ function stopEditing() {
 function characterChanged() {
     if (!editing) {
         save();
-        console.log("Saving...");
     }
 }
 document.getElementById("edit").addEventListener("click", () => {
@@ -215,16 +214,12 @@ class DataDisplay {
             let first = true;
             for (let i = 0; i < selection.rangeCount; i++) {
                 const range = selection.getRangeAt(i);
-                console.log(range.startContainer);
                 if (range.startContainer === this.element.childNodes[0] || range.startContainer === this.element) {
                     range.deleteContents();
-                    console.log(event.clipboardData);
                     let content = event.clipboardData.getData("text/plain");
-                    console.log(content);
                     if (!this.allowNewlines) {
                         content = content.replace(newlineRegex, "");
                     }
-                    console.log(content);
                     range.insertNode(document.createTextNode(content));
                     range.collapse();
                     this.element.normalize();
@@ -342,9 +337,8 @@ class DataDisplay {
 
             const text = (this.element.innerText || this.element.dataset.default) ?? "";
 
-            console.log(this.initialFontSize)
             let fontSize;
-            for (fontSize = this.initialFontSize; fontSize > 0; fontSize--) {
+            for (fontSize = this.initialFontSize; fontSize > 10; fontSize--) {
                 fontCtx.font = generateFont(fontSize);
                 if (fontCtx.measureText(text).width <= element.parentElement.clientWidth) {
                     break;
@@ -654,7 +648,8 @@ const ac = new DataDisplay({
     property: "ac",
     dataFromString: unsignedParseInt,
     validate: n => n > 0,
-    listenTo: [ stats.Dexterity.mod ]
+    listenTo: [ stats.Dexterity.mod ],
+    autoResize: true,
 });
 const initiative = new DataDisplay({
     element: document.getElementById("initiative"),
@@ -668,6 +663,7 @@ const speed = new DataDisplay({
     property: "speed",
     dataFromString: unsignedParseInt,
     validate: n => n > 0,
+    autoResize: true,
 });
 const tempHp = new DataDisplay({
     element: document.getElementById("temp-hp-value"),
@@ -743,4 +739,74 @@ for (let display of [ac, speed, hp.numerDisplay, hp.denomDisplay, tempHp, hitDic
         display.element.parentElement.classList[isValid ? "remove" : "add"]("invalid");
     });
 }
+
+const deathSaveBoxes = Array.from(document.getElementById("death-saves").getElementsByTagName("input"));
+function updateConsciousness() {
+    const unconscious = hp.numerDisplay.value === 0;
+    for (let checkbox of deathSaveBoxes) {
+        checkbox.disabled = !unconscious;
+        if (!unconscious) {
+            checkbox.checked = false;
+        }
+    }
+
+    if (unconscious) {
+        if (!("deathSaves" in characterData)) {
+            characterData.deathSaves = { success: 0, fail: 0 };
+        }
+        document.documentElement.dataset.failedDeathSaves = characterData.deathSaves.fail;
+    }
+    else {
+        delete characterData.deathSaves;
+        delete document.documentElement.dataset.failedDeathSaves
+    }
+
+    document.body.classList[unconscious && characterData.deathSaves?.success !== 3 
+        ? "add" : "remove"]("unconscious");
+};
+hp.numerDisplay.addChangeListener(updateConsciousness);
+updateConsciousness();
+
+class DeathSaves {
+    constructor(type) {
+        this.type = type;
+
+        this.checkboxes = Array.from(document.getElementById(`ds-${this.type}-counter`).getElementsByTagName("input"));
+
+        for (let i = 0; i < this.checkboxes.length; i++) {
+            const checkbox = this.checkboxes[i];
+            checkbox.addEventListener("click", () => {
+                let value = i + 1;//this.checkboxes.findLastIndex(box => box.checked) + 1;
+                if (value === characterData.deathSaves[type]) {
+                    value--;
+                }
+                console.log(value);
+                characterData.deathSaves[type] = value;
+                characterChanged();
+                this.update();
+            });
+        }
+
+        this.update();
+    }
+
+    update() {
+        if ("deathSaves" in characterData) {
+            for (let i = 0; i < characterData.deathSaves[this.type]; i++) {
+                this.checkboxes[i].checked = true;
+            }
+            for (let i = characterData.deathSaves[this.type]; i < this.checkboxes.length; i++) {
+                this.checkboxes[i].checked = false;
+            }
+            if (this.type === "fail") {
+                document.documentElement.dataset.failedDeathSaves = characterData.deathSaves[this.type];
+            }
+            if (this.type === "success") {
+                updateConsciousness();
+            }
+        }
+    }
+}
+const successfulDeathSaves = new DeathSaves("success");
+const failedDeathSaves = new DeathSaves("fail");
 // #endregion

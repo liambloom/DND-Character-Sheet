@@ -65,7 +65,7 @@
                         <div class="sectionTitle">Armor Class</div>
                     </div>
                     <div id="initiative-container">
-                        <div><div id="initiative"></div></div>
+                        <div class="written"><div id="initiative"></div></div>
                         <div class="sectionTitle">Initiative</div>
                     </div>
                     <div id="speed-container">
@@ -94,7 +94,27 @@
                         <div class="inputLine"><div id="hit-dice-value" class="ignore-invalid"></div></div>
                         <div class="sectionTitle">Hit Dice</div>
                     </div>
-                    <div id="death-saves" class="placeholder">
+                    <div id="death-saves">
+                        <div id="death-saves-grid">
+                            <div id="ds-success-label" class="ds-label">Successes</div>
+                            <div id="ds-success-counter" class="ds-counter">
+                                <div class="ds-line"></div>
+                                <div class="ds-boxes">
+                                    <input type="checkbox" name="ds-success">
+                                    <input type="checkbox" name="ds-success">
+                                    <input type="checkbox" name="ds-success">
+                                </div>
+                            </div>
+                            <div id="ds-fail-label" class="ds-label">Failures</div>
+                            <div id="ds-fail-counter" class="ds-counter">
+                                <div class="ds-line"></div>
+                                <div class="ds-boxes">
+                                    <input type="checkbox" name="ds-success">
+                                    <input type="checkbox" name="ds-success">
+                                    <input type="checkbox" name="ds-success">
+                                </div>
+                            </div>
+                        </div>
                         <div class="sectionTitle">Death Saves</div>
                     </div>
                 </div>
@@ -112,5 +132,6 @@
         </main>
         <button id="edit" type="button"></button>
         <div id="saving" style="display: none">Saving...</div>
+        <div id="overlay"></div>
     </body>
 </html>

@@ -1,15 +1,40 @@
+@font-face {
+    font-family: "Overpass";
+    src: url(./fonts/Overpass/Overpass-VariableFont_wght.ttf);
+}
+@font-face {
+    font-family: Kalam;
+    src: url(./fonts/Kalam/Kalam-Regular.ttf);
+    ascent-override: 100%;
+    descent-override: 20%;
+}
+@font-face {
+    font-family: "Architects Daughter";
+    src: url(./fonts/Architects_Daughter/ArchitectsDaughter-Regular.ttf)
+}
+
+[contentEditable], .written, .standaloneLabeledValue > :first-child {
+    font-family: "Architects Daughter", "Bradley Hand", cursive;
+}
+#misc > * > * > :not(.topText, .sectionTitle, #death-saves-grid), .stat-val, .standaloneLabeledValue > :first-child {
+    font-family: Kalam, "Bradley Hand", cursive;
+}
+:is(#misc > * > * > :not(.topText, .sectionTitle, #death-saves-grid), .stat-val, .standaloneLabeledValue > :first-child) [contenteditable] {
+    font-family: inherit;
+}
+
 [contentEditable] {
     text-overflow: clip;
     white-space: nowrap;
     overflow:hidden;
     outline: none;
     border: none;
-    border-bottom: 1px solid transparent;
+    /* border-bottom: 1px solid transparent; */
     display: inline;
 }
 [contentEditable="true"], [contentEditable="plaintext-only"] {
     background-color: #ddd;
-    border-bottom-color: black;
+    /* border-bottom-color: black; */
 }
 :is([contentEditable="true"], [contentEditable="plaintext-only"]):not([data-default], :is(.invalid:not(.ignore-invalid), .changed):not(:focus-within)):empty::before {
     content: "00";
@@ -58,17 +83,22 @@
 }
 
 .standaloneLabeledValue > :first-child > *, .stat-val, .placeholder::before,
-#misc > * > * > :not(.topText, .sectionTitle) {
+#misc > * > * > :not(.topText, .sectionTitle, #death-saves-grid) {
     position: absolute;
     top: 50%;
     left: 50%;
     translate: -50% -50%;
 }
-
 body {
     background-color: #ccc;
-    font-family: Helvetica, sans-serif;
+    font-family: Overpass, Helvetica, sans-serif;
+    font-weight: 300;
     font-size: 12px;
+    margin: 0;
+    padding: 8px 0;
+}
+.stat-val, .standaloneLabeledValue > :first-child, .inputLine:not(.topText) {
+    font-weight: 450;
 }
 main {
     width: 8.5in;
@@ -251,7 +281,7 @@ header {
     min-width: 0;
 }
 .inputLine, .topText {
-    overflow: hidden;
+    overflow: auto;
     max-width: 100%;
     white-space: nowrap;
     text-align: center;
@@ -259,7 +289,7 @@ header {
 .topText {
     position: relative;
     width: min-content;
-    margin: auto;
+    margin: 2px auto 0 auto;
 }
 .inputLine [contenteditable] {
     position: static;
@@ -326,6 +356,9 @@ header {
 #hit-dice {
     grid-area: hit-dice;
 }
+#hit-dice .inputLine:not(.topText) {
+    font-size: 30px;
+}
 #death-saves {
     grid-area: death-saves;
 }
@@ -341,6 +374,59 @@ header {
 #features {
     grid-area: features;
 }
+#death-saves-grid {
+    display: grid;
+    padding: 10px 5px;
+    gap: 10px 3px;
+    grid-template-columns: min-content 1fr;
+    grid-template-areas:
+        "success-label success-counter"
+        "fail-label fail-counter";
+}
+#ds-success-label {
+    grid-area: success-label;
+}
+#ds-success-counter {
+    grid-area: success-counter;
+}
+#ds-fail-label {
+    grid-area: fail-label;
+}
+#ds-fail-counter {
+    grid-area: fail-counter;
+}
+.ds-label {
+    text-transform: uppercase;
+    text-align: right;
+    font-size: 9px;
+}
+.ds-counter {
+    position: relative;
+}
+.ds-boxes, .ds-line {
+    position: absolute;
+    top: 50%;
+    translate: 0 -50%;
+}
+.ds-boxes {
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+.ds-line {
+    border: 1px solid black;
+    height: 1px;
+    left: 3px;
+    right: 3px;
+}
+.ds-boxes input {
+    margin: 0;
+    width: 13px;
+    height: 13px;
+}
+
 
 #hp {
     font-size: 20px;
@@ -387,4 +473,40 @@ body[data-editing="true"] #edit {
     position: fixed;
     bottom: 2px;
     left: 2px;
+}
+
+#overlay {
+    pointer-events: none;
+    position: fixed;
+    z-index: 2;
+    overflow: hidden;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+
+:root[data-failed-death-saves="0"] {
+    --base-heart-level: 25px;
+}
+
+:root[data-failed-death-saves="1"] {
+    --base-heart-level: 50px;
+}
+
+:root[data-failed-death-saves="2"] {
+    --base-heart-level: 75px;
+}
+
+:root[data-failed-death-saves="3"] {
+    --base-heart-level: 100px;
+}
+
+body.unconscious #overlay {
+    animation: 1s ease infinite heartbeat;
+}
+
+@keyframes heartbeat {
+    0%, 40%, 80%, 100% { box-shadow: 0 0 var(--base-heart-level) inset red; }
+    20%, 60% { box-shadow: 0 0 calc(var(--base-heart-level) + 25px) inset red; }
 }
