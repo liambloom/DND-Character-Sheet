@@ -13,7 +13,7 @@
     src: url(./fonts/Architects_Daughter/ArchitectsDaughter-Regular.ttf)
 }
 
-[contentEditable], .written, .standaloneLabeledValue > :first-child {
+[contentEditable], .written, .standaloneLabeledValue > :first-child, .stat-mod {
     font-family: "Architects Daughter", "Bradley Hand", cursive;
 }
 #misc > * > * > :not(.topText, .sectionTitle, #death-saves-grid), .stat-val, .standaloneLabeledValue > :first-child {
@@ -121,7 +121,83 @@ header {
     grid-area: header;
     background-color: #ccc;
     margin-bottom: 10px;
+    display: grid;
+    grid-template-columns: 2fr 3fr;
+    grid-template-areas: "name other";
+    padding: 20px;
+    gap: 10px;
+    min-height: 0;
 }
+#name-container {
+    grid-area: name;
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    max-height: 100%;
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    grid-template-areas: "left-banner name";
+}
+#name-grid-area {
+    min-width: 0;
+}
+#name-labeled-container {
+    grid-area: name;
+    position: relative;
+    top: 50%;
+    translate: 0 -50%;
+    max-height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+#name {
+    width: calc(100% - 4px);
+    display: inline-block;
+    margin: 0;
+    margin-top: 12px;
+    overflow-x: auto;
+    min-height: 0;
+    max-height: 100%;
+    border-width: 3px 2px;
+    border-style: double solid;
+    border-color: black;
+    font-size: 23px;
+}
+:where(#name) {
+    background-color: white;
+}
+#name-label {
+    text-transform: uppercase;
+    font-size: 10px;
+    height: 12px;
+    margin-left: 5px;
+}
+#left-name-banner-container {
+    grid-area: "left-banner";
+}
+#left-name-banner {
+    position: relative;
+    width: calc(100% - 2px);
+    border-width: 3px 2px;
+    border-style: double solid;
+    border-color: black;
+    color: transparent;
+    top: 50%;
+    translate: 0 calc(-50% + 10px);
+    font-size: 23px;
+    background-color: white;
+}
+/* #name::after {
+    content: "Name";
+    position: absolute;
+    font-family: "Overpass";
+    text-transform: uppercase;
+    bottom: -1.5em;
+    left: 0;
+    font-size: 10px;
+} */
 #numbers {
     grid-area: numbers;
     display: grid;
@@ -325,6 +401,9 @@ header {
 #ac-container {
     grid-area: ac;
 }
+#ac-container .sectionTitle {
+    font-size: 9px;
+}
 #initiative-container {
     grid-area: initiative;
 }
@@ -450,41 +529,93 @@ button {
     border: none;
     cursor: pointer;
 }
-#edit {
+#buttons, #collapsible-buttons > div {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+#buttons {
     position: fixed;
     right: 20px;
     bottom: 20px;
+}
+#buttons button {
+    position: relative;
     width: 60px;
     height: 60px;
     border-radius: 50%;
     box-shadow: 2px 2px 3px #0004;
-    background-image: url(img/edit.png); /* https://www.flaticon.com/free-icon/pencil_1828918 */
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: 50% 50%;
+    background-color: white;
 }
-#edit:hover {
+#buttons button:hover, #buttons button:disabled {
     background-color: #ddd;
 }
-body[data-editing="true"] #edit {
-    background-image: url(img/save.png); /* https://www.flaticon.com/free-icon/floppy-disk_1828828 */
+#buttons button::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: 50%;
+}
+#buttons button:disabled::before {
+    opacity: .6;
 }
 #saving {
     position: fixed;
     bottom: 2px;
     left: 2px;
 }
-
-#overlay {
-    pointer-events: none;
-    position: fixed;
-    z-index: 2;
-    overflow: hidden;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
+#collapsible-buttons {
+    height: auto;
+    overflow-y: clip;
+    position: relative;
+    top: 10px;
+    padding-bottom: 10px;
 }
+#collapsible-buttons > div {
+    translate: 0 0;
+    transition: translate 500ms ease-in-out;
+}
+#collapsible-buttons.collapse > div {
+    translate: 0 calc(100% - 60px);
+}
+
+#edit::before {
+    background-image: url(img/edit.png); /* https://www.flaticon.com/free-icon/pencil_1828918 */
+}
+body[data-editing="true"] #edit::before {
+    background-image: url(img/save.png); /* https://www.flaticon.com/free-icon/floppy-disk_1828828 */
+}
+#revive {
+    display: none;
+}
+body.dead #revive {
+    display: initial;
+}
+#buttons #revive::before {
+    background-size: 42%, 60%;
+    background-image: url(img/skull.png), /* https://www.flaticon.com/free-icon/skull_3509024 */
+        url(img/revive-out.png); /*  https://www.flaticon.com/free-icon/undo_182809 modified */
+}
+
+#collapse::before {
+    background-image: url(img/down-arrow.png); /* https://www.flaticon.com/free-icon/down-arrow_625946 */
+    transition: rotate 500ms ease-in-out;
+}
+#collapsible-buttons.collapse #collapse::before {
+    rotate: 180deg;
+}
+#kill::before {
+    background-image: url(img/skull.png); /* https://www.flaticon.com/free-icon/skull_3509024 */
+}
+#settings::before {
+    background-image: url(img/settings.png); /* https://www.flaticon.com/free-icon/settings_503822 */
+}
+
 
 @property --base-heart-level {
     syntax: "<length>";
@@ -508,15 +639,82 @@ body[data-editing="true"] #edit {
     --base-heart-level: 75px;
 }
 
-:root[data-failed-death-saves="3"] {
+/* :root[data-failed-death-saves="3"] {
     --base-heart-level: 100px;
+} */
+
+.overlay {
+    pointer-events: none;
+    position: fixed;
+    overflow: hidden;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    display: none;
 }
 
-body.unconscious #overlay {
+body.unconscious #heartbeat-overlay {
+    display: initial;
+    z-index: 2;
     animation: 1s ease infinite heartbeat;
+}
+
+body.death-animation #death-overlay {
+    display: initial;
+    background: radial-gradient(ellipse closest-side, transparent 0%, rgba(0, 0, 0, 0.2) calc(100% - 300px), black 100%);
+    box-shadow: 0 0 0 100vmax black;
+    z-index: 3;
+    animation: 2s linear forwards death, 1.5s ease-in 7s reverse forwards death;
+    overflow: visible;
+}
+
+body.death-animation #rip {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    /* translate: -50% -50%; */
+    animation: 2s ease 2s both rip-appear, 1s ease 6s reverse forwards rip-appear;
+    font-size: 100px;
+    color: white;
+    font-weight: bold;
+    width: 90vw;
+    text-align: center;
+}
+
+#rip-name::before {
+    color: white;
 }
 
 @keyframes heartbeat {
     0%, 40%, 80%, 100% { box-shadow: 0 0 var(--base-heart-level) inset red; }
     20%, 60% { box-shadow: 0 0 calc(var(--base-heart-level) + 25px) inset red; }
 }
+
+@keyframes death {
+    from {
+        top: -50%;
+        left: -50%;
+        bottom: -50%;
+        right: -50%;
+    }
+    to { 
+        top: 50%;
+        left: 50%;
+        bottom: 50%;
+        right: 50%;
+    }
+}
+
+@keyframes rip-appear {
+    from {
+        opacity: 0;
+        translate: -50% 0;
+    }
+    to {
+        opacity: 1;
+        translate: -50% -50%;
+    }
+}
+
+/* 0 0 100px 50px inset blue*/

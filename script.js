@@ -85,6 +85,8 @@ let editing = false;
 let saving = false;
 const editingMode = [];
 const editingModeInputs = [];
+const alwaysEditing = [];
+const alwaysEditingInputs = [];
 const invalid = [];
 const savingIndicator = document.getElementById("saving");
 async function save() {
@@ -139,7 +141,8 @@ function characterChanged() {
     save();
   }
 }
-document.getElementById("edit").addEventListener("click", () => {
+const editButton = document.getElementById("edit");
+editButton.addEventListener("click", () => {
   if (editing) {
     stopEditing();
   } else {
@@ -152,6 +155,10 @@ window.addEventListener("beforeunload", event => {
   }
 });
 // #endregion
+
+document.getElementById("collapse").addEventListener("click", () => {
+  document.getElementById("collapsible-buttons").classList.toggle("collapse");
+});
 
 // #region Reactivity & Other Classes
 class DataDisplay {
@@ -175,6 +182,7 @@ class DataDisplay {
     switch (this.editable) {
       case editable.always:
         this.element.contentEditable = contentEditableValue;
+        alwaysEditing.push(this.element);
         break;
       case editable.inEditingMode:
         editingMode.push(this.element);
@@ -435,7 +443,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 487,
+        lineNumber: 495,
         columnNumber: 34
       }
     }, /*#__PURE__*/React.createElement("input", {
@@ -447,7 +455,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 488,
+        lineNumber: 496,
         columnNumber: 13
       }
     }), /*#__PURE__*/React.createElement("label", {
@@ -455,7 +463,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 490,
+        lineNumber: 498,
         columnNumber: 13
       }
     }, /*#__PURE__*/React.createElement("span", {
@@ -463,7 +471,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 490,
+        lineNumber: 498,
         columnNumber: 44
       }
     }), " ", name, " ", /*#__PURE__*/React.createElement("span", {
@@ -471,7 +479,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 490,
+        lineNumber: 498,
         columnNumber: 106
       }
     }, "(", stat.substring(0, 3), ")")));
@@ -514,12 +522,24 @@ for (let skill of characterData.skills.proficiencies) {
 // #endregion
 
 // #region Character Data
-const name = new DataDisplay({
+const characterName = new DataDisplay({
   element: document.getElementById("name"),
-  property: "name"
+  property: "name",
+  autoResize: true
 });
-name.addChangeListener((_, str) => document.title = str + " Character Sheet");
+const ripName = new DataDisplay({
+  element: document.getElementById("rip-name"),
+  getDefault: () => characterName.value,
+  listenTo: [characterName],
+  editable: editable.never
+});
+characterName.addChangeListener((_, str) => document.title = str + " Character Sheet");
 document.title = characterData.name + " Character Sheet";
+function matchBannerFontSize() {
+  document.getElementById("left-name-banner").style.fontSize = characterName.element.style.fontSize;
+}
+characterName.element.addEventListener("input", matchBannerFontSize);
+matchBannerFontSize();
 const stats = {};
 for (let statName of statNames) {
   const block = /*#__PURE__*/React.createElement("div", {
@@ -528,7 +548,7 @@ for (let statName of statNames) {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 552,
+      lineNumber: 571,
       columnNumber: 19
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -536,7 +556,7 @@ for (let statName of statNames) {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 553,
+      lineNumber: 572,
       columnNumber: 9
     }
   }, statName), /*#__PURE__*/React.createElement("div", {
@@ -544,14 +564,14 @@ for (let statName of statNames) {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 554,
+      lineNumber: 573,
       columnNumber: 9
     }
   }, /*#__PURE__*/React.createElement("div", {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 554,
+      lineNumber: 573,
       columnNumber: 46
     }
   })), /*#__PURE__*/React.createElement("div", {
@@ -559,14 +579,14 @@ for (let statName of statNames) {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 555,
+      lineNumber: 574,
       columnNumber: 9
     }
   }, /*#__PURE__*/React.createElement("div", {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 555,
+      lineNumber: 574,
       columnNumber: 47
     }
   })));
@@ -649,6 +669,7 @@ inspiration.addEventListener("change", () => {
   characterData.inspiration = inspiration.checked;
   characterChanged();
 });
+alwaysEditingInputs.push(inspiration);
 const ac = new DataDisplay({
   element: document.getElementById("ac"),
   property: "ac",
@@ -675,7 +696,8 @@ const tempHp = new DataDisplay({
   element: document.getElementById("temp-hp-value"),
   property: "tempHp",
   dataFromString: unsignedParseInt,
-  validate: n => n >= 0
+  validate: n => n >= 0,
+  editable: editable.always
 });
 const hitDiceArgs = {
   dataFromString: str => {
@@ -731,9 +753,21 @@ const hitDice = new DataDisplay({
   ...hitDiceArgs,
   element: document.getElementById("hit-dice-value"),
   property: "hitDice",
-  validate: val => val.map(({
-    n
-  }) => n).reduce((sum, v) => sum + v) <= classAndLvl.characterLevel,
+  validate: val => {
+    const total = totalHitDice.value;
+    let i = 0;
+    for (let j = 0; j < total.length; j++) {
+      {
+        if (i >= val.length) {
+          break;
+        }
+        if (val[i]?.d === total[j].d && val[i]?.n <= total[j].n) {
+          i++;
+        }
+      }
+    }
+    return i === val.length;
+  },
   listenTo: [classAndLvl, totalHitDice],
   autoResize: true
 });
@@ -754,6 +788,47 @@ for (let display of [ac, speed, hp.numerDisplay, hp.denomDisplay, tempHp, hitDic
   });
 }
 const deathSaveBoxes = Array.from(document.getElementById("death-saves").getElementsByTagName("input"));
+const killButton = document.getElementById("kill");
+function die() {
+  if (!characterData.dead) {
+    characterData.dead = true;
+    document.body.classList.add("death-animation");
+    const animations = document.getElementById("death-overlay").getAnimations();
+    animations[0].onfinish = () => {
+      document.body.classList.remove("unconscious");
+      document.body.classList.add("dead");
+    };
+    animations[1].onfinish = () => {
+      document.body.classList.remove("death-animation");
+    };
+  } else {
+    document.body.classList.add("dead");
+  }
+  characterData.hp = 0;
+  hp.numerDisplay.update();
+  stopEditing();
+  for (let element of alwaysEditing) {
+    element.contentEditable = "false";
+  }
+  for (let element of [...alwaysEditingInputs, ...deathSaveBoxes, editButton, killButton]) {
+    element.disabled = true;
+  }
+}
+function revive() {
+  characterData.dead = false;
+  document.body.classList.remove("dead");
+  characterData.hp = 1;
+  hp.numerDisplay.update();
+  characterChanged();
+  for (let element of alwaysEditing) {
+    element.contentEditable = contentEditableValue;
+  }
+  for (let element of [...alwaysEditingInputs, editButton, killButton]) {
+    element.disabled = false;
+  }
+}
+document.getElementById("revive").addEventListener("click", revive);
+killButton.addEventListener("click", die);
 function updateConsciousness() {
   const unconscious = hp.numerDisplay.value === 0;
   for (let checkbox of deathSaveBoxes) {
@@ -768,13 +843,17 @@ function updateConsciousness() {
         success: 0,
         fail: 0
       };
+      characterChanged();
     }
     document.documentElement.dataset.failedDeathSaves = characterData.deathSaves.fail;
   } else {
-    delete characterData.deathSaves;
+    if ("deathSaves" in characterData) {
+      delete characterData.deathSaves;
+      characterChanged();
+    }
     delete document.documentElement.dataset.failedDeathSaves;
   }
-  document.body.classList[unconscious && characterData.deathSaves?.success !== 3 ? "add" : "remove"]("unconscious");
+  document.body.classList[unconscious && characterData.deathSaves?.success !== 3 && !characterData.dead ? "add" : "remove"]("unconscious");
 }
 ;
 hp.numerDisplay.addChangeListener(updateConsciousness);
@@ -790,7 +869,6 @@ class DeathSaves {
         if (value === characterData.deathSaves[type]) {
           value--;
         }
-        console.log(value);
         characterData.deathSaves[type] = value;
         characterChanged();
         this.update();
@@ -807,7 +885,11 @@ class DeathSaves {
         this.checkboxes[i].checked = false;
       }
       if (this.type === "fail") {
-        document.documentElement.dataset.failedDeathSaves = characterData.deathSaves[this.type];
+        if (characterData.deathSaves.fail === 3) {
+          die();
+        } else {
+          document.documentElement.dataset.failedDeathSaves = characterData.deathSaves.fail;
+        }
       }
       if (this.type === "success") {
         updateConsciousness();
@@ -817,4 +899,7 @@ class DeathSaves {
 }
 const successfulDeathSaves = new DeathSaves("success");
 const failedDeathSaves = new DeathSaves("fail");
+if (characterData.dead && characterData.deathSaves?.fail !== 3) {
+  die();
+}
 // #endregion

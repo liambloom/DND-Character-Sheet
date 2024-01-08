@@ -9,8 +9,20 @@
     <body>
         <main>
             <header>
-                <h1 id="name"></h1>
-                <div id="classAndLvl"></div>
+                <div id="name-container">
+                    <div id="left-name-banner-container">
+                        <div id="left-name-banner">0</div>
+                    </div>
+                    <div id="name-grid-area">
+                        <div id="name-labeled-container">
+                            <h1 id="name"></h1>
+                            <div id="name-label">Character Name</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="header-other">
+                    <div id="classAndLvl"></div>
+                </div>
             </header>
             <div id="numbers">
                 <div id="stats"></div>
@@ -130,8 +142,21 @@
                 <div class="sectionTitle">Features & Traits</div>
             </div>
         </main>
-        <button id="edit" type="button"></button>
+        <div id="buttons">
+            <div id="collapsible-buttons" class="collapse">
+                <div>
+                    <button id="collapse" type="button"></button>
+                    <button id="kill" type="button"></button>
+                    <!-- <button id="settings" type="button"></button> -->
+                </div>
+            </div>
+            <button id="revive" type="button"></button>
+            <button id="edit" type="button"></button>
+        </div>
         <div id="saving" style="display: none">Saving...</div>
-        <div id="overlay"></div>
+        <div id="heartbeat-overlay" class="overlay"></div>
+        <div id="death-overlay" class="overlay">
+            <div id="rip">RIP <span id="rip-name"></span></div>
+        </div>
     </body>
 </html>
