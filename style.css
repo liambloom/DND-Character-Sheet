@@ -16,7 +16,7 @@
 [contentEditable], .written, .standaloneLabeledValue > :first-child, .stat-mod {
     font-family: "Architects Daughter", "Bradley Hand", cursive;
 }
-#misc > * > * > :not(.topText, .sectionTitle, #death-saves-grid), .stat-val, .standaloneLabeledValue > :first-child {
+#misc > * > * > :not(.topText, .sectionTitle, #death-saves-grid), .stat-val, .standaloneLabeledValue > :first-child, #name-value {
     font-family: Kalam, "Bradley Hand", cursive;
 }
 :is(#misc > * > * > :not(.topText, .sectionTitle, #death-saves-grid), .stat-val, .standaloneLabeledValue > :first-child) [contenteditable] {
@@ -97,8 +97,22 @@ body {
     margin: 0;
     padding: 8px 0;
 }
+body.dragHappening {
+    user-select: none;
+}
 .stat-val, .standaloneLabeledValue > :first-child, .inputLine:not(.topText) {
     font-weight: 450;
+}
+#inspiration-label {
+    cursor: pointer;
+}
+#inspiration + div {
+    display: none;
+    font-size: 28px;
+    font-weight: bold;
+}
+#inspiration:checked + div {
+    display: initial;
 }
 main {
     width: 8.5in;
@@ -153,41 +167,56 @@ header {
     flex-direction: column;
 }
 #name {
-    width: calc(100% - 4px);
-    display: inline-block;
     margin: 0;
     margin-top: 12px;
     overflow-x: auto;
-    min-height: 0;
-    max-height: 100%;
-    border-width: 3px 2px;
+    border-width: 5px 2px;
     border-style: double solid;
     border-color: black;
-    font-size: 23px;
-}
-:where(#name) {
+    padding-left: 5px;
     background-color: white;
+    height: 40px;
+}
+#name-value-container {
+    position: relative;
+    top: 50%;
+    translate: 0 -50%;
+}
+#name-value {
+    display: inline;
+    font-size: 26px;
 }
 #name-label {
     text-transform: uppercase;
     font-size: 10px;
     height: 12px;
-    margin-left: 5px;
+    margin-left: 21px;
 }
 #left-name-banner-container {
     grid-area: "left-banner";
 }
 #left-name-banner {
     position: relative;
-    width: calc(100% - 2px);
-    border-width: 3px 2px;
+    width: calc(100% + 15px);
+    border-width: 5px 2px;
     border-style: double solid;
     border-color: black;
     color: transparent;
     top: 50%;
-    translate: 0 calc(-50% + 10px);
+    translate: 0 calc(-50% + 12px);
     font-size: 23px;
     background-color: white;
+    height: 40px;
+}
+#name-banner-back {
+    position: absolute;
+    width: 0;
+    height: 0;
+    bottom: 0;
+    right: 0;
+    border-color: #888 transparent transparent transparent;
+    border-style: solid;
+    border-width: 7px 0 0 17px;
 }
 /* #name::after {
     content: "Name";
@@ -243,13 +272,16 @@ header {
     margin: 0;
 }
 #savingThrowsContainer, #skillContainer {
-    border: 3px solid black;
+    border: 2px solid black;
     border-radius: 5px;
     width: calc(100% - 6px);
 }
 #savingThrows, #skills {
     margin: 7px 0 7px 5px;
     text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 3.5px;
 }
 .sectionTitle, .standaloneLabeledValue > :nth-child(2) > div {
     font-weight: bold;
@@ -279,7 +311,7 @@ header {
     margin: 5px 0;
     grid-area: label;
     width: auto;
-    border: 3px solid black;
+    border: 2px solid black;
     border-radius: 0 5px 5px 0;
     border-left: none;
     position: relative;
@@ -324,14 +356,51 @@ header {
     left: 50%;
     translate: -50% 50%;
 }
+.stat-mod > div {
+    position: relative;
+    top: 50%;
+    translate: 0 -50%;
+}
+#other-proficiencies, #equipment, #attacks, #features, #misc > * > * {
+    border-width: 2px 5px;
+    border-style: solid double;
+    border-color: black;
+    min-width: 0;
+}
+#other-proficiencies, #equipment, #attacks, #features {
+    border-radius: 5px;
+}
 #lower-proficiencies {
     grid-area: proficiencies;
     display: flex;
     flex-direction: column;
     gap: 7px;
+    min-height: 0;
 }
 #other-proficiencies {
     flex-grow: 1;
+    position: relative;
+    padding: 10px;
+    padding-bottom: 20px;
+    min-height: 0;
+}
+#other-proficiencies-content {
+    max-height: 100%;
+    overflow-y: auto;
+}
+#other-proficiencies p {
+    margin: 0 0 5px 5px;
+    white-space: normal;
+}
+#other-proficiencies p::first-letter {
+    margin-left: -5px;
+}
+#other-proficiencies [contentEditable] {
+    white-space: inherit;
+    word-wrap: break-word;
+}
+.prof-type {
+    font-weight: bold;
 }
 .placeholder {
     background-color: gray;
@@ -377,9 +446,8 @@ header {
 }
 #misc > * > * {
     background-color: white;
-    border: 3px solid black;
+    /* border: 3px solid black; */
     border-radius: 5px;
-    min-width: 0;
     position: relative;
 }
 #misc > * > * > :not(.topText, .sectionTitle) {
@@ -443,7 +511,182 @@ header {
 }
 #attacks {
     grid-area: attacks;
+    position: relative;
+    padding: 5px;
+    padding-bottom: 2px;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
 }
+#attacks .sectionTitle {
+    position: static;
+    margin-top: 5px;
+}
+#attacks-table {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    text-align: center;
+    overflow-y: auto;
+    flex-grow: 2;
+    font-family: "Architects Daughter";
+    white-space: nowrap;
+}
+#attacks-header, .attacks-row {
+    display: grid;
+    gap: 5px;
+    grid-template-columns: 2fr 1fr 2fr;
+    grid-template-areas: "name bonus damage";
+    background-color: white;
+}
+:is(#attacks-header, .attacks-row) > div {
+    min-width: 0;
+}
+#attacks-header {
+    text-transform: uppercase;
+    font-size: 8px;
+    font-weight: normal;
+    text-align: left;
+    color: #444;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+#attacks-header > div {
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+.list-delete {
+    grid-area: delete;
+    display: none;
+}
+.weapon-name {
+    grid-area: name;
+}
+.weapon-bonus {
+    grid-area: bonus;
+}
+.weapon-damage {
+    grid-area: damage;
+}
+.attacks-row :is(.weapon-name, .weapon-bonus, .weapon-damage) {
+    background-color: #ccc;
+    border-radius: 4px 0;
+    padding: 4px;
+    overflow: auto;
+}
+body[data-editing="true"] #attacks-header {
+    margin-left: 38px;
+}
+body[data-editing="true"] .attacks-row {
+    grid-template-columns: auto auto 2fr 1fr 2fr;
+    grid-template-areas: "move delete name bonus damage";
+}
+body[data-editing="false"] :is(.list-delete, .list-move, #attacks-add) {
+    display: none;
+}
+.attacks-row:first-child:nth-last-child(2) .list-move {
+    opacity: 0.5;
+    cursor: initial;
+    pointer-events: none;
+}
+.list-move {
+    grid-area: move;
+    display: grid;
+    grid-template-rows: repeat(3, 3px);
+    grid-template-columns: repeat(2, 3px);
+    gap: 2px;
+    align-self: center;
+    cursor: grab;
+    padding: 2px;
+    border-radius: 2px;
+}
+.list-move:hover {
+    background-color: #eee;
+}
+.list-move:active {
+    cursor: grabbing;
+}
+.list-move div {
+    width: 3px;
+    height: 3px;
+    background-color: #888;
+    border-radius: 50%;
+}
+.list-delete {
+    display: block;
+    align-self: center;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 2px;
+    background: none;
+}
+.list-delete:hover {
+    background-color: #eee;
+}
+.list-delete img {
+    width: 12px;
+    aspect-ratio: 1;
+    vertical-align: middle;
+}
+#attacks-add {
+    display: flex;
+    cursor: pointer;
+    padding: 5px;
+    gap: 2px;
+    flex-direction: row;
+    align-items: center;
+    background-color: #e0e0e0;
+    border-radius: 2px;
+}
+#attacks-add:hover {
+    background-color: #ccc;
+}
+.attacks-add-line {
+    flex-grow: 1;
+    background-color: black;
+    height: 1px;
+}
+#attacks-plus {
+    background-color: #00cc00;
+    color: white;
+    border-radius: 50%;
+    width: 21px;
+    height: 21px;
+    position: relative;
+}
+#attacks-plus-h, #attacks-plus-v {
+    position: absolute;
+    background-color: white;
+}
+#attacks-plus-h {
+    top: 10px;
+    left: 2px;
+    height: 1px;
+    width: 17px;
+}
+#attacks-plus-v {
+    top: 2px;
+    left: 10px;
+    height: 16px;
+    width: 1px;
+}
+#attacks-text-container {
+    flex: 1 3 auto;
+    overflow: auto;
+    padding: 5px;
+    margin-top: 5px;
+    border-top: 1px solid black;
+    /* padding-top: 0; */
+}
+#attacks-text {
+    white-space: normal;
+    word-wrap: break-word;
+}
+.dragging {
+    z-index: 2;
+    opacity: 0.8;
+}
+
 #equipment {
     grid-area: equipment;
 }
@@ -500,10 +743,13 @@ header {
     left: 3px;
     right: 3px;
 }
-.ds-boxes input {
+.ds-boxes label {
+    font-size: 0;
+}
+.ds-boxes .customCheckbox {
     margin: 0;
-    width: 13px;
-    height: 13px;
+    width: 11px;
+    height: 11px;
 }
 
 
@@ -517,8 +763,14 @@ header {
 .proficiencyBonusStat {
     color: #888;
 }
-.proficiencyCheckbox {
+/* .proficiencyCheckbox {
     margin-left: 0;
+} */
+body[data-editing="true"] .proficiency label {
+    cursor: pointer;
+}
+body[data-editing="true"] .proficiency label [contentEditable] {
+    cursor: text;
 }
 
 * {
@@ -656,7 +908,7 @@ body.dead #revive {
 
 body.unconscious #heartbeat-overlay {
     display: initial;
-    z-index: 2;
+    z-index: 3;
     animation: 1s ease infinite heartbeat;
 }
 
@@ -664,7 +916,7 @@ body.death-animation #death-overlay {
     display: initial;
     background: radial-gradient(ellipse closest-side, transparent 0%, rgba(0, 0, 0, 0.2) calc(100% - 300px), black 100%);
     box-shadow: 0 0 0 100vmax black;
-    z-index: 3;
+    z-index: 4;
     animation: 2s linear forwards death, 1.5s ease-in 7s reverse forwards death;
     overflow: visible;
 }
@@ -717,4 +969,31 @@ body.death-animation #rip {
     }
 }
 
-/* 0 0 100px 50px inset blue*/
+input[type="checkbox"] {
+    display: none;
+}
+.customCheckbox {
+    border: 1px solid black;
+    border-radius: 50%;
+    height: 7px;
+    width: 7px;
+    display: inline-block;
+    margin-right: 4px;
+    vertical-align: middle;
+    background-color: white;
+}
+input[type="checkbox"]:checked + .customCheckbox {
+    background-color: #444;
+}
+input[type="checkbox"]:not(:disabled) + .customCheckbox {
+    cursor: pointer;
+}
+/* input[type="checkbox"]:checked + .customCheckbox::after {
+    content: "";
+    width: calc(100% - 4px);
+    height: calc(100% - 4px);
+    margin: 2px;
+    border-radius: 50%;
+    background-color: black;
+    display: block;
+} */

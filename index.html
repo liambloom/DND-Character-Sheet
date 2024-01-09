@@ -6,16 +6,22 @@
         <link rel="stylesheet" href="style.css">
         <script defer type="module" src="script.js"></script>
     </head>
-    <body>
+    <body data-editing="false">
         <main>
             <header>
                 <div id="name-container">
                     <div id="left-name-banner-container">
-                        <div id="left-name-banner">0</div>
+                        <div id="left-name-banner">
+                            <div id="name-banner-back"></div>
+                        </div>
                     </div>
                     <div id="name-grid-area">
                         <div id="name-labeled-container">
-                            <h1 id="name"></h1>
+                            <div id="name">
+                                <div id="name-value-container">
+                                    <div id="name-value"></div>
+                                </div>
+                            </div>
                             <div id="name-label">Character Name</div>
                         </div>
                     </div>
@@ -27,9 +33,10 @@
             <div id="numbers">
                 <div id="stats"></div>
                 <div id="right-number-flex">
-                    <label for="inspiration" class="standaloneLabeledValue">
+                    <label for="inspiration" id="inspiration-label" class="standaloneLabeledValue">
                         <div>
                             <input type="checkbox" id="inspiration">
+                            <div>&check;</div>
                         </div>
                         <div>
                             <div>
@@ -66,7 +73,14 @@
                         <div>Passive Perception</div>
                     </div>
                 </div>
-                <div id="other-proficiencies" class="placeholder">
+                <div id="other-proficiencies">
+                    <div id="other-proficiencies-content">
+                        <p><span class="prof-type">Armor:</span> <span id="armor-prof"></span></p>
+                        <p><span class="prof-type">Weapons:</span> <span id="weapons-prof"></span></p>
+                        <p><span class="prof-type">Tools:</span> <span id="tools-prof"></span></p>
+                        <p><span class="prof-type">Languages:</span> <span id="languages-prof"></span></p>
+                    </div>
+
                     <div class="sectionTitle">Other Proficiencies & Languages</div>
                 </div>
             </div>
@@ -112,18 +126,36 @@
                             <div id="ds-success-counter" class="ds-counter">
                                 <div class="ds-line"></div>
                                 <div class="ds-boxes">
-                                    <input type="checkbox" name="ds-success">
-                                    <input type="checkbox" name="ds-success">
-                                    <input type="checkbox" name="ds-success">
+                                    <label>
+                                        <input type="checkbox" name="ds-success">
+                                        <div class="customCheckbox"></div>
+                                    </label>
+                                    <label>
+                                        <input type="checkbox" name="ds-success">
+                                        <div class="customCheckbox"></div>
+                                    </label>
+                                    <label>
+                                        <input type="checkbox" name="ds-success">
+                                        <div class="customCheckbox"></div>
+                                    </label>
                                 </div>
                             </div>
                             <div id="ds-fail-label" class="ds-label">Failures</div>
                             <div id="ds-fail-counter" class="ds-counter">
                                 <div class="ds-line"></div>
                                 <div class="ds-boxes">
-                                    <input type="checkbox" name="ds-success">
-                                    <input type="checkbox" name="ds-success">
-                                    <input type="checkbox" name="ds-success">
+                                    <label>
+                                        <input type="checkbox" name="ds-fail">
+                                        <div class="customCheckbox"></div>
+                                    </label>
+                                    <label>
+                                        <input type="checkbox" name="ds-fail">
+                                        <div class="customCheckbox"></div>
+                                    </label>
+                                    <label>
+                                        <input type="checkbox" name="ds-fail">
+                                        <div class="customCheckbox"></div>
+                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -131,7 +163,53 @@
                     </div>
                 </div>
             </div>
-            <div id="attacks" class="placeholder">
+            <div id="attacks">
+                <div id="attacks-header">
+                    <div class="weapon-name">Name</div>
+                    <div class="weapon-bonus">Atk Bonus</div>
+                    <div class="weapon-damage">Damage/Type</div>
+                </div>
+                <div id="attacks-table">
+                    <!-- <div class="attacks-row">
+                        <div class="list-move">
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                        </div>
+                        <button class="list-delete" type="button"><img src="./img/trash.png"></button>
+                        <div class="weapon-name">Quarterstaff</div>
+                        <div class="weapon-bonus">+4</div>
+                        <div class="weapon-damage">1d6 bludgeoning</div>
+                    </div>
+                    <div class="attacks-row">
+                        <div class="list-move">
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                        </div>
+                        <button class="list-delete" type="button"><img src="./img/trash.png"></button>
+                        <div class="weapon-name">Longbow</div>
+                        <div class="weapon-bonus">+5</div>
+                        <div class="weapon-damage">1d8 piercing</div>
+                    </div> -->
+                    <button id="attacks-add" type="button">
+                        <div class="attacks-add-line"></div>
+                        <div id="attacks-plus">
+                            <div id="attacks-plus-h"></div>
+                            <div id="attacks-plus-v"></div>
+                        </div>
+                        <div class="attacks-add-line"></div>
+                    </button>
+                </div>
+                <div id="attacks-text-container">
+                    <span id="attacks-text"></span>
+                </div>
                 <div class="sectionTitle">Attacks & Spellcasting</div>
             </div>
             <div id="equipment" class="placeholder">

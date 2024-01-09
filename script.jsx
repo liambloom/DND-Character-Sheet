@@ -203,7 +203,7 @@ class DataDisplay {
                 break;
             case editable.inEditingMode:
                 editingMode.push(this.element);
-                this.element.contentEditable = "false";
+                this.element.contentEditable = editing ? contentEditableValue : "false";
                 break;
         }
 
@@ -471,8 +471,6 @@ class Fraction {
         this.denomDisplay = new DataDisplay({
             element: this.denomElement,
             validate: n => n > 0,
-            // dataObject: dataObject2,
-            // property: property2,
             dataFromString: unsignedParseInt,
             ...denomArgs,
         });
@@ -480,8 +478,6 @@ class Fraction {
         this.numerDisplay = new DataDisplay({
             element: this.numerElement,
             validate: n => n >= 0 && n <= this.denomDisplay.value,
-            // dataObject: dataObject1,
-            // property: property1,
             dataFromString: unsignedParseInt,
             listenTo: [ this.denomDisplay ],
             editable: editable.always,
@@ -493,9 +489,8 @@ class Fraction {
 class Proficiency {
     constructor(block, group, name, stat, defaultMap = n => n) {
         block = this.element ||= <div class={group + " proficiency"} id={name}>
-            <input id={name + "Checkbox"} type="checkbox" name={group + "Checkbox"}
-                   class={group + "Checkbox proficiencyCheckbox"} disabled="true"></input>
-            <label for={name + "Checkbox"}><span class={group + "Bonus proficiencyBonus"}></span> {name} <span
+            <label for={name + "Checkbox"}><input id={name + "Checkbox"} type="checkbox" name={group + "Checkbox"}
+                   class={group + "Checkbox proficiencyCheckbox"} disabled="true"></input><div class="customCheckbox"></div><span class={group + "Bonus proficiencyBonus"}></span> {name} <span
                 class="proficiencyBonusStat">({stat.substring(0, 3)})</span>
             </label>
         </div>;
@@ -547,7 +542,7 @@ for (let skill of characterData.skills.proficiencies) {
 
 // #region Character Data
 const characterName = new DataDisplay({
-    element: document.getElementById("name"),
+    element: document.getElementById("name-value"),
     property: "name",
     autoResize: true,
 });
@@ -559,11 +554,6 @@ const ripName = new DataDisplay({
 });
 characterName.addChangeListener((_, str) => document.title = str + " Character Sheet");
 document.title = characterData.name + " Character Sheet";
-function matchBannerFontSize() {
-    document.getElementById("left-name-banner").style.fontSize = characterName.element.style.fontSize;
-}
-characterName.element.addEventListener("input", matchBannerFontSize);
-matchBannerFontSize();
 
 const stats = {};
 
@@ -692,29 +682,19 @@ const tempHp = new DataDisplay({
     validate: n => n >= 0,
     editable: editable.always,
 });
+function hitDieFromString(str) {
+    let [ n, d, err ] = str.split("d");
+    if (err || !n || !d) {
+        throw new Error();
+    }
+    return {d: unsignedParseInt(d), n: unsignedParseInt(n)};
+}
+function hitDieToString(die) {
+    return `${die.n}d${die.d}`;
+}
 const hitDiceArgs = {
-    dataFromString: str => {
-        const dice = str.split("+");
-        const val = [];
-        for (let die of dice) {
-            let [ n, d, err ] = die.split("d");
-            if (err || !n || !d) {
-                throw new Error();
-            }
-            val.push({d: unsignedParseInt(d), n: unsignedParseInt(n)});
-        }
-        return val;
-    },
-    dataToString: dat => {
-        let str = "";
-        for (let die of dat) {
-            if (str.length) {
-                str += "+";
-            }
-            str += `${die.n}d${die.d}`;
-        }
-        return str;
-    },
+    dataFromString: str => str.split("+").map(hitDieFromString),
+    dataToString: dice => dice.map(hitDieToString).join("+"),
     getDefault: () => {
         const v = [];
         for (let c of classAndLvl.value) {
@@ -904,4 +884,214 @@ const failedDeathSaves = new DeathSaves("fail");
 if (characterData.dead && characterData.deathSaves?.fail !== 3) {
     die();
 }
+
+const otherProficiencies = [];
+for (let prof of ["armor", "weapons", "tools", "languages"]) {
+    const element = document.getElementById(prof + "-prof");
+
+    const display = new DataDisplay({
+        element,
+        dataObject: characterData.otherProficiencies,
+        property: prof,
+    });
+    otherProficiencies.push(display);
+}
+
+const attacksText = new DataDisplay({
+    element: document.getElementById("attacks-text"),
+    property: "attacksText",
+    allowNewlines: true,
+});
+
+const weaponsTable = document.getElementById("attacks-table");
+const addWeapon = document.getElementById("attacks-add");
+const weapons = [];
+
+class Weapon {
+    constructor(weapon) {
+        const block = this.element = <div class="attacks-row">
+            <div class="list-move">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+            <button class="list-delete" type="button"><img src="./img/trash.png"></img></button>
+            <div class="weapon-name"><span class="weapon-name-value"></span></div>
+            <div class="weapon-bonus"><span class="weapon-bonus-value"></span></div>
+            <div class="weapon-damage"><span class="weapon-damage-value"></span></div>
+        </div>;
+
+        this.value = {
+            name: new DataDisplay({
+                element: block.getElementsByClassName("weapon-name-value")[0],
+                dataObject: weapon,
+                property: "name",
+            }),
+            bonus: new DataDisplay({
+                element: block.getElementsByClassName("weapon-bonus-value")[0],
+                dataObject: weapon,
+                property: "bonus",
+                dataFromString: betterParseInt,
+                dataToString: signedIntToStr,
+            }),
+            damage: new DataDisplay({
+                element: block.getElementsByClassName("weapon-damage-value")[0],
+                dataObject: weapon,
+                property: "damage",
+                dataToString: data => {
+                    let str = "";
+
+                    for (let amt of data.amount) {
+                        if (typeof amt === "number") {
+                            if (str.length) {
+                                str += (amt < 0 ? "-" : "+")
+                                str += Math.abs(amt);
+                            }
+                            else {
+                                str += amt;
+                            }
+                        }
+                        else {
+                            if (str.length) {
+                                str += "+";
+                            }
+                            str += hitDieToString(amt);
+                        }
+                    }
+
+                    if (data.type) {
+                        str += " " + data.type;
+                    }
+
+                    return str;
+                },
+                dataFromString: str => {
+                    let [ amountStr, type, err ] = str.split(/\s/g);
+
+                    if (!amountStr || type && !type.length || err !== undefined) {
+                        throw new Error();
+                    }
+
+                    let arr = amountStr.split(/\+|(?=-)/g);
+                    if (arr[0].length === 0) {
+                        arr.pop();
+                        arr[0] = amountStr.charAt(0) + arr[0]
+                    }
+
+                    let amount = [];
+
+                    for (let value of arr) {
+                        try {
+                            amount.push(betterParseInt(value));
+                        }
+                        catch {
+                            amount.push(hitDieFromString(value));
+                        }
+                    }
+
+                    return { amount, type };
+                },
+                validate: dat => dat.amount.length > 0,
+            }), 
+        };
+
+        block.getElementsByClassName("list-delete")[0].addEventListener("click", () => {
+            block.remove();
+            const index = weapons.indexOf(this);
+            weapons.splice(index, 1);
+            characterData.weapons.splice(index, 1);
+        });
+
+        const handle = block.getElementsByClassName("list-move")[0];
+        let dragging = false;
+        let startY;
+        handle.addEventListener("mousedown", e => {
+            dragging = true;
+            block.classList.add("dragging");
+            document.body.classList.add("dragHappening");
+            startY = e.screenY;
+        });
+        window.addEventListener("mousemove", e => {
+            if (dragging) {
+                let dy = e.screenY - startY;
+
+                if (this === weapons[0] && dy < 0) {
+                    dy = 0;
+                }
+                if (this === weapons[weapons.length - 1] && dy > 0) {
+                    dy = 0;
+                }
+
+                block.style.setProperty("translate", `0 ${dy}px`);
+
+                const midpoint = block.offsetTop + block.clientHeight / 2 + dy;
+                let colliding;
+                let collidingIndex;
+                for (let i = 0; i < weapons.length; i++) {
+                    const otherWeapon = weapons[i];
+                    if (this === otherWeapon) {
+                        continue;
+                    }
+
+                    if (otherWeapon.element.offsetTop <= midpoint && midpoint <= otherWeapon.element.offsetTop + otherWeapon.element.clientHeight) {
+                        colliding = otherWeapon;
+                        collidingIndex = i;
+                        break;
+                    }
+                }
+
+                if (colliding) {
+                    console.log("move");
+                    const ownIndex = weapons.indexOf(this);
+                    const prevY = block.offsetTop;
+
+                    block.remove();
+                    if (ownIndex > collidingIndex) {
+                        weaponsTable.insertBefore(block, colliding.element);
+                    }
+                    else {
+                        weaponsTable.insertBefore(block, colliding.element.nextElementSibling);
+                    }
+
+                    weapons.splice(ownIndex, 1);
+                    weapons.splice(collidingIndex, 0, this);
+
+                    console.log(weapons);
+
+                    const jsonValue = characterData.weapons[ownIndex];
+                    characterData.weapons.splice(ownIndex, 1);
+                    characterData.weapons.splice(collidingIndex, 0, jsonValue);
+
+                    startY += block.offsetTop - prevY;
+                    dy = e.screenY - startY;
+                    block.style.setProperty("translate", `0 ${dy}px`);
+                }
+            }
+        });
+        function endDrag() {
+            dragging = false;
+            block.classList.remove("dragging");
+            block.style.removeProperty("translate");
+            document.body.classList.remove("dragHappening");
+        }
+        window.addEventListener("mouseup", endDrag);
+        window.addEventListener("mouseleave", endDrag);
+
+        weaponsTable.insertBefore(block, addWeapon);
+    }
+}
+
+for (let weapon of characterData.weapons) {
+    weapons.push(new Weapon(weapon));
+}
+
+addWeapon.addEventListener("click", () => {
+    const data = { name: "Name", bonus: 0, damage: { amount: [0], type: "type" } };
+    weapons.push(new Weapon(data));
+    characterData.weapons.push(data);
+});
+
 // #endregion
