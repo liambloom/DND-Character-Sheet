@@ -57,6 +57,7 @@ const hitDiceTable = {
   "ranger": 10,
   "barbarian": 12
 };
+const moneyDenominations = ["CP", "SP", "EP", "GP", "PP"];
 const editable = {
   always: Symbol("Always Editable"),
   inEditingMode: Symbol("In Editing Mode"),
@@ -188,6 +189,9 @@ class DataDisplay {
         editingMode.push(this.element);
         this.element.contentEditable = editing ? contentEditableValue : "false";
         break;
+    }
+    if (this.allowNewlines) {
+      this.element.classList.add("multi-line-text");
     }
     for (let e of listenTo) {
       e.addChangeListener(() => {
@@ -342,12 +346,15 @@ class DataDisplay {
   }
   parse(v) {
     try {
-      const val = this.dataFromString(v);
+      let val = this.dataFromString(v);
+      if (typeof val === "string") {
+        val = val.replace(/(?:^[\n\r\u2028\u2029]+)|(?:[\n\r\u2028\u2029]+$)/g, "");
+      }
       return {
         isValid: this.validate(val) && (typeof val !== "number" || val < Number.MAX_SAFE_INTEGER),
         value: val
       };
-    } catch (e) {
+    } catch {
       return {
         isValid: false
       };
@@ -393,7 +400,7 @@ class DataDisplay {
     this.changeListeners.push(callback);
   }
   removeChangeListener(callback) {
-    this.changeListeners.splice(this.changeListeners.indexOf(callback));
+    this.changeListeners.splice(this.changeListeners.indexOf(callback), 1);
   }
   addInvalidationListener(callback) {
     this.invalidationListeners.push(callback);
@@ -439,7 +446,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 491,
+        lineNumber: 500,
         columnNumber: 34
       }
     }, /*#__PURE__*/React.createElement("label", {
@@ -447,7 +454,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 492,
+        lineNumber: 501,
         columnNumber: 13
       }
     }, /*#__PURE__*/React.createElement("input", {
@@ -459,7 +466,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 492,
+        lineNumber: 501,
         columnNumber: 44
       }
     }), /*#__PURE__*/React.createElement("div", {
@@ -467,7 +474,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 493,
+        lineNumber: 502,
         columnNumber: 91
       }
     }), /*#__PURE__*/React.createElement("span", {
@@ -475,7 +482,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 493,
+        lineNumber: 502,
         columnNumber: 125
       }
     }), " ", name, " ", /*#__PURE__*/React.createElement("span", {
@@ -483,7 +490,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 493,
+        lineNumber: 502,
         columnNumber: 187
       }
     }, "(", stat.substring(0, 3), ")")));
@@ -509,6 +516,222 @@ class Proficiency {
       }
       bonus.update();
     });
+  }
+}
+class List {
+  constructor(element, data, newValue, ThisListItem) {
+    element.classList.add("list");
+    this.element = element;
+    this.data = data;
+    this.contents = [];
+    const addButton = this.addButton = /*#__PURE__*/React.createElement("button", {
+      class: "list-add",
+      type: "button",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 546,
+        columnNumber: 44
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      class: "list-add-line",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 547,
+        columnNumber: 13
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      class: "list-plus",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 548,
+        columnNumber: 13
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      class: "list-plus-h",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 549,
+        columnNumber: 17
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      class: "list-plus-v",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 550,
+        columnNumber: 17
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      class: "list-add-line",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 552,
+        columnNumber: 13
+      }
+    }));
+    element.appendChild(addButton);
+    addButton.addEventListener("click", () => {
+      const value = newValue();
+      this.contents.push(new ThisListItem(this, value));
+      data.push(value);
+    });
+    for (let value of data) {
+      this.contents.push(new ThisListItem(this, value));
+    }
+  }
+}
+class ListItem {
+  constructor(list) {
+    const block = this.element = /*#__PURE__*/React.createElement("div", {
+      class: "list-row",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 571,
+        columnNumber: 38
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      class: "list-move",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 572,
+        columnNumber: 13
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 573,
+        columnNumber: 17
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 574,
+        columnNumber: 17
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 575,
+        columnNumber: 17
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 576,
+        columnNumber: 17
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 577,
+        columnNumber: 17
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 578,
+        columnNumber: 17
+      }
+    })), /*#__PURE__*/React.createElement("button", {
+      class: "list-delete",
+      type: "button",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 580,
+        columnNumber: 13
+      }
+    }, /*#__PURE__*/React.createElement("img", {
+      src: "./img/trash.png",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 580,
+        columnNumber: 55
+      }
+    })));
+    block.getElementsByClassName("list-delete")[0].addEventListener("click", () => {
+      block.remove();
+      const index = list.contents.indexOf(this);
+      list.contents.splice(index, 1);
+      list.data.splice(index, 1);
+    });
+    const handle = block.getElementsByClassName("list-move")[0];
+    let dragging = false;
+    let startY;
+    handle.addEventListener("mousedown", e => {
+      dragging = true;
+      block.classList.add("dragging");
+      document.body.classList.add("dragHappening");
+      startY = e.screenY;
+    });
+    window.addEventListener("mousemove", e => {
+      if (dragging) {
+        let dy = e.screenY - startY;
+        if (this === list.contents[0] && dy < 0) {
+          dy = 0;
+        }
+        if (this === list.contents[list.contents.length - 1] && dy > 0) {
+          dy = 0;
+        }
+        block.style.setProperty("translate", `0 ${dy}px`);
+        const midpoint = block.offsetTop + block.clientHeight / 2 + dy;
+        let colliding;
+        let collidingIndex;
+        for (let i = 0; i < list.contents.length; i++) {
+          const other = list.contents[i];
+          if (this === other) {
+            continue;
+          }
+          const otherMidpoint = other.element.offsetTop + other.element.clientHeight / 2;
+          if (other.element.offsetTop <= midpoint && midpoint <= other.element.offsetTop + other.element.clientHeight && this.element.offsetTop + dy <= otherMidpoint && otherMidpoint <= this.element.offsetTop + dy + this.element.clientHeight) {
+            colliding = other;
+            collidingIndex = i;
+            break;
+          }
+        }
+        if (colliding) {
+          const ownIndex = list.contents.indexOf(this);
+          const prevY = block.offsetTop;
+          block.remove();
+          if (ownIndex > collidingIndex) {
+            list.element.insertBefore(block, colliding.element);
+          } else {
+            list.element.insertBefore(block, colliding.element.nextElementSibling);
+          }
+          list.contents.splice(ownIndex, 1);
+          list.contents.splice(collidingIndex, 0, this);
+          const jsonValue = list.data[ownIndex];
+          list.data.splice(ownIndex, 1);
+          list.data.splice(collidingIndex, 0, jsonValue);
+          startY += block.offsetTop - prevY;
+          dy = e.screenY - startY;
+          block.style.setProperty("translate", `0 ${dy}px`);
+        }
+      }
+    });
+    function endDrag() {
+      dragging = false;
+      block.classList.remove("dragging");
+      block.style.removeProperty("translate");
+      document.body.classList.remove("dragHappening");
+    }
+    window.addEventListener("mouseup", endDrag);
+    window.addEventListener("mouseleave", endDrag);
+    list.element.insertBefore(block, list.addButton);
   }
 }
 // #endregion
@@ -547,7 +770,7 @@ for (let statName of statNames) {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 561,
+      lineNumber: 701,
       columnNumber: 19
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -555,7 +778,7 @@ for (let statName of statNames) {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 562,
+      lineNumber: 702,
       columnNumber: 9
     }
   }, statName), /*#__PURE__*/React.createElement("div", {
@@ -563,14 +786,14 @@ for (let statName of statNames) {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 563,
+      lineNumber: 703,
       columnNumber: 9
     }
   }, /*#__PURE__*/React.createElement("div", {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 563,
+      lineNumber: 703,
       columnNumber: 46
     }
   })), /*#__PURE__*/React.createElement("div", {
@@ -578,14 +801,14 @@ for (let statName of statNames) {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 564,
+      lineNumber: 704,
       columnNumber: 9
     }
   }, /*#__PURE__*/React.createElement("div", {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 564,
+      lineNumber: 704,
       columnNumber: 47
     }
   })));
@@ -897,7 +1120,8 @@ for (let prof of ["armor", "weapons", "tools", "languages"]) {
   const display = new DataDisplay({
     element,
     dataObject: characterData.otherProficiencies,
-    property: prof
+    property: prof,
+    allowNewlines: true
   });
   otherProficiencies.push(display);
 }
@@ -906,132 +1130,56 @@ const attacksText = new DataDisplay({
   property: "attacksText",
   allowNewlines: true
 });
-const weaponsTable = document.getElementById("attacks-table");
-const addWeapon = document.getElementById("attacks-add");
-const weapons = [];
-class Weapon {
-  constructor(weapon) {
-    const block = this.element = /*#__PURE__*/React.createElement("div", {
-      class: "attacks-row",
-      __self: this,
+class Weapon extends ListItem {
+  constructor(list, weapon) {
+    super(list);
+    const block = /*#__PURE__*/React.createElement("div", {
+      class: "weapon-content",
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 912,
-        columnNumber: 38
+        lineNumber: 1051,
+        columnNumber: 23
       }
     }, /*#__PURE__*/React.createElement("div", {
-      class: "list-move",
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 913,
-        columnNumber: 13
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 914,
-        columnNumber: 17
-      }
-    }), /*#__PURE__*/React.createElement("div", {
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 915,
-        columnNumber: 17
-      }
-    }), /*#__PURE__*/React.createElement("div", {
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 916,
-        columnNumber: 17
-      }
-    }), /*#__PURE__*/React.createElement("div", {
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 917,
-        columnNumber: 17
-      }
-    }), /*#__PURE__*/React.createElement("div", {
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 918,
-        columnNumber: 17
-      }
-    }), /*#__PURE__*/React.createElement("div", {
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 919,
-        columnNumber: 17
-      }
-    })), /*#__PURE__*/React.createElement("button", {
-      class: "list-delete",
-      type: "button",
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 921,
-        columnNumber: 13
-      }
-    }, /*#__PURE__*/React.createElement("img", {
-      src: "./img/trash.png",
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 921,
-        columnNumber: 55
-      }
-    })), /*#__PURE__*/React.createElement("div", {
       class: "weapon-name",
-      __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 922,
+        lineNumber: 1052,
         columnNumber: 13
       }
     }, /*#__PURE__*/React.createElement("span", {
       class: "weapon-name-value",
-      __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 922,
+        lineNumber: 1052,
         columnNumber: 38
       }
     })), /*#__PURE__*/React.createElement("div", {
       class: "weapon-bonus",
-      __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 923,
+        lineNumber: 1053,
         columnNumber: 13
       }
     }, /*#__PURE__*/React.createElement("span", {
       class: "weapon-bonus-value",
-      __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 923,
+        lineNumber: 1053,
         columnNumber: 39
       }
     })), /*#__PURE__*/React.createElement("div", {
       class: "weapon-damage",
-      __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 924,
+        lineNumber: 1054,
         columnNumber: 13
       }
     }, /*#__PURE__*/React.createElement("span", {
       class: "weapon-damage-value",
-      __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 924,
+        lineNumber: 1054,
         columnNumber: 40
       }
     })));
@@ -1046,146 +1194,201 @@ class Weapon {
         dataObject: weapon,
         property: "bonus",
         dataFromString: betterParseInt,
-        dataToString: signedIntToStr
+        dataToString: signedIntToStr,
+        listenTo: [stats.Strength.mod, stats.Dexterity.mod, proficiencyBonus]
       }),
       damage: new DataDisplay({
         element: block.getElementsByClassName("weapon-damage-value")[0],
         dataObject: weapon,
         property: "damage",
-        dataToString: data => {
-          let str = "";
-          for (let amt of data.amount) {
-            if (typeof amt === "number") {
-              if (str.length) {
-                str += amt < 0 ? "-" : "+";
-                str += Math.abs(amt);
-              } else {
-                str += amt;
-              }
-            } else {
-              if (str.length) {
-                str += "+";
-              }
-              str += hitDieToString(amt);
-            }
-          }
-          if (data.type) {
-            str += " " + data.type;
-          }
-          return str;
-        },
-        dataFromString: str => {
-          let [amountStr, type, err] = str.split(/\s/g);
-          if (!amountStr || type && !type.length || err !== undefined) {
-            throw new Error();
-          }
-          let arr = amountStr.split(/\+|(?=-)/g);
-          if (arr[0].length === 0) {
-            arr.pop();
-            arr[0] = amountStr.charAt(0) + arr[0];
-          }
-          let amount = [];
-          for (let value of arr) {
-            try {
-              amount.push(betterParseInt(value));
-            } catch {
-              amount.push(hitDieFromString(value));
-            }
-          }
-          return {
-            amount,
-            type
-          };
-        },
-        validate: dat => dat.amount.length > 0
+        listenTo: [stats.Strength.mod, stats.Dexterity.mod, proficiencyBonus]
       })
     };
-    block.getElementsByClassName("list-delete")[0].addEventListener("click", () => {
-      block.remove();
-      const index = weapons.indexOf(this);
-      weapons.splice(index, 1);
-      characterData.weapons.splice(index, 1);
-    });
-    const handle = block.getElementsByClassName("list-move")[0];
-    let dragging = false;
-    let startY;
-    handle.addEventListener("mousedown", e => {
-      dragging = true;
-      block.classList.add("dragging");
-      document.body.classList.add("dragHappening");
-      startY = e.screenY;
-    });
-    window.addEventListener("mousemove", e => {
-      if (dragging) {
-        let dy = e.screenY - startY;
-        if (this === weapons[0] && dy < 0) {
-          dy = 0;
-        }
-        if (this === weapons[weapons.length - 1] && dy > 0) {
-          dy = 0;
-        }
-        block.style.setProperty("translate", `0 ${dy}px`);
-        const midpoint = block.offsetTop + block.clientHeight / 2 + dy;
-        let colliding;
-        let collidingIndex;
-        for (let i = 0; i < weapons.length; i++) {
-          const otherWeapon = weapons[i];
-          if (this === otherWeapon) {
-            continue;
-          }
-          if (otherWeapon.element.offsetTop <= midpoint && midpoint <= otherWeapon.element.offsetTop + otherWeapon.element.clientHeight) {
-            colliding = otherWeapon;
-            collidingIndex = i;
-            break;
-          }
-        }
-        if (colliding) {
-          console.log("move");
-          const ownIndex = weapons.indexOf(this);
-          const prevY = block.offsetTop;
-          block.remove();
-          if (ownIndex > collidingIndex) {
-            weaponsTable.insertBefore(block, colliding.element);
-          } else {
-            weaponsTable.insertBefore(block, colliding.element.nextElementSibling);
-          }
-          weapons.splice(ownIndex, 1);
-          weapons.splice(collidingIndex, 0, this);
-          console.log(weapons);
-          const jsonValue = characterData.weapons[ownIndex];
-          characterData.weapons.splice(ownIndex, 1);
-          characterData.weapons.splice(collidingIndex, 0, jsonValue);
-          startY += block.offsetTop - prevY;
-          dy = e.screenY - startY;
-          block.style.setProperty("translate", `0 ${dy}px`);
-        }
-      }
-    });
-    function endDrag() {
-      dragging = false;
-      block.classList.remove("dragging");
-      block.style.removeProperty("translate");
-      document.body.classList.remove("dragHappening");
-    }
-    window.addEventListener("mouseup", endDrag);
-    window.addEventListener("mouseleave", endDrag);
-    weaponsTable.insertBefore(block, addWeapon);
+    this.element.appendChild(block);
   }
 }
-for (let weapon of characterData.weapons) {
-  weapons.push(new Weapon(weapon));
-}
-addWeapon.addEventListener("click", () => {
-  const data = {
-    name: "Name",
-    bonus: 0,
-    damage: {
-      amount: [0],
-      type: "type"
+const weapons = new List(document.getElementById("attacks-table"), characterData.weapons, () => ({
+  name: "Name",
+  bonus: 0,
+  damage: "0 type"
+}), Weapon);
+const moneyElement = document.getElementById("money");
+const money = [];
+for (let denom of moneyDenominations) {
+  const block = /*#__PURE__*/React.createElement("div", {
+    id: "money-" + denom.toLowerCase(),
+    class: "money-denom",
+    __self: this,
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 1090,
+      columnNumber: 19
     }
-  };
-  weapons.push(new Weapon(data));
-  characterData.weapons.push(data);
+  }, /*#__PURE__*/React.createElement("div", {
+    class: "money-denom-label-container",
+    __self: this,
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 1091,
+      columnNumber: 9
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    class: "money-denom-label",
+    __self: this,
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 1092,
+      columnNumber: 13
+    }
+  }, denom.toUpperCase())), /*#__PURE__*/React.createElement("div", {
+    class: "money-value-container",
+    __self: this,
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 1094,
+      columnNumber: 9
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    class: "money-value",
+    __self: this,
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 1095,
+      columnNumber: 13
+    }
+  })));
+  money.push(new DataDisplay({
+    element: block.getElementsByClassName("money-value")[0],
+    dataObject: characterData.money,
+    property: denom,
+    dataFromString: unsignedParseInt
+  }));
+  moneyElement.appendChild(block);
+}
+const equipmentText = new DataDisplay({
+  element: document.getElementById("equipment-text"),
+  property: "equipmentText",
+  allowNewlines: true
 });
-
+class Feature extends ListItem {
+  constructor(list, data) {
+    super(list);
+    const block = /*#__PURE__*/React.createElement("div", {
+      class: "feature multi-line-text",
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 1118,
+        columnNumber: 23
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      class: "feature-name multi-line-text",
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 1119,
+        columnNumber: 13
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      class: "feature-name-text multi-line-text",
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 1120,
+        columnNumber: 17
+      }
+    }), " ", /*#__PURE__*/React.createElement("span", {
+      class: "feature-uses",
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 1120,
+        columnNumber: 73
+      }
+    }, /*#__PURE__*/React.createElement("input", {
+      type: "checkbox",
+      class: "feature-uses-checkbox default-checkbox",
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 1121,
+        columnNumber: 21
+      }
+    }), "(", /*#__PURE__*/React.createElement("span", {
+      class: "feature-uses-blank",
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 1122,
+        columnNumber: 22
+      }
+    }, "_ / _"), /*#__PURE__*/React.createElement("span", {
+      class: "feature-uses-value",
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 1122,
+        columnNumber: 67
+      }
+    }), ")"), ":"), " ", /*#__PURE__*/React.createElement("span", {
+      class: "feature-text multi-line-text",
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 1123,
+        columnNumber: 33
+      }
+    }));
+    this.data = data;
+    this.name = new DataDisplay({
+      element: block.getElementsByClassName("feature-name-text")[0],
+      dataObject: data,
+      property: "name"
+    });
+    this.text = new DataDisplay({
+      element: block.getElementsByClassName("feature-text")[0],
+      dataObject: data,
+      property: "text",
+      allowNewlines: true
+    });
+    this.checkbox = block.getElementsByClassName("feature-uses-checkbox")[0];
+    this.usesBlank = block.getElementsByClassName("feature-uses-blank")[0];
+    this.usesValue = block.getElementsByClassName("feature-uses-value")[0];
+    this.checkbox.checked = "maxUses" in data;
+    this.updateFeatureUses();
+    this.checkbox.addEventListener("change", () => this.updateFeatureUses());
+    editingModeInputs.push(this.checkbox);
+    this.checkbox.disabled = !editing;
+    this.element.appendChild(block);
+  }
+  updateFeatureUses() {
+    if (this.checkbox.checked) {
+      this.usesBlank.style.display = "none";
+      this.usesValue.style.display = "initial";
+      if (!this.data.maxUses) {
+        this.data.currentUses = 1;
+        this.data.maxUses = 1;
+      }
+      this.uses = new Fraction(this.usesValue, {
+        dataObject: this.data,
+        property: "currentUses"
+      }, {
+        dataObject: this.data,
+        property: "maxUses"
+      });
+      this.uses.numerElement.classList.add("multi-line-text");
+      this.uses.denomElement.classList.add("multi-line-text");
+    } else {
+      this.usesBlank.style.display = "initial";
+      this.usesValue.style.display = "none";
+      delete this.data.currentUses;
+      delete this.data.maxUses;
+      if (this.uses) {
+        for (let display of [this.uses.numerDisplay, this.uses.denomDisplay]) {
+          const index = invalid.indexOf(display);
+          if (index >= 0) {
+            invalid.splice(display, 1);
+          }
+        }
+      }
+      this.usesValue.innerHTML = "";
+    }
+  }
+}
+const features = new List(document.getElementById("features-list"), characterData.features, () => ({
+  name: "Name",
+  text: "Description"
+}), Feature);
 // #endregion

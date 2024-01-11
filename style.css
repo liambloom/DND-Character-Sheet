@@ -99,6 +99,10 @@ body {
 }
 body.dragHappening {
     user-select: none;
+    cursor: grabbing;
+}
+body.dragHappening * {
+    pointer-events: none;
 }
 .stat-val, .standaloneLabeledValue > :first-child, .inputLine:not(.topText) {
     font-weight: 450;
@@ -390,7 +394,6 @@ header {
 }
 #other-proficiencies p {
     margin: 0 0 5px 5px;
-    white-space: normal;
 }
 #other-proficiencies p::first-letter {
     margin-left: -5px;
@@ -509,6 +512,56 @@ header {
 #death-saves {
     grid-area: death-saves;
 }
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    text-align: center;
+    overflow-y: auto;
+}
+.list-add {
+    display: flex;
+    cursor: pointer;
+    padding: 5px;
+    gap: 2px;
+    flex-direction: row;
+    align-items: center;
+    background-color: #e0e0e0;
+    border-radius: 2px;
+}
+.list-add:hover {
+    background-color: #ccc;
+}
+.list-add-line {
+    flex-grow: 1;
+    background-color: black;
+    height: 1px;
+}
+.list-plus {
+    background-color: #00cc00;
+    color: white;
+    border-radius: 50%;
+    width: 21px;
+    height: 21px;
+    position: relative;
+}
+.list-plus div {
+    position: absolute;
+    background-color: white;
+}
+.list-plus-h {
+    top: 10px;
+    left: 2px;
+    height: 1px;
+    width: 17px;
+}
+.list-plus-v {
+    top: 2px;
+    left: 10px;
+    height: 16px;
+    width: 1px;
+}
+
 #attacks {
     grid-area: attacks;
     position: relative;
@@ -523,26 +576,30 @@ header {
     margin-top: 5px;
 }
 #attacks-table {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    text-align: center;
-    overflow-y: auto;
     flex-grow: 2;
-    font-family: "Architects Daughter";
-    white-space: nowrap;
 }
-#attacks-header, .attacks-row {
+.list-header, .list-row {
+    border-radius: 5px;
+}
+.list-row {
+    display: grid;
+    gap: 5px;
+    grid-template-columns: 1fr;
+    grid-template-areas: "content";
+}
+.list-row > :last-child {
+    grid-area: content;
+}
+#attacks-header, .weapon-content {
     display: grid;
     gap: 5px;
     grid-template-columns: 2fr 1fr 2fr;
     grid-template-areas: "name bonus damage";
-    background-color: white;
 }
-:is(#attacks-header, .attacks-row) > div {
+:is(.list-header, .list-row) > div {
     min-width: 0;
 }
-#attacks-header {
+.list-header {
     text-transform: uppercase;
     font-size: 8px;
     font-weight: normal;
@@ -551,7 +608,7 @@ header {
     white-space: nowrap;
     text-overflow: ellipsis;
 }
-#attacks-header > div {
+.list-header > div {
     text-overflow: ellipsis;
     overflow: hidden;
 }
@@ -568,23 +625,24 @@ header {
 .weapon-damage {
     grid-area: damage;
 }
-.attacks-row :is(.weapon-name, .weapon-bonus, .weapon-damage) {
+.list-row :is(.weapon-name, .weapon-bonus, .weapon-damage) {
     background-color: #ccc;
     border-radius: 4px 0;
     padding: 4px;
     overflow: auto;
 }
-body[data-editing="true"] #attacks-header {
+body[data-editing="true"] .list-header {
     margin-left: 38px;
 }
-body[data-editing="true"] .attacks-row {
-    grid-template-columns: auto auto 2fr 1fr 2fr;
-    grid-template-areas: "move delete name bonus damage";
+body[data-editing="true"] .list-row {
+    grid-template-columns: auto auto 1fr;
+    grid-template-areas: "move delete content";
+    background-color: #eee;
 }
-body[data-editing="false"] :is(.list-delete, .list-move, #attacks-add) {
+body[data-editing="false"] :is(.list-delete, .list-move, .list-add) {
     display: none;
 }
-.attacks-row:first-child:nth-last-child(2) .list-move {
+.list-row:first-child:nth-last-child(2) .list-move {
     opacity: 0.5;
     cursor: initial;
     pointer-events: none;
@@ -628,48 +686,6 @@ body[data-editing="false"] :is(.list-delete, .list-move, #attacks-add) {
     aspect-ratio: 1;
     vertical-align: middle;
 }
-#attacks-add {
-    display: flex;
-    cursor: pointer;
-    padding: 5px;
-    gap: 2px;
-    flex-direction: row;
-    align-items: center;
-    background-color: #e0e0e0;
-    border-radius: 2px;
-}
-#attacks-add:hover {
-    background-color: #ccc;
-}
-.attacks-add-line {
-    flex-grow: 1;
-    background-color: black;
-    height: 1px;
-}
-#attacks-plus {
-    background-color: #00cc00;
-    color: white;
-    border-radius: 50%;
-    width: 21px;
-    height: 21px;
-    position: relative;
-}
-#attacks-plus-h, #attacks-plus-v {
-    position: absolute;
-    background-color: white;
-}
-#attacks-plus-h {
-    top: 10px;
-    left: 2px;
-    height: 1px;
-    width: 17px;
-}
-#attacks-plus-v {
-    top: 2px;
-    left: 10px;
-    height: 16px;
-    width: 1px;
-}
 #attacks-text-container {
     flex: 1 3 auto;
     overflow: auto;
@@ -678,7 +694,7 @@ body[data-editing="false"] :is(.list-delete, .list-move, #attacks-add) {
     border-top: 1px solid black;
     /* padding-top: 0; */
 }
-#attacks-text {
+#other-proficiencies p, .multi-line-text {
     white-space: normal;
     word-wrap: break-word;
 }
@@ -689,12 +705,117 @@ body[data-editing="false"] :is(.list-delete, .list-move, #attacks-add) {
 
 #equipment {
     grid-area: equipment;
+    position: relative;
 }
+#equipment-content {
+    position: absolute;
+    top: 5px;
+    bottom: 20px;
+    left: -10px;
+    right: 5px;
+    display: grid;
+    gap: 5px;
+    grid-template-columns: auto 1fr;
+    grid-template-areas: "money text";
+}
+#equipment-text-container {
+    grid-area: text;
+    overflow: auto;
+    min-width: 0;
+}
+#money {
+    grid-area: money;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.money-denom {
+    display: grid;
+    grid-template-columns: 17px 1fr;
+    grid-template-areas: "label value";
+    height: 30px;
+}
+.money-denom-label-container {
+    grid-area: label;
+    width: 20px;
+    border: 2px solid black;
+    border-right: none;
+    border-radius: 10px 0 0 10px;
+    font-size: 8px;
+    height: 12px;
+    color: #444;
+    background-color: white;
+    align-self: center;
+    position: relative;
+}
+.money-denom-label {
+    position: absolute;
+    top: calc(50% + 1px);
+    left: 3px;
+    translate: 0 -50%;
+}
+.money-value-container {
+    grid-area: value;
+    height: 26px;
+    border-radius: 15px;
+    width: 50px;
+    border-width: 2px 5px;
+    border-style: solid double;
+    border-color: black;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    z-index: 1;
+}
+.money-value {
+    text-align: center;
+    overflow-x: auto;
+    font-size: 14px;
+}
+
 #character {
     grid-area: character;
 }
 #features {
     grid-area: features;
+    padding: 5px;
+    padding-bottom: 20px;
+    position: relative;
+}
+#features-list {
+    width: 100%;
+    height: 100%;
+}
+.feature {
+    text-align: left;
+    overflow: hidden;
+    
+}
+body[data-editing="false"] .feature {
+    padding-left: 5px;
+}
+body[data-editing="false"] .feature::first-letter {
+    margin-left: -5px;
+}
+.feature-name {
+    font-weight: bold;
+    letter-spacing: 0.06em;
+}
+body[data-editing="true"] .feature-uses {
+    background-color: #bbb;
+    border-radius: 3px;
+    padding: 2px;
+}
+.feature-uses {
+    max-width: 100%;
+    white-space: nowrap;
+}
+.feature-uses-checkbox {
+    vertical-align: middle;
+}
+body[data-editing="false"] .feature-uses-checkbox {
+    display: none;
 }
 #death-saves-grid {
     display: grid;
@@ -969,7 +1090,7 @@ body.death-animation #rip {
     }
 }
 
-input[type="checkbox"] {
+input[type="checkbox"]:not(.default-checkbox) {
     display: none;
 }
 .customCheckbox {
