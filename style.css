@@ -958,10 +958,10 @@ button {
 }
 
 #edit::before {
-    background-image: url(img/edit.png); /* https://www.flaticon.com/free-icon/pencil_1828918 */
+    background-image: url(img/edit.png);
 }
 body[data-editing="true"] #edit::before {
-    background-image: url(img/save.png); /* https://www.flaticon.com/free-icon/floppy-disk_1828828 */
+    background-image: url(img/save.png);
 }
 #revive {
     display: none;
@@ -971,22 +971,22 @@ body.dead #revive {
 }
 #buttons #revive::before {
     background-size: 42%, 60%;
-    background-image: url(img/skull.png), /* https://www.flaticon.com/free-icon/skull_3509024 */
-        url(img/revive-out.png); /*  https://www.flaticon.com/free-icon/undo_182809 modified */
+    background-image: url(img/skull.png),
+        url(img/revive-out.png);
 }
 
 #collapse::before {
-    background-image: url(img/down-arrow.png); /* https://www.flaticon.com/free-icon/down-arrow_625946 */
+    background-image: url(img/down-arrow.png);
     transition: rotate 500ms ease-in-out;
 }
 #collapsible-buttons.collapse #collapse::before {
     rotate: 180deg;
 }
 #kill::before {
-    background-image: url(img/skull.png); /* https://www.flaticon.com/free-icon/skull_3509024 */
+    background-image: url(img/skull.png);
 }
 #settings::before {
-    background-image: url(img/settings.png); /* https://www.flaticon.com/free-icon/settings_503822 */
+    background-image: url(img/settings.png);
 }
 
 

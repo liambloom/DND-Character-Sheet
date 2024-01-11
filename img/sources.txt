@@ -1,0 +1,8 @@
+trash.png https://www.flaticon.com/free-icon/trash_2312162 (modified)
+edit.png https://www.flaticon.com/free-icon/pencil_1828918
+save.png https://www.flaticon.com/free-icon/floppy-disk_1828828
+skull.png https://www.flaticon.com/free-icon/skull_3509024
+revive-out.png https://www.flaticon.com/free-icon/undo_182809 (modified)
+revive.png (unused) Original of revive-out.png ^^^
+down-arrow.png https://www.flaticon.com/free-icon/down-arrow_625946
+settings.png https://www.flaticon.com/free-icon/settings_503822
