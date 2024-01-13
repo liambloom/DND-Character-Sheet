@@ -2,11 +2,13 @@
   "name": "dnd-character-sheet",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "server/server.js",
   "scripts": {
+    "start": "node server/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npx babel script.jsx --out-file script.js",
-    "listen": "npx nodemon --watch script.jsx --exec \"npx rimraf script.js && npm run build\""
+    "build": "npx babel ./scripts -d ./compiled-scripts",
+    "listen-scripts": "npx nodemon -e jsx --watch scripts --exec npm run build",
+    "listen-server":  "npx nodemon --watch server --exec npm start"
   },
   "author": "Liam Bloom",
   "dependencies": {

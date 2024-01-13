@@ -1,16 +1,16 @@
 @font-face {
     font-family: "Overpass";
-    src: url(./fonts/Overpass/Overpass-VariableFont_wght.ttf);
+    src: url(/fonts/Overpass/Overpass-VariableFont_wght.ttf);
 }
 @font-face {
     font-family: Kalam;
-    src: url(./fonts/Kalam/Kalam-Regular.ttf);
+    src: url(/fonts/Kalam/Kalam-Regular.ttf);
     ascent-override: 100%;
     descent-override: 20%;
 }
 @font-face {
     font-family: "Architects Daughter";
-    src: url(./fonts/Architects_Daughter/ArchitectsDaughter-Regular.ttf)
+    src: url(/fonts/Architects_Daughter/ArchitectsDaughter-Regular.ttf)
 }
 
 [contentEditable], .written, .standaloneLabeledValue > :first-child, .stat-mod {
@@ -1019,10 +1019,10 @@ button {
 }
 
 #edit::before {
-    background-image: url(img/edit.png);
+    background-image: url(/img/edit.png);
 }
 body[data-editing="true"] #edit::before {
-    background-image: url(img/save.png);
+    background-image: url(/img/save.png);
 }
 #revive {
     display: none;
@@ -1032,22 +1032,22 @@ body.dead #revive {
 }
 #buttons #revive::before {
     background-size: 42%, 60%;
-    background-image: url(img/skull.png),
-        url(img/revive-out.png);
+    background-image: url(/img/skull.png),
+        url(/img/revive-out.png);
 }
 
 #collapse::before {
-    background-image: url(img/down-arrow.png);
+    background-image: url(/img/down-arrow.png);
     transition: rotate 500ms ease-in-out;
 }
 #collapsible-buttons.collapse #collapse::before {
     rotate: 180deg;
 }
 #kill::before {
-    background-image: url(img/skull.png);
+    background-image: url(/img/skull.png);
 }
 #settings::before {
-    background-image: url(img/settings.png);
+    background-image: url(/img/settings.png);
 }
 
 

@@ -27,7 +27,7 @@ const React = {
 // #endregion
 
 // #region Constants
-const characterJson = "characters" + new URL(location).pathname + ".json";
+const characterJson = "/characters/" + new URL(location).pathname.split("/").pop() + ".json";
 
 const newlineRegex = /[\n\r\u2028\u2029]/g;
 const statNames = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
@@ -583,7 +583,7 @@ class ListItem {
                 <div></div>
                 <div></div>
             </div>
-            <button class="list-delete" type="button"><img src="./img/trash.png"></img></button>
+            <button class="list-delete" type="button"><img src="/img/trash.png"></img></button>
         </div>;
 
         block.getElementsByClassName("list-delete")[0].addEventListener("click", () => {

@@ -1,4 +1,3 @@
-var _jsxFileName = "C:\\Users\\liamr\\Documents\\code\\DnD Character Sheet\\script.jsx";
 // #region React
 
 // https://stackoverflow.com/a/42405694/11326662
@@ -25,7 +24,7 @@ const React = {
 // #endregion
 
 // #region Constants
-const characterJson = "characters" + new URL(location).pathname + ".json";
+const characterJson = "/characters/" + new URL(location).pathname.split("/").pop() + ".json";
 const newlineRegex = /[\n\r\u2028\u2029]/g;
 const statNames = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
 const statToSkillMap = {
@@ -446,57 +445,21 @@ class Proficiency {
   constructor(block, group, name, stat, defaultMap = n => n) {
     block = this.element ||= /*#__PURE__*/React.createElement("div", {
       class: group + " proficiency",
-      id: name,
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 506,
-        columnNumber: 34
-      }
+      id: name
     }, /*#__PURE__*/React.createElement("label", {
-      for: name + "Checkbox",
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 507,
-        columnNumber: 13
-      }
+      for: name + "Checkbox"
     }, /*#__PURE__*/React.createElement("input", {
       id: name + "Checkbox",
       type: "checkbox",
       name: group + "Checkbox",
       class: group + "Checkbox proficiencyCheckbox",
-      disabled: "true",
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 507,
-        columnNumber: 44
-      }
+      disabled: "true"
     }), /*#__PURE__*/React.createElement("div", {
-      class: "customCheckbox",
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 508,
-        columnNumber: 91
-      }
+      class: "customCheckbox"
     }), /*#__PURE__*/React.createElement("span", {
-      class: group + "Bonus proficiencyBonus",
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 508,
-        columnNumber: 125
-      }
+      class: group + "Bonus proficiencyBonus"
     }), " ", name, " ", /*#__PURE__*/React.createElement("span", {
-      class: "proficiencyBonusStat",
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 508,
-        columnNumber: 187
-      }
+      class: "proficiencyBonusStat"
     }, "(", stat.substring(0, 3), ")")));
     const statMod = stats[stat].mod;
     const bonus = this.bonus = new DataDisplay({
@@ -530,53 +493,17 @@ class List {
     this.contents = [];
     const addButton = this.addButton = /*#__PURE__*/React.createElement("button", {
       class: "list-add",
-      type: "button",
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 552,
-        columnNumber: 44
-      }
+      type: "button"
     }, /*#__PURE__*/React.createElement("div", {
-      class: "list-add-line",
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 553,
-        columnNumber: 13
-      }
+      class: "list-add-line"
     }), /*#__PURE__*/React.createElement("div", {
-      class: "list-plus",
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 554,
-        columnNumber: 13
-      }
+      class: "list-plus"
     }, /*#__PURE__*/React.createElement("div", {
-      class: "list-plus-h",
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 555,
-        columnNumber: 17
-      }
+      class: "list-plus-h"
     }), /*#__PURE__*/React.createElement("div", {
-      class: "list-plus-v",
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 556,
-        columnNumber: 17
-      }
+      class: "list-plus-v"
     })), /*#__PURE__*/React.createElement("div", {
-      class: "list-add-line",
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 558,
-        columnNumber: 13
-      }
+      class: "list-add-line"
     }));
     element.appendChild(addButton);
     addButton.addEventListener("click", () => {
@@ -592,80 +519,14 @@ class List {
 class ListItem {
   constructor(list) {
     const block = this.element = /*#__PURE__*/React.createElement("div", {
-      class: "list-row",
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 577,
-        columnNumber: 38
-      }
+      class: "list-row"
     }, /*#__PURE__*/React.createElement("div", {
-      class: "list-move",
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 578,
-        columnNumber: 13
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 579,
-        columnNumber: 17
-      }
-    }), /*#__PURE__*/React.createElement("div", {
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 580,
-        columnNumber: 17
-      }
-    }), /*#__PURE__*/React.createElement("div", {
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 581,
-        columnNumber: 17
-      }
-    }), /*#__PURE__*/React.createElement("div", {
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 582,
-        columnNumber: 17
-      }
-    }), /*#__PURE__*/React.createElement("div", {
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 583,
-        columnNumber: 17
-      }
-    }), /*#__PURE__*/React.createElement("div", {
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 584,
-        columnNumber: 17
-      }
-    })), /*#__PURE__*/React.createElement("button", {
+      class: "list-move"
+    }, /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", null)), /*#__PURE__*/React.createElement("button", {
       class: "list-delete",
-      type: "button",
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 586,
-        columnNumber: 13
-      }
+      type: "button"
     }, /*#__PURE__*/React.createElement("img", {
-      src: "./img/trash.png",
-      __self: this,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 586,
-        columnNumber: 55
-      }
+      src: "/img/trash.png"
     })));
     block.getElementsByClassName("list-delete")[0].addEventListener("click", () => {
       block.remove();
@@ -813,52 +674,14 @@ const stats = {};
 for (let statName of statNames) {
   const block = /*#__PURE__*/React.createElement("div", {
     class: "stat",
-    id: statName,
-    __self: this,
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 756,
-      columnNumber: 19
-    }
+    id: statName
   }, /*#__PURE__*/React.createElement("div", {
-    class: "sectionTitle staticPos",
-    __self: this,
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 757,
-      columnNumber: 9
-    }
+    class: "sectionTitle staticPos"
   }, statName), /*#__PURE__*/React.createElement("div", {
-    class: "stat-val ignore-invalid",
-    __self: this,
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 758,
-      columnNumber: 9
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    __self: this,
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 758,
-      columnNumber: 46
-    }
-  })), /*#__PURE__*/React.createElement("div", {
-    class: "stat-mod inherit-invalid",
-    __self: this,
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 759,
-      columnNumber: 9
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    __self: this,
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 759,
-      columnNumber: 47
-    }
-  })));
+    class: "stat-val ignore-invalid"
+  }, /*#__PURE__*/React.createElement("div", null)), /*#__PURE__*/React.createElement("div", {
+    class: "stat-mod inherit-invalid"
+  }, /*#__PURE__*/React.createElement("div", null)));
   document.getElementById("stats").appendChild(block);
   stats[statName] = {};
   const stat = stats[statName].stat = new DataDisplay({
@@ -1156,54 +979,19 @@ class Weapon extends ListItem {
   constructor(list, weapon) {
     super(list);
     const block = /*#__PURE__*/React.createElement("div", {
-      class: "weapon-content",
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 1079,
-        columnNumber: 23
-      }
+      class: "weapon-content"
     }, /*#__PURE__*/React.createElement("div", {
-      class: "weapon-name",
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 1080,
-        columnNumber: 13
-      }
+      class: "weapon-name"
     }, /*#__PURE__*/React.createElement("span", {
-      class: "weapon-name-value",
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 1080,
-        columnNumber: 38
-      }
+      class: "weapon-name-value"
     })), /*#__PURE__*/React.createElement("div", {
-      class: "weapon-bonus",
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 1081,
-        columnNumber: 13
-      }
+      class: "weapon-bonus"
     }, /*#__PURE__*/React.createElement("span", {
-      class: "weapon-bonus-value",
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 1081,
-        columnNumber: 39
-      }
+      class: "weapon-bonus-value"
     })), /*#__PURE__*/React.createElement("div", {
-      class: "weapon-damage",
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 1082,
-        columnNumber: 13
-      }
+      class: "weapon-damage"
     }, /*#__PURE__*/React.createElement("span", {
-      class: "weapon-damage-value",
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 1082,
-        columnNumber: 40
-      }
+      class: "weapon-damage-value"
     })));
     this.value = {
       name: new DataDisplay({
@@ -1239,45 +1027,15 @@ const money = [];
 for (let denom of moneyDenominations) {
   const block = /*#__PURE__*/React.createElement("div", {
     id: "money-" + denom.toLowerCase(),
-    class: "money-denom",
-    __self: this,
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 1118,
-      columnNumber: 19
-    }
+    class: "money-denom"
   }, /*#__PURE__*/React.createElement("div", {
-    class: "money-denom-label-container",
-    __self: this,
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 1119,
-      columnNumber: 9
-    }
+    class: "money-denom-label-container"
   }, /*#__PURE__*/React.createElement("div", {
-    class: "money-denom-label",
-    __self: this,
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 1120,
-      columnNumber: 13
-    }
+    class: "money-denom-label"
   }, denom.toUpperCase())), /*#__PURE__*/React.createElement("div", {
-    class: "money-value-container",
-    __self: this,
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 1122,
-      columnNumber: 9
-    }
+    class: "money-value-container"
   }, /*#__PURE__*/React.createElement("div", {
-    class: "money-value",
-    __self: this,
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 1123,
-      columnNumber: 13
-    }
+    class: "money-value"
   })));
   money.push(new DataDisplay({
     element: block.getElementsByClassName("money-value")[0],
@@ -1296,69 +1054,24 @@ class Feature extends ListItem {
   constructor(list, data) {
     super(list);
     const block = /*#__PURE__*/React.createElement("div", {
-      class: "feature multi-line-text",
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 1146,
-        columnNumber: 23
-      }
+      class: "feature multi-line-text"
     }, /*#__PURE__*/React.createElement("span", {
-      class: "feature-name multi-line-text",
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 1147,
-        columnNumber: 13
-      }
+      class: "feature-name multi-line-text"
     }, /*#__PURE__*/React.createElement("span", {
-      class: "feature-name-text multi-line-text",
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 1148,
-        columnNumber: 17
-      }
+      class: "feature-name-text multi-line-text"
     }), /*#__PURE__*/React.createElement("span", {
-      class: "feature-uses",
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 1148,
-        columnNumber: 72
-      }
+      class: "feature-uses"
     }, /*#__PURE__*/React.createElement("input", {
       type: "checkbox",
-      class: "feature-uses-checkbox default-checkbox",
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 1149,
-        columnNumber: 21
-      }
+      class: "feature-uses-checkbox default-checkbox"
     }), /*#__PURE__*/React.createElement("span", {
-      class: "feature-uses-blank",
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 1150,
-        columnNumber: 21
-      }
+      class: "feature-uses-blank"
     }, "(_ / _)"), /*#__PURE__*/React.createElement("span", {
-      class: "feature-uses-value-container",
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 1150,
-        columnNumber: 68
-      }
+      class: "feature-uses-value-container"
     }, "(", /*#__PURE__*/React.createElement("span", {
-      class: "feature-uses-value",
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 1150,
-        columnNumber: 112
-      }
+      class: "feature-uses-value"
     }), ")")), ":"), " ", /*#__PURE__*/React.createElement("span", {
-      class: "feature-text multi-line-text",
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 1151,
-        columnNumber: 33
-      }
+      class: "feature-text multi-line-text"
     }));
     this.data = data;
     this.name = new DataDisplay({

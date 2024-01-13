@@ -13,16 +13,16 @@ function getURL(req) {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get(/^[^\.]+$/, async (req, res) => {
+app.get("/:username/c/:character", async (req, res) => {
     try {
-        await fs.access("characters/" + getURL(req).pathname.split("/").pop() + ".json", fs.constants.F_OK)
-        const data = await fs.readFile("./index.html");
+        await fs.access("characters/" + req.params.character + ".json", fs.constants.F_OK)
+        const data = await fs.readFile("./views/character.html");
         res.writeHead(200, { "Content-Type": "text/html" });
         res.write(data);
     }
     catch (error1) {
         try {
-            const p404 = await fs.readFile("./404.html");
+            const p404 = await fs.readFile("./views/404.html");
             res.writeHead(404, { "Content-Type": "text/html" });
             res.write(p404);
         }
