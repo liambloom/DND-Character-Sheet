@@ -1,0 +1,37 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://dnd5e.liambloom.dev/characterSchema.json",
+    "title": "DnD 5e Character",
+    "type":"object",
+    "properties": {
+        "name": { "type": "string" },
+        "stats": {
+            "type": "object",
+            "properties": {
+                "Strength": { "$ref": "#/$defs/stat" },
+                "Dexterity": { "$ref": "#/$defs/stat" },
+                "Constitution": { "$ref": "#/$defs/stat" },
+                "Intelligence": { "$ref": "#/$defs/stat" },
+                "Wisdom": { "$ref": "#/$defs/stat" },
+                "Charisma": { "$ref": "#/$defs/stat" }
+            }
+        },
+        "race": { "type": "string" },
+        "background": { "type": "string" },
+        "hp": {
+            "type": "integer",
+            "minimum": 0
+        },
+        "classes": [
+
+        ]
+    },
+    "required": [ "name" ],
+    "$defs": {
+        "stat": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+        }
+    }
+}

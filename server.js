@@ -54,7 +54,7 @@ app.get(/\./, async (req, res) => {
         res.end();
     }
 });
-app.post(/characters\/.*.json/, async (req, res) => {
+app.put(/characters\/.*.json/, async (req, res) => {
     try {
         await fs.writeFile("." + getURL(req).pathname, JSON.stringify(req.body));
         res.writeHead(204);

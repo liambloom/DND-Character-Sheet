@@ -108,7 +108,7 @@ async function save() {
     saving = true;
     savingIndicator.style.display = "initial";
     const res = await fetch(characterJson, {
-        method: "POST",
+        method: "PUT",
         headers: {
             "Content-Type": "application/json",
         },
@@ -215,7 +215,7 @@ class DataDisplay {
 
         for (let e of listenTo) {
             e.addChangeListener(() => {
-                if (editing && this.getDefault && this.valueExists) {
+                if (editing && this.valueExists) {
                     this.element.classList.add("changed");
                 }
                 this.update()
@@ -246,6 +246,7 @@ class DataDisplay {
             }
 
             this.checkElementValidity();
+            this.maybeResizeFont();
         });
 
         let index;
@@ -263,7 +264,7 @@ class DataDisplay {
             }
         });
 
-        this.element.addEventListener("input", () => {
+        this.element.addEventListener("input", event => {
             if (!this.allowNewlines && newlineRegex.test(this.element.innerText)) {
                 const brs = this.element.getElementsByTagName("br");
                 while (brs.length) {
@@ -279,6 +280,11 @@ class DataDisplay {
                         selection.removeRange(range);
                     }
                 }
+
+                if (!node.nodeValue?.length) {
+                    index = 0;
+                }
+
                 const range = document.createRange();
                 range.setStart(node, index);
                 range.setEnd(node, index)
@@ -695,6 +701,55 @@ const ripName = new DataDisplay({
 characterName.addChangeListener((_, str) => document.title = str + " Character Sheet");
 document.title = characterData.name + " Character Sheet";
 
+const characterLevel = classes => classes.reduce((total, c) => total + c.level, 0);
+
+const classAndLvl = new DataDisplay({
+    element: document.getElementById("classAndLvl"),
+    property: "classes",
+    dataFromString: str => {
+        const regex = /^\s*([^\n/]+?)\s+(1?[1-9]|[12]0)\s*$/;
+        let data = [];
+        for (let readClass of str.split("/")) {
+            let parsed = readClass.match(regex);
+            
+            data.push({"class": parsed[1], level: +parsed[2]});
+        }
+
+        return data;
+    },
+    validate: arr => arr.length !== 0 && characterLevel(arr) <= 20,
+    dataToString: data => data.map(d => `${d["class"]} ${d.level}`).join(" / "),
+});
+
+Object.defineProperty(classAndLvl, "characterLevel", {
+    get() {
+        return characterLevel(classAndLvl.value);
+    },
+    enumerable: true,
+});
+
+const background = new DataDisplay({
+    element: document.getElementById("background"),
+    property: "background",
+});
+
+const race = new DataDisplay({
+    element: document.getElementById("race"),
+    property: "race",
+});
+
+const alignment = new DataDisplay({
+    element: document.getElementById("alignment"),
+    property: "alignment",
+})
+
+const xp = new DataDisplay({
+    element: document.getElementById("xp"),
+    property: "xp",
+    dataFromString: unsignedParseInt,
+    editable: editable.always,
+});
+
 const stats = {};
 
 for (let statName of statNames) {
@@ -726,33 +781,6 @@ for (let statName of statNames) {
         block.classList[isValid ? "remove" : "add"]("invalid");
     });
 }
-
-const characterLevel = classes => classes.reduce((total, c) => total + c.level, 0);
-
-const classAndLvl = new DataDisplay({
-    element: document.getElementById("classAndLvl"),
-    property: "classes",
-    dataFromString: str => {
-        const regex = /^\s*([^\n/]+?)\s+(1?[1-9]|[12]0)\s*$/;
-        let data = [];
-        for (let readClass of str.split("/")) {
-            let parsed = readClass.match(regex);
-            
-            data.push({"class": parsed[1], level: +parsed[2]});
-        }
-
-        return data;
-    },
-    validate: arr => arr.length !== 0 && characterLevel(arr) <= 20,
-    dataToString: data => data.map(d => `${d["class"]} ${d.level}`).join(" / "),
-});
-
-Object.defineProperty(classAndLvl, "characterLevel", {
-    get() {
-        return characterLevel(classAndLvl.value);
-    },
-    enumerable: true,
-});
 
 const proficiencyBonus = new DataDisplay({
     element: document.getElementById("proficiencyBonus"),
@@ -1117,9 +1145,9 @@ class Feature extends ListItem {
         super(list);
         const block = <div class="feature multi-line-text">
             <span class="feature-name multi-line-text">
-                <span class="feature-name-text multi-line-text"></span> <span class="feature-uses">
+                <span class="feature-name-text multi-line-text"></span><span class="feature-uses">
                     <input type="checkbox" class="feature-uses-checkbox default-checkbox"></input>
-                    (<span class="feature-uses-blank">_ / _</span><span class="feature-uses-value"></span>)
+                    <span class="feature-uses-blank">(_ / _)</span><span class="feature-uses-value-container">(<span class="feature-uses-value"></span>)</span>
                 </span>:</span> <span class="feature-text multi-line-text"></span>
         </div>;
 
@@ -1139,8 +1167,9 @@ class Feature extends ListItem {
         });
 
         this.checkbox = block.getElementsByClassName("feature-uses-checkbox")[0];
-        this.usesBlank = block.getElementsByClassName("feature-uses-blank")[0];
+        // this.usesBlank = block.getElementsByClassName("feature-uses-blank")[0];
         this.usesValue = block.getElementsByClassName("feature-uses-value")[0];
+        this.usesContainer = block.getElementsByClassName("feature-uses")[0];
         
         this.checkbox.checked = "maxUses" in data;
         this.updateFeatureUses();
@@ -1154,8 +1183,6 @@ class Feature extends ListItem {
 
     updateFeatureUses() {
         if (this.checkbox.checked) {
-            this.usesBlank.style.display = "none";
-            this.usesValue.style.display = "initial";
             if (!this.data.maxUses) {
                 this.data.currentUses = 1;
                 this.data.maxUses = 1;
@@ -1165,8 +1192,6 @@ class Feature extends ListItem {
             this.uses.denomElement.classList.add("multi-line-text");
         }
         else {
-            this.usesBlank.style.display = "initial";
-            this.usesValue.style.display = "none";
             delete this.data.currentUses;
             delete this.data.maxUses;
             if (this.uses) {

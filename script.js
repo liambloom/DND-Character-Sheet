@@ -94,7 +94,7 @@ async function save() {
   saving = true;
   savingIndicator.style.display = "initial";
   const res = await fetch(characterJson, {
-    method: "POST",
+    method: "PUT",
     headers: {
       "Content-Type": "application/json"
     },
@@ -195,7 +195,7 @@ class DataDisplay {
     }
     for (let e of listenTo) {
       e.addChangeListener(() => {
-        if (editing && this.getDefault && this.valueExists) {
+        if (editing && this.valueExists) {
           this.element.classList.add("changed");
         }
         this.update();
@@ -223,6 +223,7 @@ class DataDisplay {
         }
       }
       this.checkElementValidity();
+      this.maybeResizeFont();
     });
     let index;
     this.element.addEventListener("beforeinput", event => {
@@ -238,7 +239,7 @@ class DataDisplay {
         }
       }
     });
-    this.element.addEventListener("input", () => {
+    this.element.addEventListener("input", event => {
       if (!this.allowNewlines && newlineRegex.test(this.element.innerText)) {
         const brs = this.element.getElementsByTagName("br");
         while (brs.length) {
@@ -253,6 +254,9 @@ class DataDisplay {
           if (range.startContainer === this.element || range.startContainer === node) {
             selection.removeRange(range);
           }
+        }
+        if (!node.nodeValue?.length) {
+          index = 0;
         }
         const range = document.createRange();
         range.setStart(node, index);
@@ -446,7 +450,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 500,
+        lineNumber: 506,
         columnNumber: 34
       }
     }, /*#__PURE__*/React.createElement("label", {
@@ -454,7 +458,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 501,
+        lineNumber: 507,
         columnNumber: 13
       }
     }, /*#__PURE__*/React.createElement("input", {
@@ -466,7 +470,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 501,
+        lineNumber: 507,
         columnNumber: 44
       }
     }), /*#__PURE__*/React.createElement("div", {
@@ -474,7 +478,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 502,
+        lineNumber: 508,
         columnNumber: 91
       }
     }), /*#__PURE__*/React.createElement("span", {
@@ -482,7 +486,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 502,
+        lineNumber: 508,
         columnNumber: 125
       }
     }), " ", name, " ", /*#__PURE__*/React.createElement("span", {
@@ -490,7 +494,7 @@ class Proficiency {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 502,
+        lineNumber: 508,
         columnNumber: 187
       }
     }, "(", stat.substring(0, 3), ")")));
@@ -530,7 +534,7 @@ class List {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 546,
+        lineNumber: 552,
         columnNumber: 44
       }
     }, /*#__PURE__*/React.createElement("div", {
@@ -538,7 +542,7 @@ class List {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 547,
+        lineNumber: 553,
         columnNumber: 13
       }
     }), /*#__PURE__*/React.createElement("div", {
@@ -546,7 +550,7 @@ class List {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 548,
+        lineNumber: 554,
         columnNumber: 13
       }
     }, /*#__PURE__*/React.createElement("div", {
@@ -554,7 +558,7 @@ class List {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 549,
+        lineNumber: 555,
         columnNumber: 17
       }
     }), /*#__PURE__*/React.createElement("div", {
@@ -562,7 +566,7 @@ class List {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 550,
+        lineNumber: 556,
         columnNumber: 17
       }
     })), /*#__PURE__*/React.createElement("div", {
@@ -570,7 +574,7 @@ class List {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 552,
+        lineNumber: 558,
         columnNumber: 13
       }
     }));
@@ -592,7 +596,7 @@ class ListItem {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 571,
+        lineNumber: 577,
         columnNumber: 38
       }
     }, /*#__PURE__*/React.createElement("div", {
@@ -600,49 +604,49 @@ class ListItem {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 572,
+        lineNumber: 578,
         columnNumber: 13
       }
     }, /*#__PURE__*/React.createElement("div", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 573,
+        lineNumber: 579,
         columnNumber: 17
       }
     }), /*#__PURE__*/React.createElement("div", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 574,
+        lineNumber: 580,
         columnNumber: 17
       }
     }), /*#__PURE__*/React.createElement("div", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 575,
+        lineNumber: 581,
         columnNumber: 17
       }
     }), /*#__PURE__*/React.createElement("div", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 576,
+        lineNumber: 582,
         columnNumber: 17
       }
     }), /*#__PURE__*/React.createElement("div", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 577,
+        lineNumber: 583,
         columnNumber: 17
       }
     }), /*#__PURE__*/React.createElement("div", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 578,
+        lineNumber: 584,
         columnNumber: 17
       }
     })), /*#__PURE__*/React.createElement("button", {
@@ -651,7 +655,7 @@ class ListItem {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 580,
+        lineNumber: 586,
         columnNumber: 13
       }
     }, /*#__PURE__*/React.createElement("img", {
@@ -659,7 +663,7 @@ class ListItem {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 580,
+        lineNumber: 586,
         columnNumber: 55
       }
     })));
@@ -762,77 +766,6 @@ const ripName = new DataDisplay({
 });
 characterName.addChangeListener((_, str) => document.title = str + " Character Sheet");
 document.title = characterData.name + " Character Sheet";
-const stats = {};
-for (let statName of statNames) {
-  const block = /*#__PURE__*/React.createElement("div", {
-    class: "stat",
-    id: statName,
-    __self: this,
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 701,
-      columnNumber: 19
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    class: "sectionTitle staticPos",
-    __self: this,
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 702,
-      columnNumber: 9
-    }
-  }, statName), /*#__PURE__*/React.createElement("div", {
-    class: "stat-val ignore-invalid",
-    __self: this,
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 703,
-      columnNumber: 9
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    __self: this,
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 703,
-      columnNumber: 46
-    }
-  })), /*#__PURE__*/React.createElement("div", {
-    class: "stat-mod inherit-invalid",
-    __self: this,
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 704,
-      columnNumber: 9
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    __self: this,
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 704,
-      columnNumber: 47
-    }
-  })));
-  document.getElementById("stats").appendChild(block);
-  stats[statName] = {};
-  const stat = stats[statName].stat = new DataDisplay({
-    element: block.getElementsByClassName("stat-val")[0].children[0],
-    validate: n => n > 0 && n <= 20,
-    dataObject: characterData.stats,
-    property: statName,
-    dataFromString: betterParseInt
-  });
-  const args = {
-    element: block.getElementsByClassName("stat-mod")[0].children[0],
-    getDefault: () => Math.floor((stat.value - 10) / 2),
-    dataToString: signedIntToStr,
-    listenTo: [stat],
-    editable: editable.never
-  };
-  const mod = stats[statName].mod = new DataDisplay(args);
-  stat.addInvalidationListener((_, isValid) => {
-    block.classList[isValid ? "remove" : "add"]("invalid");
-  });
-}
 const characterLevel = classes => classes.reduce((total, c) => total + c.level, 0);
 const classAndLvl = new DataDisplay({
   element: document.getElementById("classAndLvl"),
@@ -858,6 +791,95 @@ Object.defineProperty(classAndLvl, "characterLevel", {
   },
   enumerable: true
 });
+const background = new DataDisplay({
+  element: document.getElementById("background"),
+  property: "background"
+});
+const race = new DataDisplay({
+  element: document.getElementById("race"),
+  property: "race"
+});
+const alignment = new DataDisplay({
+  element: document.getElementById("alignment"),
+  property: "alignment"
+});
+const xp = new DataDisplay({
+  element: document.getElementById("xp"),
+  property: "xp",
+  dataFromString: unsignedParseInt,
+  editable: editable.always
+});
+const stats = {};
+for (let statName of statNames) {
+  const block = /*#__PURE__*/React.createElement("div", {
+    class: "stat",
+    id: statName,
+    __self: this,
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 756,
+      columnNumber: 19
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    class: "sectionTitle staticPos",
+    __self: this,
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 757,
+      columnNumber: 9
+    }
+  }, statName), /*#__PURE__*/React.createElement("div", {
+    class: "stat-val ignore-invalid",
+    __self: this,
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 758,
+      columnNumber: 9
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    __self: this,
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 758,
+      columnNumber: 46
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    class: "stat-mod inherit-invalid",
+    __self: this,
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 759,
+      columnNumber: 9
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    __self: this,
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 759,
+      columnNumber: 47
+    }
+  })));
+  document.getElementById("stats").appendChild(block);
+  stats[statName] = {};
+  const stat = stats[statName].stat = new DataDisplay({
+    element: block.getElementsByClassName("stat-val")[0].children[0],
+    validate: n => n > 0 && n <= 20,
+    dataObject: characterData.stats,
+    property: statName,
+    dataFromString: betterParseInt
+  });
+  const args = {
+    element: block.getElementsByClassName("stat-mod")[0].children[0],
+    getDefault: () => Math.floor((stat.value - 10) / 2),
+    dataToString: signedIntToStr,
+    listenTo: [stat],
+    editable: editable.never
+  };
+  const mod = stats[statName].mod = new DataDisplay(args);
+  stat.addInvalidationListener((_, isValid) => {
+    block.classList[isValid ? "remove" : "add"]("invalid");
+  });
+}
 const proficiencyBonus = new DataDisplay({
   element: document.getElementById("proficiencyBonus"),
   getDefault: () => Math.floor((classAndLvl.characterLevel - 1) / 4) + 2,
@@ -1137,49 +1159,49 @@ class Weapon extends ListItem {
       class: "weapon-content",
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 1051,
+        lineNumber: 1079,
         columnNumber: 23
       }
     }, /*#__PURE__*/React.createElement("div", {
       class: "weapon-name",
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 1052,
+        lineNumber: 1080,
         columnNumber: 13
       }
     }, /*#__PURE__*/React.createElement("span", {
       class: "weapon-name-value",
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 1052,
+        lineNumber: 1080,
         columnNumber: 38
       }
     })), /*#__PURE__*/React.createElement("div", {
       class: "weapon-bonus",
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 1053,
+        lineNumber: 1081,
         columnNumber: 13
       }
     }, /*#__PURE__*/React.createElement("span", {
       class: "weapon-bonus-value",
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 1053,
+        lineNumber: 1081,
         columnNumber: 39
       }
     })), /*#__PURE__*/React.createElement("div", {
       class: "weapon-damage",
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 1054,
+        lineNumber: 1082,
         columnNumber: 13
       }
     }, /*#__PURE__*/React.createElement("span", {
       class: "weapon-damage-value",
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 1054,
+        lineNumber: 1082,
         columnNumber: 40
       }
     })));
@@ -1221,7 +1243,7 @@ for (let denom of moneyDenominations) {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 1090,
+      lineNumber: 1118,
       columnNumber: 19
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -1229,7 +1251,7 @@ for (let denom of moneyDenominations) {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 1091,
+      lineNumber: 1119,
       columnNumber: 9
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -1237,7 +1259,7 @@ for (let denom of moneyDenominations) {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 1092,
+      lineNumber: 1120,
       columnNumber: 13
     }
   }, denom.toUpperCase())), /*#__PURE__*/React.createElement("div", {
@@ -1245,7 +1267,7 @@ for (let denom of moneyDenominations) {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 1094,
+      lineNumber: 1122,
       columnNumber: 9
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -1253,7 +1275,7 @@ for (let denom of moneyDenominations) {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 1095,
+      lineNumber: 1123,
       columnNumber: 13
     }
   })));
@@ -1277,57 +1299,64 @@ class Feature extends ListItem {
       class: "feature multi-line-text",
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 1118,
+        lineNumber: 1146,
         columnNumber: 23
       }
     }, /*#__PURE__*/React.createElement("span", {
       class: "feature-name multi-line-text",
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 1119,
+        lineNumber: 1147,
         columnNumber: 13
       }
     }, /*#__PURE__*/React.createElement("span", {
       class: "feature-name-text multi-line-text",
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 1120,
+        lineNumber: 1148,
         columnNumber: 17
       }
-    }), " ", /*#__PURE__*/React.createElement("span", {
+    }), /*#__PURE__*/React.createElement("span", {
       class: "feature-uses",
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 1120,
-        columnNumber: 73
+        lineNumber: 1148,
+        columnNumber: 72
       }
     }, /*#__PURE__*/React.createElement("input", {
       type: "checkbox",
       class: "feature-uses-checkbox default-checkbox",
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 1121,
+        lineNumber: 1149,
         columnNumber: 21
       }
-    }), "(", /*#__PURE__*/React.createElement("span", {
+    }), /*#__PURE__*/React.createElement("span", {
       class: "feature-uses-blank",
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 1122,
-        columnNumber: 22
+        lineNumber: 1150,
+        columnNumber: 21
       }
-    }, "_ / _"), /*#__PURE__*/React.createElement("span", {
+    }, "(_ / _)"), /*#__PURE__*/React.createElement("span", {
+      class: "feature-uses-value-container",
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 1150,
+        columnNumber: 68
+      }
+    }, "(", /*#__PURE__*/React.createElement("span", {
       class: "feature-uses-value",
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 1122,
-        columnNumber: 67
+        lineNumber: 1150,
+        columnNumber: 112
       }
-    }), ")"), ":"), " ", /*#__PURE__*/React.createElement("span", {
+    }), ")")), ":"), " ", /*#__PURE__*/React.createElement("span", {
       class: "feature-text multi-line-text",
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 1123,
+        lineNumber: 1151,
         columnNumber: 33
       }
     }));
@@ -1344,8 +1373,9 @@ class Feature extends ListItem {
       allowNewlines: true
     });
     this.checkbox = block.getElementsByClassName("feature-uses-checkbox")[0];
-    this.usesBlank = block.getElementsByClassName("feature-uses-blank")[0];
+    // this.usesBlank = block.getElementsByClassName("feature-uses-blank")[0];
     this.usesValue = block.getElementsByClassName("feature-uses-value")[0];
+    this.usesContainer = block.getElementsByClassName("feature-uses")[0];
     this.checkbox.checked = "maxUses" in data;
     this.updateFeatureUses();
     this.checkbox.addEventListener("change", () => this.updateFeatureUses());
@@ -1355,8 +1385,6 @@ class Feature extends ListItem {
   }
   updateFeatureUses() {
     if (this.checkbox.checked) {
-      this.usesBlank.style.display = "none";
-      this.usesValue.style.display = "initial";
       if (!this.data.maxUses) {
         this.data.currentUses = 1;
         this.data.maxUses = 1;
@@ -1371,8 +1399,6 @@ class Feature extends ListItem {
       this.uses.numerElement.classList.add("multi-line-text");
       this.uses.denomElement.classList.add("multi-line-text");
     } else {
-      this.usesBlank.style.display = "initial";
-      this.usesValue.style.display = "none";
       delete this.data.currentUses;
       delete this.data.maxUses;
       if (this.uses) {

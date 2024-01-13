@@ -25,7 +25,7 @@
 
 [contentEditable] {
     text-overflow: clip;
-    white-space: nowrap;
+    white-space: pre;
     overflow:hidden;
     outline: none;
     border: none;
@@ -34,6 +34,7 @@
 }
 [contentEditable="true"], [contentEditable="plaintext-only"] {
     background-color: #ddd;
+    cursor: text;
     /* border-bottom-color: black; */
 }
 :is([contentEditable="true"], [contentEditable="plaintext-only"]):not([data-default], :is(.invalid:not(.ignore-invalid), .changed):not(:focus-within)):empty::before {
@@ -47,13 +48,13 @@
 }
 .invalid:not(:focus-within, .ignore-invalid), .changed {
     position: relative;
-    padding-right: calc(1.1547em + 5px); /* 1.1547 = 2 / sqrt(3) */
+    /* padding-right: calc(1.1547em + 5px); 1.1547 = 2 / sqrt(3) */
 }
-.invalid:not(:focus-within, .ignore-invalid)::after, .changed::after {
-    position: absolute;
+.invalid:not(:focus-within, .ignore-invalid)::after, .changed:not(.invalid)::after {
+    /* position: absolute; */
     right: 2px;
-    top: 50%;
-    translate: 0 -50%;
+    /* top: 50%; */
+    /* translate: 0 -50%; */
     font-size: 0.9em;
     border-color: transparent;
     border-style: none solid solid;
@@ -64,10 +65,12 @@
     justify-content: center;
     color: white;
     font-weight: bold;
-    /*margin-left: 5px;*/
+    margin-left: 5px;
     content: "!";
+    font-family: Overpass, Helvetica, sans-serif;
+    position: sticky;
 }
-.changed::after {
+.changed:not(.invalid)::after {
     border-bottom-color: blue;
 }
 .invalid:not(:focus-within, .ignore-invalid)::after {
@@ -140,46 +143,41 @@ header {
     background-color: #ccc;
     margin-bottom: 10px;
     display: grid;
-    grid-template-columns: 2fr 3fr;
-    grid-template-areas: "name other";
-    padding: 20px;
-    gap: 10px;
+    grid-template-columns: 20px 2fr 3fr 20px;
+    grid-template-areas: "left-banner name other right-banner";
+    padding: 15px 0;
+    /* gap: 10px; */
     min-height: 0;
 }
-#name-container {
-    grid-area: name;
-    position: relative;
-    min-width: 0;
-    min-height: 0;
-    max-height: 100%;
-    display: grid;
-    grid-template-columns: 20px 1fr;
-    grid-template-areas: "left-banner name";
-}
-#name-grid-area {
-    min-width: 0;
+.header-label {
+    text-transform: uppercase;
+    font-size: 9px;
 }
 #name-labeled-container {
     grid-area: name;
+    justify-content: center;
     position: relative;
     top: 50%;
     translate: 0 -50%;
-    max-height: 100%;
+    min-width: 0;
     min-height: 0;
     max-height: 100%;
     display: flex;
     flex-direction: column;
 }
+#name, #left-name-banner, #right-banner {
+    border-width: 5px 2px;
+    border-style: double solid;
+    border-color: black;
+    height: 40px;
+    background-color: white;
+}
 #name {
     margin: 0;
     margin-top: 12px;
     overflow-x: auto;
-    border-width: 5px 2px;
-    border-style: double solid;
-    border-color: black;
     padding-left: 5px;
-    background-color: white;
-    height: 40px;
+    border-right: none;
 }
 #name-value-container {
     position: relative;
@@ -191,26 +189,20 @@ header {
     font-size: 26px;
 }
 #name-label {
-    text-transform: uppercase;
+    margin-left: 21px;
     font-size: 10px;
     height: 12px;
-    margin-left: 21px;
 }
-#left-name-banner-container {
-    grid-area: "left-banner";
-}
+/* #left-name-banner-container {
+} */
 #left-name-banner {
+    grid-area: "left-banner";
     position: relative;
     width: calc(100% + 15px);
-    border-width: 5px 2px;
-    border-style: double solid;
-    border-color: black;
     color: transparent;
     top: 50%;
     translate: 0 calc(-50% + 12px);
     font-size: 23px;
-    background-color: white;
-    height: 40px;
 }
 #name-banner-back {
     position: absolute;
@@ -222,15 +214,59 @@ header {
     border-style: solid;
     border-width: 7px 0 0 17px;
 }
-/* #name::after {
-    content: "Name";
-    position: absolute;
-    font-family: "Overpass";
-    text-transform: uppercase;
-    bottom: -1.5em;
-    left: 0;
-    font-size: 10px;
-} */
+#right-banner {
+    align-self: center;
+    grid-area: right-banner;
+    border-left: none;
+}
+#header-other {
+    grid-area: other;
+    border-color: #ccc black;
+    border-style: solid double;
+    border-width: 5px;
+    background-color: white;
+}
+#header-other > div {
+    height: 100%;
+    background-color: #ccc;
+}
+#header-other-contents {
+    border-color: black;
+    border-style: double solid;
+    border-width: 5px 2px;
+    background-color: white;
+    height: 100%;
+    width: calc(100% + 4px);
+    border-radius: 15px;
+    box-sizing: border-box;
+    position: relative;
+    right: 2px;
+    padding: 5px 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr 1px auto);
+    grid-template-areas: 
+        "class-level background player-name"
+        "hr1 hr1 hr1"
+        "class-level-label background-label player-name-label"
+        "race alignment xp"
+        "hr2 hr2 hr2"
+        "race-label alignment-label xp-label";
+    gap: 1px 5px;
+}
+
+#hr1 {
+    grid-area: hr1;
+}
+#hr2 {
+    grid-area: hr2;
+}
+#hr1, #hr2 {
+    width: 100%;
+    height: 100%;
+    background-color: #ccc;
+}
+
 #numbers {
     grid-area: numbers;
     display: grid;
@@ -278,7 +314,8 @@ header {
 #savingThrowsContainer, #skillContainer {
     border: 2px solid black;
     border-radius: 5px;
-    width: calc(100% - 6px);
+    width: 100%;
+    box-sizing: border-box;
 }
 #savingThrows, #skills {
     margin: 7px 0 7px 5px;
@@ -286,6 +323,7 @@ header {
     display: flex;
     flex-direction: column;
     gap: 3.5px;
+    overflow: hidden;
 }
 .sectionTitle, .standaloneLabeledValue > :nth-child(2) > div {
     font-weight: bold;
@@ -433,11 +471,30 @@ header {
     max-width: 100%;
     white-space: nowrap;
     text-align: center;
+    box-sizing: border-box;
+    max-width: 100%;
+    /* padding: 10px 0; */
+    display: flex;
+    align-items: center;
+}
+:is(.inputLine, .topText) :first-child {
+    margin-left: auto;
+}
+:is(.inputLine, .topText) > :last-child {
+    margin-right: auto;
+}
+:is(.inputLine, .topText) > * {
+    flex-shrink: 0;
+}
+.inputLine:focus-within {
+    z-index: 1;
 }
 .topText {
     position: relative;
+    margin-top: 2px;
     width: min-content;
-    margin: 2px auto 0 auto;
+    margin: auto;
+    /* width: 100%; */
 }
 .inputLine [contenteditable] {
     position: static;
@@ -807,6 +864,9 @@ body[data-editing="true"] .feature-uses {
     border-radius: 3px;
     padding: 2px;
 }
+body[data-editing="true"] .feature-uses, body[data-editing="false"] .feature-uses-value-container {
+    margin-left: 0.35em;
+}
 .feature-uses {
     max-width: 100%;
     white-space: nowrap;
@@ -814,9 +874,11 @@ body[data-editing="true"] .feature-uses {
 .feature-uses-checkbox {
     vertical-align: middle;
 }
-body[data-editing="false"] .feature-uses-checkbox {
+body[data-editing="false"] :is(.feature-uses-checkbox, .feature-uses-blank), .feature-uses-checkbox:checked + .feature-uses-blank,
+.feature-uses-checkbox:not(:checked) + .feature-uses-blank + .feature-uses-value-container {
     display: none;
 }
+
 #death-saves-grid {
     display: grid;
     padding: 10px 5px;
@@ -879,7 +941,6 @@ body[data-editing="false"] .feature-uses-checkbox {
 }
 .proficiency {
     white-space: nowrap;
-    overflow: hidden;
 }
 .proficiencyBonusStat {
     color: #888;
