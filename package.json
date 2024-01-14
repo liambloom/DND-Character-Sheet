@@ -8,12 +8,16 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npx babel ./scripts -d ./compiled-scripts",
     "listen-scripts": "npx nodemon -e jsx --watch scripts --exec npm run build",
-    "listen-server":  "npx nodemon --watch server --exec npm start"
+    "listen-server": "npx nodemon --watch server --exec npm start"
   },
   "author": "Liam Bloom",
   "dependencies": {
+    "connect-pg-simple": "^9.0.1",
     "express": "^4.18.2",
-    "mime-types": "^2.1.35"
+    "express-session": "^1.17.3",
+    "mime-types": "^2.1.35",
+    "pg": "^8.11.3",
+    "validator": "^13.11.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.23.4",
