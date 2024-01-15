@@ -27,7 +27,7 @@ const React = {
 // #endregion
 
 // #region Constants
-const characterJson = "/characters/" + new URL(location).pathname.split("/").pop() + ".json";
+const characterJson = "/data/" + new URL(location).pathname;
 
 const newlineRegex = /[\n\r\u2028\u2029]/g;
 const statNames = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];

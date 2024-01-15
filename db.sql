@@ -43,8 +43,8 @@ CREATE TABLE public.users (
     username character varying(50) NOT NULL,
     email public.citext NOT NULL,
     display_name character varying(80) NOT NULL,
-    password bit(32)[] NOT NULL,
-    salt bit(16)[] NOT NULL,
+    password bytea NOT NULL,
+    salt bytea NOT NULL,
     created timestamp without time zone NOT NULL
 );
 
