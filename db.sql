@@ -30,9 +30,63 @@ CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
 COMMENT ON EXTENSION citext IS 'data type for case-insensitive character strings';
 
 
+--
+-- Name: share_level; Type: TYPE; Schema: public; Owner: liamr
+--
+
+CREATE TYPE public.share_level AS ENUM (
+    'none',
+    'view',
+    'edit'
+);
+
+
+ALTER TYPE public.share_level OWNER TO liamr;
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+--
+-- Name: characters; Type: TABLE; Schema: public; Owner: liamr
+--
+
+CREATE TABLE public.characters (
+    character_id uuid NOT NULL,
+    owner uuid NOT NULL,
+    title character varying(80) NOT NULL,
+    share_level public.share_level DEFAULT 'none'::public.share_level NOT NULL,
+    content jsonb NOT NULL
+);
+
+
+ALTER TABLE public.characters OWNER TO liamr;
+
+--
+-- Name: session; Type: TABLE; Schema: public; Owner: liamr
+--
+
+CREATE TABLE public.session (
+    sid character varying NOT NULL,
+    sess json NOT NULL,
+    expire timestamp(6) without time zone NOT NULL
+);
+
+
+ALTER TABLE public.session OWNER TO liamr;
+
+--
+-- Name: sharing; Type: TABLE; Schema: public; Owner: liamr
+--
+
+CREATE TABLE public.sharing (
+    "character" uuid NOT NULL,
+    "user" uuid NOT NULL,
+    share_level public.share_level NOT NULL
+);
+
+
+ALTER TABLE public.sharing OWNER TO liamr;
 
 --
 -- Name: users; Type: TABLE; Schema: public; Owner: liamr
@@ -50,6 +104,30 @@ CREATE TABLE public.users (
 
 
 ALTER TABLE public.users OWNER TO liamr;
+
+--
+-- Name: characters characters_pkey; Type: CONSTRAINT; Schema: public; Owner: liamr
+--
+
+ALTER TABLE ONLY public.characters
+    ADD CONSTRAINT characters_pkey PRIMARY KEY (character_id);
+
+
+--
+-- Name: characters owner_title_unique; Type: CONSTRAINT; Schema: public; Owner: liamr
+--
+
+ALTER TABLE ONLY public.characters
+    ADD CONSTRAINT owner_title_unique UNIQUE (owner, title);
+
+
+--
+-- Name: session session_pkey; Type: CONSTRAINT; Schema: public; Owner: liamr
+--
+
+ALTER TABLE ONLY public.session
+    ADD CONSTRAINT session_pkey PRIMARY KEY (sid);
+
 
 --
 -- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: liamr
@@ -73,6 +151,13 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_username_key UNIQUE (username);
+
+
+--
+-- Name: IDX_session_expire; Type: INDEX; Schema: public; Owner: liamr
+--
+
+CREATE INDEX "IDX_session_expire" ON public.session USING btree (expire);
 
 
 --
