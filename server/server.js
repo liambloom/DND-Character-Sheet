@@ -6,7 +6,6 @@ const url = require("node:url");
 const crypto = require("node:crypto");
 const util = require("node:util");
 const process = require("node:process");
-const http = require("node:http");
 const validator = require("validator");
 const { Pool } = require("pg");
 

@@ -55,7 +55,7 @@ CREATE TABLE public.characters (
     character_id uuid NOT NULL,
     owner uuid NOT NULL,
     title character varying(80) NOT NULL,
-    share_level public.share_level DEFAULT 'none'::public.share_level NOT NULL,
+    link_sharing public.share_level DEFAULT 'none'::public.share_level NOT NULL,
     content jsonb NOT NULL
 );
 
@@ -82,7 +82,7 @@ ALTER TABLE public.session OWNER TO liamr;
 CREATE TABLE public.sharing (
     "character" uuid NOT NULL,
     "user" uuid NOT NULL,
-    share_level public.share_level NOT NULL
+    share_type public.share_level NOT NULL
 );
 
 
@@ -104,6 +104,14 @@ CREATE TABLE public.users (
 
 
 ALTER TABLE public.users OWNER TO liamr;
+
+--
+-- Name: sharing character_user_unique; Type: CONSTRAINT; Schema: public; Owner: liamr
+--
+
+ALTER TABLE ONLY public.sharing
+    ADD CONSTRAINT character_user_unique UNIQUE ("character", "user");
+
 
 --
 -- Name: characters characters_pkey; Type: CONSTRAINT; Schema: public; Owner: liamr
