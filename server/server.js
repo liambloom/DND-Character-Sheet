@@ -20,7 +20,6 @@ const testConfig = {
     ssl: false
 };
 const sendFileOptions = { root: process.cwd() };
-const blankCharacter = JSON.parse(await fs.readFile("./blank-character.json"));
 
 const pool = new Pool(testConfig);
 
@@ -51,7 +50,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.post("/api/new-user", async (req, res) => {
+app.post("/api/user/new-user", async (req, res) => {
     const client = await pool.connect();
     
     try {
@@ -133,22 +132,18 @@ app.post("/api/new-user", async (req, res) => {
                 VALUES ($1, $2, $3, $4, $5, $6, current_timestamp)`, [userId, username, email, displayName, hash, salt]);
 
             req.session.userId = userId;
-            res.status(204).end();
+            res.status(201).end(); // TODO: Set Location header
         }
-    }
-    catch (err) {
-        console.error(err);
-        res.status(500).end();
     }
     finally {
         client.release();
     }
 });
 
-app.post("/api/login", async (req, res) => {
+app.post("/api/user/login", async (req, res) => {
     const { name, password } = req.body;
     if (typeof name !== "string" || typeof password !== "string") {
-        res.status(422).end();
+        res.status(422);
         return;
     }
     const nameType = name.indexOf("@") === -1 ? "username" : "email";
@@ -174,28 +169,17 @@ app.post("/api/login", async (req, res) => {
             res.status(401);
         }
     }
-    catch (err) {
-        console.error(err);
-        res.status(500)
-    }
     finally {
-        res.end();
         client.release();
     }
 });
 
-app.post("/api/logout", async (req, res) => {
-    try {
-        await bindPromisify(req.session, "destroy")();
-        res.status(204).end();
-    }
-    catch (err) {
-        console.error(err);
-        res.status(500).end();
-    }
+app.post("/api/user/logout", async (req, res) => {
+    await bindPromisify(req.session, "destroy")();
+    res.status(204).end();
 });
 
-app.delete("/api/user", async (req, res) => {
+app.delete("/api/user/current-user", async (req, res) => {
     const client = await pool.connect();
     try {
         const { password } = req.body;
@@ -217,138 +201,274 @@ app.delete("/api/user", async (req, res) => {
             res.status(401).end();
         }
     }
-    catch (err) {
-        console.error(err);
-        res.status(500).end();
-    }
     finally {
         client.release();
     }
 });
 
 app.get("/", async (req, res) => {
-    try {
-        const data = await fs.readFile("./views/index.html");
-        res.writeHead(200, { "Content-Type": "text/html" });
-        res.write(data);
-    }
-    catch (err) {
-        console.error(err);
-        res.writeHead(500)
-    }
-    finally {
-        res.end();
-    }
+    res.sendFileAsync("./views/index.html", sendFileOptions);
 });
 
-const ShareLevel = {
-    "none": 0,
-    "view": 1,
-    "edit": 2,
+const ShareLevel = new Map();
+ShareLevel.none = 0;
+ShareLevel.view = 1;
+ShareLevel.edit = 2;
+
+ShareLevel.set("none", ShareLevel.none)
+ShareLevel.set("view", ShareLevel.view);
+ShareLevel.set("edit", ShareLevel.edit);
+
+ShareLevel.MAX = ShareLevel.edit;
+
+const CaseChanger = {
+    change(str) {
+        let words = str.split(/_|(?=[A-Z])/g).map(s => s.toLowerCase());
+        if (words[0]?.length === 0) {
+            words.splice(0, 1);
+        }
+
+        return {
+            toSnakeCase: () => words.join("_"),
+            toCamelCase: () => words.length ? words[0] + words.slice(1).map(s => s && (s.charAt(0).toUpperCase() + s.substring(1))) : "",
+            toCapitalCase: () => words.map(s => s && (s.charAt(0).toUpperCase() + s.substring(1))),
+        }
+    }
 }
 
-async function getCharacter(sessionUser, owner, title, characterColumns = "1", sharingColumns = "1") {
-    /* `SELECT ${["character.sharing", "sharing.share_level", ...columns].join(",")} FROM characters, sharing 
-        WHERE character.owner = $1 AND character.title = $2 AND (character.owner = $3 OR character.share_level > 'none' 
-            OR (sharing.character = character.character_id AND sharing.user = $3 AND sharing.share_level > 'none'))` */
+class Character {
+    constructor(sessionUser, characterId, owner, title, linkSharing, content) {
+        this.sessionUser = sessionUser;
+        this.characterId = characterId;
 
-    const client = await pool.connect();
+        for (let [ column, value ] of Object.entries({ owner, title, linkSharing, content })) {
+            const colCapital = CaseChanger.change(column).toCapitalCase();
 
-    try {
-        let characterQueryResult = await client.query(`SELECT ${["character_id", "share_level", ...characterColumns].join(",")} FROM characters WHERE owner = $1 AND title = $2`, [owner, title]);
+            this[column + "Value"] = value;
+            this["get" + colCapital] = this.getColumnValue.bind(this, column);
+            this["set" + colCapital] = this.setColumnValue.bind(this, column);
+        }
+    }
 
-        if (characterQueryResult.rowCount === 0) {
-            return { status: 404, characterData: null, sharingData: null, shareLevel: null };
+    getColumnValue(column) {
+        return this[CaseChanger.change(column).toCamelCase() + "Value"];
+    }
+
+    async setColumnValue(column, value) {
+        const colCaseChanger = CaseChanger.change(column);
+        this[colCaseChanger.toCamelCase() + "Value"] = value;
+        await pool.query(`UPDATE characters SET ${colCaseChanger.toSnakeCase()} = $1 WHERE character_id = $2`, [value, this.characterId]);
+    }
+
+    columnExists(column) {
+        return ["character_id", "owner", "title", "link_sharing", "content"].indexOf(CaseChanger.change(column).toSnakeCase()) >= 0;
+    }
+
+    getLinkShareLevel() {
+        return ShareLevel.get(this.getLinkSharing);
+    }
+
+    async getUserDirectSharing() {
+        if (this.sessionUser == undefined) {
+            return "none";
         }
 
-        const characterData = characterQueryResult.rows[0];
-        let sharingData;
+        this.userDirectSharingValue ??= await pool.query(`SELECT share_type FROM sharing WHERE character = $1 AND user = $2`, [this.characterId, this.sessionUser]);
 
-        const sharingArgs = [characterData.character_id, sessionUser, characterData.share_level];
-        let thisShareLevel = characterData.share_level;
-
-        if (sessionUser !== null && ShareLevel[character.share_level] > ShareLevel.none) {
-            await client.query(`UPDATE sharing SET share_level = $3 WHERE character = $1 AND user = $2 AND share_level < $3`, sharingArgs);
-            sharingData = await client.query(`SELECT ${["share_level", ...sharingColumns].join(",")} FROM sharing WHERE character = $1 AND user = $2`, sharingArgs);
-
-            thisShareLevel = sharingData.share_level;
-
-            if (sharingData.rowCount === 0) {
-                sharingData = await client.query(`INSERT INTO sharing (character, "user", share_level) VALUES ($1, $2, $3) RETURNING ${sharingColumns.join(",")}`);
-                canShare = true;
-            }
-        }
-
-
-
-        if (ShareLevel(thisShareLevel) >= ShareLevel.none) {
-            return { 
-                status: 200, 
-                characterData: Object.fromEntries(characterColumns.map(c => [c, characterData[c]])),
-                sharingData: Object.fromEntries(sharingColumns.map(c => [c, sharingData[c]])),
-                shareLevel: thisShareLevel,
-            };
+        if (this.userDirectSharingValue.rowCount === 0) {
+            return "none";
         }
         else {
-            return { status: 401, characterData: null, sharingData: null, shareLevel: null };
+            return this.userDirectSharingValue.rows[0].share_type;
         }
     }
-    catch (err) {
-        console.error(err);
-        return { status: 500, characterData: null, sharingData: null, shareLevel: null };
+
+
+    async getUserDirectSharingLevel() {
+        return ShareLevel.get(await this.getUserDirectSharing())
     }
-    finally {
-        client.release();
+
+    async shareLevelGE(target) {
+        return this.currentUserIsOwner() || this.getLinkShareLevel() >= target || await this.getUserDirectSharingLevel() >= target;
+    }
+
+    async canView() {
+        return await this.shareLevelGE(ShareLevel.view);
+    }
+
+    async canEdit() {
+        return await this.shareLevelGE(ShareLevel.edit);
+    }
+
+    currentUserIsOwner() {
+        return sessionUser === this.getOwner();
+    }
+
+    async deleteCharacter() {
+        await pool.query(`
+            DELETE FROM characters WHERE character_id = $1;
+            DELETE FROM sharing WHERE character = $1;
+        `, [characterId]);
+    }
+
+    static async getBlankCharacterSheet() {
+        return this.blankCharacterSheet ??= JSON.parse(await fs.readFile("./blank-character.json"));
+    }
+
+    static async createCharacter(creatorId, title, content) {
+        const characterId = crypto.randomUUID();
+
+        await pool.query(`INSERT INTO characters (character_id, owner, title, link_sharing, content) VALUES ($1, $2, $3, 'none', $4)`, 
+            [characterId, creatorId, title, content]);
+
+        return new Character(creatorId, characterId, creatorId, title, 'none', content);
+    }
+
+    static async getCharacter(sessionUser, owner, title) {
+        const data = await pool.query(`SELECT * FROM characters WHERE owner = (SELECT user_id FROM users WHERE username = $1) AND title = $2`, [owner, title]);
+
+        if (data.rowCount === 0) {
+            return null;
+        }
+        else {
+            const { characterId, owner, title, linkSharing, content } = data.rows[0];
+            return new Character(sessionUser, characterId, owner, title, linkSharing, content);
+        }
+    }
+
+    static async getPropertyError(property, value, character) {
+        switch (property) {
+            case "title":
+                if (typeof value !== "string") {
+                    return { status: 422, content: { error: "Title must be a string", target: "value" } };
+                }
+                else if (value.length < 1) {
+                    return { status: 422, content: { error: "Title cannot be blank", target: "value" } };
+                }
+                else if (value.length > 80) {
+                    return { status: 422, content: { error: "Title cannot be more than 50 characters long", target: "value" } };
+                }
+                else if (/[^A-Za-z0-9_\-.]/.test(value)) {
+                    return { status: 422, content: { error: "Title can only contain characters letters, numbers, _, -, and .", target: "value" } };
+                }
+                else if (Character.getCharacter(req.session.userId, req.params.username, value) !== null) {
+                    return { status: 409, content: { error: "Character with this title already exists", target: "value" } };
+                }
+                else {
+                    return null;
+                }
+            case "owner":
+                if (!character.currentUserIsOwner()) {
+                    return { status: 401, content: { error: "Only the character owner can transfer ownership", target: "user" } };
+                }
+                else {
+                    const newOwnerQuery = await pool.query("SELECT user_id FROM users WHERE username = $1", [ value ]);
+
+                    if (newOwnerQuery.rowCount === 0) {
+                        return { status: 404, content: { error: "New owner does not exist", target: "value" } };
+                    }
+                    else {
+                        const originalOwner = character.getOwner();
+                        const newOwner = newOwnerQuery.rows[0].user_id;
+
+                        if (originalOwner === newOwner) {
+                            return { status: 422, content: { error: "New and current owner are the same", target: "value" } };
+                        }
+                        else {
+                            return null;
+                        }
+                    }
+                }
+            case "linkSharing":
+                if (typeof value !== "string" || !ShareLevel.has(value)) {
+                    return { status: 422, content: { error: "Link sharing must be one of 'none', 'view' or 'edit'.", target: "value" } };
+                }
+                else {
+                    return null;
+                }
+            case "content":
+                if (typeof value !== object) {
+                    return { status: 422, content: { error: "Character content must be object ", target: "value" } };
+                }
+                else {
+                    const contentStr = JSON.stringify(value);
+                    if (Buffer.byteLength(contentStr) > 1e8) {
+                        return { status: 413, content: { error: "Character content is too large (>100 MB)", target: "value" } };
+                    }
+                    else {
+                        return null;
+                    }
+                }
+            default:
+                return { status: 422, content: { error: "Property does not exist", target: "property" } }
+        }
     }
 }
+
 app.get("/:username/c/:character", async (req, res) => {
-    try {
-        const character = getCharacter(req.session.userId, req.params.username, req.params.character);
-        res.status(character.status);
-        switch (character.status) {
-            case 200:
-                await res.sendFileAsync("./views/character.html", sendFileOptions);
-                break;
-            case 404:
-                await res.sendFileAsync("./views/404.html", sendFileOptions);
-                break;
-            default:
-                res.sendStatus(character.status);
-        }
+    const character = await Character.getCharacter(req.session.userId, req.params.username, req.params.character);
+
+    if (character === null) {
+        await res.status(404).sendFileAsync("./views/404.html", sendFileOptions);
     }
-    catch (err) {
-        console.error(err);
-        res.sendStatus(500)
+    else if (!character.canView()) {
+        res.sendStatus(401);
+    }
+    else {
+        await res.status(200).sendFileAsync("./views/character.html", sendFileOptions);
     }
 });
-app.get("/data/:username/c/:character", async (req, res) => {
-    try {
-        const { status, characterData, shareLevel} = getCharacter(req.session.userId, req.params.username, req.params.character, "content");
-        res.status(status);
-        switch (status) {
-            case 200:
-                res.json(characterData.content);
-                break;
-            default:
-                res.end();
-        }
+app.get("/api/character/:username/:character", async (req, res) => {
+    const character = await Character.getCharacter(req.session.userId, req.params.username, req.params.character);
+
+    if (character === null) {
+        res.sendStatus(404);
     }
-    catch (err) {
-        console.error(err);
-        res.sendStatus(500)
+    else if (!character.canView()) {
+        res.sendStatus(401);
+    }
+    else {
+        res.status(200).json({
+            editPermission: character.canEdit(),
+            content: character.getContent(),
+        });
     }
 });
 
-// app.put(/characters\/.*.json/, async (req, res) => {
-//     try {
-//         await fs.writeFile("." + req.parsedUrl.pathname, JSON.stringify(req.body));
-//         res.status(204).end();
-//     }
-//     catch (err) {
-//         console.error(err);
-//         res.status(500).end();
-//     }
-// });
+app.put("/data/character/:username/:character", async (req, res) => {
+    const character = await Character.getCharacter(req.session.userId, req.params.username, req.params.character);
+    
+    if (character === null) {
+        res.status(404).json({ error: "Character does not exist", target: "character" });
+    }
+    else if (!character.canEdit()) {
+        res.sendStatus(401).json({ error: "No edit permission", target: "user" });
+    }
+    else {
+        const { property, value } = req.body;
+        const error = await Character.getPropertyError(property, value, character);
+
+        if (error !== null) {
+            res.status(error.status).json(error.content);
+        }
+        else {
+            const promises = [ character.setColumnValue(property, value) ];
+
+            if (property === "owner") {
+                promises.push(
+                    pool.query(`
+                        DELETE FROM sharing WHERE character = $1 AND user = $2;
+                        INSERT INTO sharing (character, user, share_type) VALUES ($1, $3, 'edit'); 
+                    `, [ character.characterId, originalOwner, newOwner])
+                );
+            }
+
+            await Promise.all(promises);
+
+            res.status(204);
+        }
+    }
+});
 
 app.get(/\./, async (req, res) => {
     try {

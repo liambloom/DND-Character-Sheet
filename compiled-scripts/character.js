@@ -24,7 +24,8 @@ const React = {
 // #endregion
 
 // #region Constants
-const characterJson = "/data/" + new URL(location).pathname;
+const [, characterOwner,, characterTitle] = new URL(location).pathname.split("/");
+const characterJson = `/api/character/${characterOwner}/${characterTitle}`;
 const newlineRegex = /[\n\r\u2028\u2029]/g;
 const statNames = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
 const statToSkillMap = {
@@ -97,11 +98,14 @@ async function save() {
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify(characterData)
+    body: JSON.stringify({
+      property: "content",
+      value: characterData
+    })
   });
   savingIndicator.style.display = "none";
   if (!res.ok) {
-    if (confirm(`Error attempting to save changes: "${res.status} - ${res.statusText}." Reload page (recommended)?`)) {
+    if (confirm(`Error attempting to save changes: "${res.status} - ${res.json().error}." Reload page (recommended)?`)) {
       location.reload();
     }
   }
@@ -603,8 +607,18 @@ class ListItem {
 
 // #region Fetch character data
 const charResponse = await fetch(characterJson);
-const characterData = await charResponse.json();
+if (!charResponse.ok) {
+  alert(`Error retrieving character data\n${charResponse.status} - ${charResponse.statusText}\n$${res.text()}`);
+}
+const {
+  content: characterData,
+  editPermission
+} = await charResponse.json();
 window.characterData = characterData;
+if (!editPermission) {
+  alert("You can't edit this. I haven't finished implementing view-only mode, but the save button won't work.");
+  // TODO
+}
 for (let skill of characterData.skills.proficiencies) {
   if (!(skill in skillToStatMap)) {
     alert("The character sheet is invalid");

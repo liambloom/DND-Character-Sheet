@@ -15,7 +15,7 @@
   "author": "Liam Bloom",
   "dependencies": {
     "connect-pg-simple": "^9.0.1",
-    "express": "^4.18.2",
+    "express": "^5.0.0-beta.1",
     "express-session": "^1.17.3",
     "pg": "^8.11.3",
     "validator": "^13.11.0"
@@ -25,5 +25,8 @@
     "@babel/core": "^7.23.6",
     "@babel/preset-react": "^7.23.3",
     "rimraf": "^5.0.5"
+  },
+  "overrides": {
+    "qs": "^6.11.2"
   }
 }
