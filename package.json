@@ -2,9 +2,9 @@
   "name": "dnd-character-sheet",
   "version": "1.0.0",
   "description": "",
-  "main": "server/server.js",
+  "main": "server/index.mjs",
   "scripts": {
-    "start": "node server/server.js",
+    "start": "node server/index.mjs",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npx babel ./scripts -d ./compiled-scripts",
     "listen-scripts": "npx nodemon -e jsx --watch scripts --exec npm run build",
