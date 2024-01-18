@@ -63,17 +63,17 @@ class Character {
 
     directSharingIds = new Map();
 
-    async getUserDirectSharing(user) {
-        if (this.directSharingIds.has(user)) {
-            return this.directSharingIds.get(user);
+    async getUserDirectSharing(userId) {
+        if (this.directSharingIds.has(userId)) {
+            return this.directSharingIds.get(userId);
         }
         else if (this.directSharingIsComplete) {
             return "none";
         }
         else {
-            const result = await pool.query(`SELECT share_type FROM sharing WHERE character = $1 AND user = $2`, [this.characterId, user]);
+            const result = await pool.query(`SELECT share_type FROM sharing WHERE character = $1 AND user = $2`, [this.characterId, userId]);
             const value = result.rowCount === 0 ? "none" : result.rows[0].share_type;
-            this.directSharingIds.set(user, value);
+            this.directSharingIds.set(userId, value);
             return value;
         }
     }
@@ -82,9 +82,31 @@ class Character {
         return ShareLevel.get(await this.getUserDirectSharing(user));
     }
 
-    async setUserDirectSharing(user, value) {
-        await pool.query(`INSERT INTO sharing (character, user, share_type) VALUES ($1, $2, $3) 
-            ON CONFLICT DO UPDATE sharing SET share_type = $3 WHERE character = $1 AND user = $2`, [this.characterId, user, value]);
+    async setUserDirectSharing(user, value, userIsUsername) {
+        delete this.directSharingUsernames;
+
+        const userIdSql = userIsUsername ? "$2" : "(SELECT user_id FROM users WHERE username = $2)";
+        if (value === "none") {
+            const userId = await pool.query(`DELETE FROM sharing WHERE character = $1 AND user = ${userIdSql} RETURNING user`, [this.characterId, user]);
+            if (userId.rowCount === 0) {
+                return false;
+            }
+            else {
+                this.directSharingIds.delete(userId);
+                return true;
+            }
+        }
+        else {
+            const userId = await pool.query(`INSERT INTO sharing (character, user, share_type) VALUES ($1, ${userIdSql}, $3) 
+                ON CONFLICT DO UPDATE sharing SET share_type = $3 WHERE character = $1 AND user = ${userIdSql} RETURNING user`, [this.characterId, user, value]);
+            if (userId.rowCount === 0) {
+                return false;
+            }
+            else {
+                this.directSharingIds.set(userId, value);
+                return true;
+            }
+        }
     }
 
     async getAllDirectSharing() {
@@ -92,7 +114,8 @@ class Character {
             return this.directSharingUsernames;
         }
         else {
-            this.directSharingUsernames = await pool.query(`SELECT user.username, sharing.share_type FROM users, sharing WHERE sharing.character = $1 AND sharing.user = users.user_id`, 
+            this.directSharingUsernames = await pool.query(`SELECT user.username, user.display_name, sharing.share_type FROM users, sharing 
+                WHERE sharing.character = $1 AND sharing.user = users.user_id`, 
                 [this.characterId]).rows;
         }
     }
@@ -226,10 +249,10 @@ characterApi.get("/:username/:character", async (req, res) => {
     const character = await Character.getCharacter(req.session.userId, req.params.username, req.params.character);
 
     if (character === null) {
-        res.sendStatus(404);
+        res.status(404).json({ error: "Character does not exist", target: "character" });
     }
     else if (!character.canView()) {
-        res.sendStatus("userId" in req.session ? 403 : 401);
+        res.status("userId" in req.session ? 403 : 401).json({ error: "No view permission", target: "user" });
     }
     else {
         res.status(200).json({
@@ -246,26 +269,34 @@ characterApi.put("/:username/:character", async (req, res) => {
         res.status(404).json({ error: "Character does not exist", target: "character" });
     }
     else if (!character.canEdit()) {
-        res.sendStatus("userId" in req.session ? 403 : 401).json({ error: "No edit permission", target: "user" });
+        res.status("userId" in req.session ? 403 : 401).json({ error: "No edit permission", target: "user" });
     }
     else {
-        const { property, value } = req.body;
+        let { property, value } = req.body;
         const error = await Character.getPropertyError(property, value, character);
 
         if (error !== null) {
             res.status(error.status).json(error.content);
         }
         else {
-            const promises = [ character.setColumnValue(property, value) ];
+            const promises = [];
 
             if (property === "owner") {
-                promises.push(
-                    pool.query(`
-                        DELETE FROM sharing WHERE character = $1 AND user = $2;
-                        INSERT INTO sharing (character, user, share_type) VALUES ($1, $3, 'edit'); 
-                    `, [ character.characterId, originalOwner, newOwner])
-                );
+                const newOwnerQuery = await pool.query(`SELECT user_id FROM users WHERE username = $1`, [ value ]);
+
+                if (newOwnerQuery.rowCount === 0) {
+                    res.status(404).json({ error: "New owner does not exist", target: "value" });
+                }
+                else {
+                    value = newOwnerQuery.rows[0].user_id;
+                    promises.push(
+                        character.setUserDirectSharing(character.getOwner(), "edit"),
+                        character.setUserDirectSharing(value, "none"),
+                    );
+                }
             }
+
+            promises.push(character.setColumnValue(property, value));
 
             await Promise.all(promises);
 
@@ -278,10 +309,10 @@ characterApi.delete("/:username/:character", async (req, res) => {
     const character = await Character.getCharacter(req.session.userId, req.params.username, req.params.character);
 
     if (character === null) {
-        res.sendStatus(404);
+        res.status(404).json({ error: "Character does not exist", target: "character" });
     }
     else if (!character.currentUserIsOwner()) {
-        res.sendStatus("userId" in req.session ? 403 : 401);
+        res.status("userId" in req.session ? 403 : 401).json({ error: "Only owner can delete character", target: "user" });
     }
     else {
         await character.deleteCharacter();
@@ -293,10 +324,10 @@ characterApi.get("/:username/:character/sharing", async (req, res) => {
     const character = await Character.getCharacter(req.session.userId, req.params.username, req.params.character);
 
     if (character === null) {
-        res.sendStatus(404);
+        res.status(404).json({ error: "Character does not exist", target: "character" });
     }
     else if (!character.canView()) {
-        res.sendStatus("userId" in req.session ? 403 : 401);
+        res.status("userId" in req.session ? 403 : 401).json({ error: "No view permission", target: "user" });
     }
     else {
         const data = await character.getAllDirectSharing();
@@ -308,19 +339,45 @@ characterApi.post("/:username/:character/sharing", async (req, res) => {
     const character = await Character.getCharacter(req.session.userId, req.params.username, req.params.character);
 
     if (character === null) {
-        res.sendStatus(404);
+        res.status(404).json({ error: "Character does not exist", target: "character" });
     }
     else if (!character.canEdit()) {
-        res.sendStatus("userId" in req.session ? 403 : 401);
+        res.status("userId" in req.session ? 403 : 401).json({ error: "No edit permission", target: "user" });
     }
     else {
-        
+        const exist = [];
+        const notExist = [];
+
+        for (let { user, level } of req.body) {
+            if (character.setUserDirectSharing(user, level, true)) {
+                notExist.push(user);
+            }
+            else {
+                exist.push(user);
+            }
+        }
+
+        if (notExist.length) {
+            const responses = [];
+
+            for (let user of exist) {
+                responses.push({ user, status: 204 });
+            }
+
+            for (let user of notExist) {
+                responses.push({ user, status: 404, error: "User does not exist", target: "value" });
+            }
+
+            res.status(207).json(responses);
+        }
+
+        res.status(204);
     }
 });
 
 characterApi.post("/new", async (req, res) => {
-    if (!("userId" in res.session)) {
-        res.status(401).json({ total: { error: "Not logged in" }, target: "user" });
+    if (!("userId" in req.session)) {
+        res.status(401).json({ error: "Not logged in", target: "user" });
     }
     else {
         const errors = Object.fromEntries([ "title", "linkSharing", "content" ]
@@ -330,7 +387,6 @@ characterApi.post("/new", async (req, res) => {
         await Promise.all(Object.values(errors));
         
         let error = false;
-        let status = Number.MAX_SAFE_INTEGER ;
         
         for (let key in errors) {
             const value = await errors[key];
@@ -340,16 +396,37 @@ characterApi.post("/new", async (req, res) => {
             else {
                 error = true;
                 errors[key] = value;
-                status = Math.min(status, value.status);
             }
         }
 
         if (error) {
-            res.status(status).json(errors);
+            res.status(errors.length === 1 ? errors[0].status : 422).json(errors);
         }
         else {
             await Character.createCharacter(req.session.userId, req.body.title, req.body.linkSharing ?? 'none', req.body.content ?? await Character.getBlankCharacterSheet());
+
+            res.status(201);
         }
+    }
+});
+
+characterApi.get("myCharacterList", async (req, res) => {
+    if (!("userId" in req.session)) {
+        res.status(401).json({ total: { error: "Not logged in" }, target: "user" });
+    }
+    else {
+        const characters = await pool.query(`SELECT title FROM characters WHERE owner = $1`, [ req.session.userId ]);
+
+        res.status(200).json(characters.rows);
+    }
+});
+
+ui.get("/:username/c/", async (req, res) => {
+    if (!("userId" in req.session)) {
+        res.redirect(303, "/login?returnTo=" + req.parsedUrl);
+    }
+    else {
+        await res.status.sendFileAsync("./views/characterList.html", sendFileOptions)
     }
 });
 
@@ -365,7 +442,6 @@ ui.get("/:username/c/:character", async (req, res) => {
         }
         else {
             res.redirect(303, "/login?returnTo=" + req.parsedUrl);
-
         }
     }
     else {

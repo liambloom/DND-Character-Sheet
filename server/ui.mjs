@@ -4,7 +4,7 @@ ui.get("/", async (req, res) => {
     res.sendFileAsync("./views/index.html", sendFileOptions);
 });
 
-ui.get(/\./, async (req, res) => {
+ui.get("/static/*", async (req, res) => {
     try {
         await res.status(200).sendFileAsync("." + req.parsedUrl.pathname, sendFileOptions);
     }

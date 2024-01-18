@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import util from "node:util";
 import validator from "validator";
 
-import { userApi, pool, bindPromisify }  from "./init.mjs";
+import { userApi, pool, bindPromisify, ui, sendFileOptions }  from "./init.mjs";
 
 userApi.post("/new-user", async (req, res) => {
     const client = await pool.connect();
@@ -159,3 +159,23 @@ userApi.delete("/current-user", async (req, res) => {
         client.release();
     }
 });
+
+ui.get("/login", async (req, res) => {
+    if (req.session.userId) {
+        const username = pool.query("SELECT username FROM users WHERE user_id = $1", [req.session.userId]);
+        res.redirect(303, `./${username}/c/`)
+    }
+    else {
+        await res.status(200).sendFileAsync("./views/login.html", sendFileOptions);
+    }
+});
+
+ui.get("/signup", async (req, res) => {
+    if (req.session.userId) {
+        const username = pool.query("SELECT username FROM users WHERE user_id = $1", [req.session.userId]);
+        res.redirect(303, `./${username}/c/`)
+    }
+    else {
+        await res.status(200).sendFileAsync("./views/signup.html", sendFileOptions);
+    }
+})
