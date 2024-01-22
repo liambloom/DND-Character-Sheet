@@ -1,0 +1,87 @@
+@font-face {
+    font-family: "Overpass";
+    src: url(/static/fonts/Overpass/Overpass-VariableFont_wght.ttf);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    overflow: auto;
+    height: 100vh;
+}
+
+body, input {
+    font-family: Overpass, Helvetica, sans-serif;
+}
+
+form {
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    padding: 35px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin: auto;
+    width: min-content;
+}
+
+input, input:invalid, button, button:invalid {
+    outline: none;
+}
+
+input:is([type="text"], [type="email"], [type="password"]) {
+    width: 250px;
+    font-size: 16px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    max-width: 100%;
+}
+
+#submit {
+    align-self: flex-end;
+}
+
+.form-bottom-text {
+    font-size: 14px;
+}
+
+#title {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 5px;
+}
+
+h1 {
+    color: #444;
+    margin: 0;
+    font-size: 24px;
+
+}
+
+.error {
+    color: red;
+    font-size: 12px;
+    /* height: 24px; */
+    line-height: 12px;
+    margin: 2px 0;
+}
+
+.error:empty::after {
+    content: ".";
+    visibility: hidden;
+}
+
+input[type="button"], input[type="submit"], button {
+    width: 80px;
+    padding: 10px 12px;
+    border: none;
+    background-color: rgb(75, 94, 202);
+    border-radius: 3px;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+}

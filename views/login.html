@@ -3,13 +3,32 @@
     <head>
         <meta charset="utf8">
         <title>Login</title>
+
+        <link rel="stylesheet" href="/static/styles/signup-login.css">
+        <script defer src="/static/scripts/signup-login.js"></script>
+
+        <link rel="icon" href="/static/img/favicon/favicon32.png" sizes="32x32">
+        <link rel="icon" href="/static/img/favicon/favicon64.png" sizes="64x64">
+        <link rel="icon" href="/static/img/favicon/favicon128.png" sizes="128x128">
+        <link rel="icon" href="/static/img/favicon/favicon196.png" sizes="196x196">
     </head>
     <body>
-        <form>
-            <input name="loginName" type="text" placeholder="username or email">
-            <input name="password" type="password" placeholder="password">
-            <a href="/signup">Create an account</a>
-            <input type="submit" value="Login">
+        <form id="signup">
+            <div id="title">
+                <img src="/static/img/logo.svg">
+                <h1>Log in</h1>
+            </div>
+
+            <div class="field">
+                <input name="name" type="text" placeholder="username or email">
+                <div id="name-error" class="error"></div>
+            </div>
+            <div class="field">
+                <input name="password" type="password" placeholder="password">
+                <div id="password-error" class="error"></div>
+            </div>
+            <a id="signup-login-switch" href="/signup" class="form-bottom-text">Create a new account</a>
+            <input id="submit" type="submit" value="Log in">
         </form>
     </body>
 </html>

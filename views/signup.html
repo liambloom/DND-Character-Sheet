@@ -3,22 +3,40 @@
     <head>
         <meta charset="utf8">
         <title>Sign up</title>
+
+        <link rel="stylesheet" href="/static/styles/signup-login.css">
+        <script defer src="/static/scripts/signup-login.js"></script>
+
+        <link rel="icon" href="/static/img/favicon/favicon32.png" sizes="32x32">
+        <link rel="icon" href="/static/img/favicon/favicon64.png" sizes="64x64">
+        <link rel="icon" href="/static/img/favicon/favicon128.png" sizes="128x128">
+        <link rel="icon" href="/static/img/favicon/favicon196.png" sizes="196x196">
     </head>
     <body>
-        <form>
-            <input name="username" type="text" placeholder="username">
-            <input name="email" type="email" placeholder="email">
-            <input name="displayName" type="text" placeholder="display name">
-            <input name="password" type="password" placeholder="password">
-            <a href="/login">Log in</a>
-            <input type="submit" value="Sign up">
+        <form id="signup">
+            <div id="title">
+                <img src="/static/img/logo.svg">
+                <h1>Create New Account</h1>
+            </div>
+
+            <div class="field">
+                <input name="username" type="text" placeholder="username">
+                <div id="username-error" class="error"></div>
+            </div>
+            <div class="field">
+                <input name="email" type="email" placeholder="email">
+                <div id="email-error" class="error"></div>
+            </div>
+            <div class="field">
+                <input name="displayName" type="text" placeholder="display name">
+                <div id="displayName-error" class="error"></div>
+            </div>
+            <div class="field">
+                <input name="password" type="password" placeholder="password">
+                <div id="password-error" class="error"></div>
+            </div>
+            <a id="signup-login-switch" href="/login" class="form-bottom-text">Already have an account?</a>
+            <input id="submit" type="submit" value="Sign up">
         </form>
-        <script>
-            const form = document.forms[0];
-            fetch("/new-user", {
-                method: "POST",
-                
-            });
-        </script>
     </body>
 </html>

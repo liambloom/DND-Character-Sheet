@@ -300,7 +300,7 @@ characterApi.put("/:username/:character", async (req, res) => {
 
             await Promise.all(promises);
 
-            res.status(204);
+            res.status(204).end();
         }
     }
 });
@@ -316,7 +316,7 @@ characterApi.delete("/:username/:character", async (req, res) => {
     }
     else {
         await character.deleteCharacter();
-        res.status(204);
+        res.status(204).end();
     }
 });
 
@@ -371,7 +371,7 @@ characterApi.post("/:username/:character/sharing", async (req, res) => {
             res.status(207).json(responses);
         }
 
-        res.status(204);
+        res.status(204).end();
     }
 });
 
@@ -405,7 +405,7 @@ characterApi.post("/new", async (req, res) => {
         else {
             await Character.createCharacter(req.session.userId, req.body.title, req.body.linkSharing ?? 'none', req.body.content ?? await Character.getBlankCharacterSheet());
 
-            res.status(201);
+            res.status(201).end();
         }
     }
 });
@@ -426,7 +426,7 @@ ui.get("/:username/c/", async (req, res) => {
         res.redirect(303, "/login?returnTo=" + req.parsedUrl);
     }
     else {
-        await res.status.sendFileAsync("./views/characterList.html", sendFileOptions)
+        await res.status(200).sendFileAsync("./views/characterList.html", sendFileOptions)
     }
 });
 

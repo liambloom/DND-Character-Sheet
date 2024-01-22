@@ -6,11 +6,15 @@ import { userApi, pool, bindPromisify, ui, sendFileOptions }  from "./init.mjs";
 
 userApi.post("/new-user", async (req, res) => {
     const client = await pool.connect();
-    
+    console.log(req.body);
+
+    if (req.body === undefined) {
+        res.status(400).end();
+        return;
+    }
+
     try {
         const { username, displayName, email, password } = req.body;
-
-        console.log(req.body);
 
         const errors = {};
         let duplicateError = false;
@@ -86,7 +90,8 @@ userApi.post("/new-user", async (req, res) => {
                 VALUES ($1, $2, $3, $4, $5, $6, current_timestamp)`, [userId, username, email, displayName, hash, salt]);
 
             req.session.userId = userId;
-            res.status(201).end(); // TODO: Set Location header
+            res.status(201).setHeader("Location", "/" + username + "/c/"); // TODO: Set Location header
+            res.end();
         }
     }
     finally {
@@ -97,30 +102,31 @@ userApi.post("/new-user", async (req, res) => {
 userApi.post("/login", async (req, res) => {
     const { name, password } = req.body;
     if (typeof name !== "string" || typeof password !== "string") {
-        res.status(422);
+        res.status(422).end();
         return;
     }
     const nameType = name.indexOf("@") === -1 ? "username" : "email";
     const client = await pool.connect();
     
     try {
-        const user = (await client.query(`SELECT password, salt, user_id FROM users WHERE ${nameType} = $1`, [ name ])).rows[0];
+        const user = (await client.query(`SELECT password, salt, user_id, username FROM users WHERE ${nameType} = $1`, [ name ])).rows[0];
 
         console.log(nameType);
         console.log(name);
 
-        console.log(await util.promisify(crypto.scrypt)(password, user.salt, 32));
-        console.log(Buffer.from(user.password));
         
         if (user === undefined) {
-            res.status(404);
+            res.status(404).end();
         }
         else if (crypto.timingSafeEqual(await util.promisify(crypto.scrypt)(password, user.salt, 32), Buffer.from(user.password))) {
             req.session.userId = user.user_id;
-            res.status(204);
+            res.status(200).json({
+                username: user.username,
+                characterList: `/${user.username}/c/`,
+            });
         }
         else {
-            res.status(401);
+            res.status(401).end();
         }
     }
     finally {

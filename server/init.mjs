@@ -5,6 +5,7 @@ import url from "node:url";
 import util from "node:util";
 import process from "node:process";
 import pg from "pg";
+import "body-parser";
 
 export const app = express();
 export const port = process.env.PORT || 8080;
@@ -21,6 +22,10 @@ export const pool = new pg.Pool(testConfig);
 const PGSession = pgConnect(session);
 
 app.use(express.json());
+app.use((req, res, next) => {
+    console.log(req.body);
+    next();
+})
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
     cookie: {
@@ -42,7 +47,7 @@ export function bindPromisify(obj, func) {
 }
 
 app.use((req, res, next) => {
-    req.parsedUrl = url.parse(`${req.protocol}://${req.headers.host}${req.originalUrl}`, true);
+    req.parsedUrl = new URL(`${req.protocol}://${req.headers.host}${req.originalUrl}`);
     res.sendFileAsync = bindPromisify(res, "sendFile");
     next();
 });
