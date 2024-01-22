@@ -168,8 +168,8 @@ userApi.delete("/current-user", async (req, res) => {
 
 ui.get("/login", async (req, res) => {
     if (req.session.userId) {
-        const username = pool.query("SELECT username FROM users WHERE user_id = $1", [req.session.userId]);
-        res.redirect(303, `./${username}/c/`)
+        const username = (await pool.query("SELECT username FROM users WHERE user_id = $1", [req.session.userId])).rows[0].username;
+        res.redirect(303, req.parsedUrl.searchParams.get("returnTo") ?? `./${username}/c/`)
     }
     else {
         await res.status(200).sendFileAsync("./views/login.html", sendFileOptions);
@@ -178,8 +178,8 @@ ui.get("/login", async (req, res) => {
 
 ui.get("/signup", async (req, res) => {
     if (req.session.userId) {
-        const username = pool.query("SELECT username FROM users WHERE user_id = $1", [req.session.userId]);
-        res.redirect(303, `./${username}/c/`)
+        const username = (await pool.query("SELECT username FROM users WHERE user_id = $1", [req.session.userId])).rows[0].username;
+        res.redirect(303, req.parsedUrl.searchParams.get("returnTo") ?? `./${username}/c/`)
     }
     else {
         await res.status(200).sendFileAsync("./views/signup.html", sendFileOptions);
