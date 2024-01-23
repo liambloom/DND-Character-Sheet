@@ -1,0 +1,172 @@
+:root.leaving {
+    cursor: wait !important;
+    height: 100vh;
+}
+
+:root.leaving * {
+    pointer-events: none !important;
+}
+
+body {
+    font-size: 16px;
+}
+
+header {
+    margin: 30px 40px 20px 40px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+h1 {
+    font-size: 40px;
+    margin: 0;
+}
+
+#list {
+    display: flex;
+    flex-direction: column;
+    margin: 50px;
+}
+.li {
+    display: grid;
+    grid-template-areas: "data options";
+    height: 40px;
+    grid-template-columns: 1fr 40px;
+    border-radius: 20px;
+    position: relative;
+}
+
+.li:not(:last-child) {
+    margin-bottom: 1px;
+}
+
+.li:not(:last-child)::after {
+    content: "";
+    display: block;
+    width: calc(100% - 40px);
+    left: 20px;
+    height: 1px;
+    background-color: #bbb;
+    bottom: -1px;
+    position: absolute;
+}
+
+.li:hover {
+    background-color: #eee;
+}
+
+.li .content {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    color: black;
+    text-decoration: none;
+    padding: 0 15px ;
+    align-items: center;
+}
+
+#list-title {
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+#list-title::after {
+    content: none;
+}
+
+.options {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    background-color: transparent;
+    border: none;
+    margin: 5px;
+    position: relative;
+}
+
+.options:hover {
+    background-color: #bbb;
+}
+
+.options .dot {
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background-color: black;
+}
+
+.optionMenu {
+    display: none;
+    position: absolute;
+    top: 90%;
+    right: 40%;
+    background-color: white;
+    box-shadow: 0 0 2px #0008;
+    z-index: 1;
+    animation: 0.3s ease-in-out both appear;
+    flex-direction: column;
+    border-radius: 3px;
+}
+
+.optionMenu > input {
+    padding: 5px 10px;
+    margin: 0;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+}
+.optionMenu > input:hover {
+    background-color: #ccc;
+}
+
+
+.options.open .optionMenu {
+    display: flex;
+}
+
+@keyframes appear {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+
+button {
+    cursor: pointer;
+}
+
+#newCharacter {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 59px;
+    height: 59px;
+    border-radius: 50%;
+    box-shadow: 2px 2px 3px 0px #0004/*, 2px 2px 3px 0 inset #0004*/;
+    border: 1px solid #bbb;
+    background-color: white;
+}
+#newCharacter:hover {
+    background-color: #ddd;
+}
+#newCharacter::before, #newCharacter::after {
+    content: "";
+    color: transparent;
+    background-color: #444;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    display: block;
+    position: absolute;
+    border-radius: 1.5px;
+}
+#newCharacter::before {
+    width: 3px;
+    height: 21px;
+}
+#newCharacter::after {
+    width: 21px;
+    height: 3px;
+}

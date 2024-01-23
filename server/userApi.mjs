@@ -149,11 +149,10 @@ userApi.delete("/current-user", async (req, res) => {
         const { password: passwordHash, salt } = (await client.query(`SELECT password, salt FROM users WHERE user_id = $1`, [ req.session.userId ])).rows[0];
 
         if (crypto.timingSafeEqual(await util.promisify(crypto.scrypt)(password, salt, 32), Buffer.from(passwordHash))) {
-            await client.query(`
-                DELETE FROM users WHERE user_id = $1;
-                DELETE FROM sharing WHERE user = $1 OR character = (SELECT character_id FROM characters WHERE owner = $1);
-                DELETE FROM characters WHERE owner = $1;
-            `, [ req.session.userId ]);
+            await Promise.all([
+                client.query(`DELETE FROM users WHERE user_id = $1`, [ req.session.userId ]),
+                client.query(`DELETE FROM sharing WHERE user = $1 OR character = (SELECT character_id FROM characters WHERE owner = $1)`, [ req.session.userId ]),
+                client.query(`DELETE FROM characters WHERE owner = $1`, [ req.session.userId ])]);
             await bindPromisify(req.session, "destroy")();
             res.status(204).end();
         }

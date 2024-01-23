@@ -1,8 +1,4 @@
 @font-face {
-    font-family: "Overpass";
-    src: url(/static/fonts/Overpass/Overpass-VariableFont_wght.ttf);
-}
-@font-face {
     font-family: Kalam;
     src: url(/static/fonts/Kalam/Kalam-Regular.ttf);
     ascent-override: 100%;
@@ -13,7 +9,7 @@
     src: url(/static/fonts/Architects_Daughter/ArchitectsDaughter-Regular.ttf)
 }
 
-[contentEditable], .written, .standaloneLabeledValue > :first-child, .stat-mod {
+[contentEditable]:where(:not(#title)), .written, .standaloneLabeledValue > :first-child, .stat-mod, #playerName {
     font-family: "Architects Daughter", "Bradley Hand", cursive;
 }
 #misc > * > * > :not(.topText, .sectionTitle, #death-saves-grid), .stat-val, .standaloneLabeledValue > :first-child, #name-value {
@@ -32,7 +28,7 @@
     /* border-bottom: 1px solid transparent; */
     display: inline;
 }
-[contentEditable="true"], [contentEditable="plaintext-only"] {
+[contentEditable="true"]:not(#title), [contentEditable="plaintext-only"]:not(#title) {
     background-color: #ddd;
     cursor: text;
     /* border-bottom-color: black; */
@@ -94,10 +90,8 @@
 }
 body {
     background-color: #ccc;
-    font-family: Overpass, Helvetica, sans-serif;
     font-weight: 300;
     font-size: 12px;
-    margin: 0;
     padding: 8px 0;
 }
 body.dragHappening {
@@ -957,6 +951,41 @@ body[data-editing="true"] .proficiency label [contentEditable] {
 
 * {
     outline: none;
+}
+#top-left {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: calc((100vw - 9.5in) / 2 - 10px);
+}
+#title {
+    font-size: 30px;
+    font-weight: 450;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#home {
+    display: block;
+    /* display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    background-color: transparent;
+    width: 60px;
+    height: 60px;*/
+    height: 40px;
+    /* border-radius: 3px; */
+    flex-shrink: 0;
+}
+/* #home:hover {
+    background-color: #0002;
+} */
+#home img {
+    height: 40px;
+    aspect-ratio: 1;
 }
 button {
     padding: 0;

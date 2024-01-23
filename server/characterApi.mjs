@@ -50,7 +50,7 @@ class Character {
     async setColumnValue(column, value) {
         const colCaseChanger = CaseChanger.change(column);
         this[colCaseChanger.toCamelCase() + "Value"] = value;
-        await pool.query(`UPDATE characters SET ${colCaseChanger.toSnakeCase()} = $1 WHERE character_id = $2`, [value, this.characterId]);
+        await pool.query(`UPDATE characters SET ${colCaseChanger.toSnakeCase()} = $1, last_modified = 'now' WHERE character_id = $2`, [value, this.characterId]);
     }
 
     columnExists(column) {
@@ -141,42 +141,42 @@ class Character {
     }
 
     currentUserIsOwner() {
-        return sessionUser === this.getOwner();
+        return this.sessionUser === this.getOwner();
     }
 
     async deleteCharacter() {
-        await pool.query(`
-            DELETE FROM characters WHERE character_id = $1;
-            DELETE FROM sharing WHERE character = $1;
-        `, [characterId]);
+        await Promise.all([
+            pool.query(`DELETE FROM characters WHERE character_id = $1`, [this.characterId]),
+            pool.query(`DELETE FROM sharing WHERE character = $1`, [this.characterId])
+        ]);
     }
 
     static async getBlankCharacterSheet() {
-        return this.blankCharacterSheet ??= JSON.parse(await fs.readFile("./blank-character.json"));
+        return this.blankCharacterSheet ??= JSON.parse(await fs.readFile("./json/blank-character.json"));
     }
 
     static async createCharacter(creatorId, title, linkSharing, content) {
         const characterId = crypto.randomUUID();
 
-        await pool.query(`INSERT INTO characters (character_id, owner, title, link_sharing, content) VALUES ($1, $2, $3, $4, $5)`, 
+        await pool.query(`INSERT INTO characters (character_id, owner, title, link_sharing, content, last_modified) VALUES ($1, $2, $3, $4, $5, 'now')`, 
             [characterId, creatorId, title, linkSharing, content]);
 
         return new Character(creatorId, characterId, creatorId, title, linkSharing, content);
     }
 
-    static async getCharacter(sessionUser, owner, title) {
-        const data = await pool.query(`SELECT * FROM characters WHERE owner = (SELECT user_id FROM users WHERE username = $1) AND title = $2`, [owner, title]);
+    static async getCharacter(sessionUser, owner, title, ownerIsUsername = true) {
+        const data = await pool.query(`SELECT * FROM characters WHERE owner = ${ownerIsUsername ? "(SELECT user_id FROM users WHERE username = $1)" : "$1"} AND title = $2`, [owner, title]);
 
         if (data.rowCount === 0) {
             return null;
         }
         else {
-            const { characterId, owner, title, linkSharing, content } = data.rows[0];
-            return new Character(sessionUser, characterId, owner, title, linkSharing, content);
+            const { character_id, owner, title, link_sharing, content } = data.rows[0];
+            return new Character(sessionUser, character_id, owner, title, link_sharing, content);
         }
     }
 
-    static async getPropertyError(property, value, character) {
+    static async getPropertyError(property, value, character, userId) {
         switch (property) {
             case "title":
                 if (typeof value !== "string") {
@@ -191,7 +191,7 @@ class Character {
                 else if (/[^A-Za-z0-9_\-.]/.test(value)) {
                     return { status: 422, content: { error: "Title can only contain characters letters, numbers, _, -, and .", target: "value" } };
                 }
-                else if (Character.getCharacter(req.session.userId, req.params.username, value) !== null) {
+                else if ((await Character.getCharacter(userId, userId, value, false)) !== null) {
                     return { status: 409, content: { error: "Character with this title already exists", target: "value" } };
                 }
                 else {
@@ -227,7 +227,7 @@ class Character {
                     return null;
                 }
             case "content":
-                if (typeof value !== object) {
+                if (typeof value !== "object") {
                     return { status: 422, content: { error: "Character content must be object ", target: "value" } };
                 }
                 else {
@@ -251,12 +251,19 @@ characterApi.get("/:username/:character", async (req, res) => {
     if (character === null) {
         res.status(404).json({ error: "Character does not exist", target: "character" });
     }
-    else if (!character.canView()) {
+    else if (!await character.canView()) {
         res.status("userId" in req.session ? 403 : 401).json({ error: "No view permission", target: "user" });
     }
     else {
+        const [editPermission, ownerDisplayNameQuery] = await Promise.all([
+            character.canEdit(),
+            pool.query("SELECT display_name FROM users WHERE user_id = $1", [character.getOwner()]),
+        ])
+
         res.status(200).json({
-            editPermission: character.canEdit(),
+            editPermission, 
+            ownerDisplayName: ownerDisplayNameQuery.rows[0].display_name,
+            title: character.getTitle(),
             content: character.getContent(),
         });
     }
@@ -268,12 +275,12 @@ characterApi.put("/:username/:character", async (req, res) => {
     if (character === null) {
         res.status(404).json({ error: "Character does not exist", target: "character" });
     }
-    else if (!character.canEdit()) {
+    else if (!await character.canEdit()) {
         res.status("userId" in req.session ? 403 : 401).json({ error: "No edit permission", target: "user" });
     }
     else {
         let { property, value } = req.body;
-        const error = await Character.getPropertyError(property, value, character);
+        const error = await Character.getPropertyError(property, value, character, req.session.userId);
 
         if (error !== null) {
             res.status(error.status).json(error.content);
@@ -326,7 +333,7 @@ characterApi.get("/:username/:character/sharing", async (req, res) => {
     if (character === null) {
         res.status(404).json({ error: "Character does not exist", target: "character" });
     }
-    else if (!character.canView()) {
+    else if (!await character.canView()) {
         res.status("userId" in req.session ? 403 : 401).json({ error: "No view permission", target: "user" });
     }
     else {
@@ -341,7 +348,7 @@ characterApi.post("/:username/:character/sharing", async (req, res) => {
     if (character === null) {
         res.status(404).json({ error: "Character does not exist", target: "character" });
     }
-    else if (!character.canEdit()) {
+    else if (!await character.canEdit()) {
         res.status("userId" in req.session ? 403 : 401).json({ error: "No edit permission", target: "user" });
     }
     else {
@@ -380,8 +387,10 @@ characterApi.post("/new", async (req, res) => {
         res.status(401).json({ error: "Not logged in", target: "user" });
     }
     else {
+        req.body ??= {};
+
         const errors = Object.fromEntries([ "title", "linkSharing", "content" ]
-            .map(column => [column, req.body[column]])
+            .map(column => [column, req.body[column], null, res.session.userId])
             .filter(([, value]) => value != null)
             .map(Character.getPropertyError))
         await Promise.all(Object.values(errors));
@@ -403,19 +412,37 @@ characterApi.post("/new", async (req, res) => {
             res.status(errors.length === 1 ? errors[0].status : 422).json(errors);
         }
         else {
-            await Character.createCharacter(req.session.userId, req.body.title, req.body.linkSharing ?? 'none', req.body.content ?? await Character.getBlankCharacterSheet());
+            const title = req.body.title ?? (await pool.query(`SELECT 'Character-' || COALESCE(
+                (SELECT min(CAST(substring("outer".title FROM 11) AS integer)) + 1 FROM characters as "outer" WHERE owner = $1 
+                AND NOT EXISTS (SELECT FROM characters as "inner" WHERE owner = $1 AND "inner".title = 'Character-' || (cast(substring("outer".title FROM 11) AS integer) + 1)))
+                , 1) AS title`, [req.session.userId])).rows[0].title;
 
-            res.status(201).end();
+            console.log(title);
+
+            const [character, users] = await Promise.all([
+                await Character.createCharacter(
+                    req.session.userId, 
+                    title, 
+                    req.body.linkSharing ?? 'none', 
+                    req.body.content ?? await Character.getBlankCharacterSheet()
+                ),
+                await pool.query("SELECT username FROM users WHERE user_id = $1", [req.session.userId]),
+            ]);
+
+            res.status(201).setHeader("Location", `/${users.rows[0].username}/c/${character.getTitle()}`);
+            res.end();
         }
     }
 });
 
-characterApi.get("myCharacterList", async (req, res) => {
+characterApi.get("/myCharacterList", async (req, res) => {
     if (!("userId" in req.session)) {
         res.status(401).json({ total: { error: "Not logged in" }, target: "user" });
     }
     else {
-        const characters = await pool.query(`SELECT title FROM characters WHERE owner = $1`, [ req.session.userId ]);
+        const characters = await pool.query(`SELECT characters.title, characters.last_modified, users.username AS owner_username, users.display_name AS owner_display_name
+            FROM characters, users WHERE characters.owner = $1 AND users.user_id = characters.owner`, [ req.session.userId ]);
+        // ${["name", "classes", "stats", "xp", "dead", "hp"].map(k => `characters.content->'${k}' AS '${k}'`).join(", ")}
 
         res.status(200).json(characters.rows);
     }
@@ -436,7 +463,7 @@ ui.get("/:username/c/:character", async (req, res) => {
     if (character === null) {
         await res.status(404).sendFileAsync("./views/404.html", sendFileOptions);
     }
-    else if (!character.canView()) {
+    else if (!await character.canView()) {
         if ("userId" in req.session) {
             res.sendStatus(403);
         }

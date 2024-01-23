@@ -1,1 +1,32 @@
-todo: character list
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf8">
+        <title>Characters</title>
+        
+        <link rel="stylesheet" href="/static/styles/common.css">
+        <link rel="stylesheet" href="/static/styles/characterList.css">
+        <script defer type="module" src="/static/scripts/characterList.js"></script>
+
+        <link rel="icon" href="/static/img/favicon/favicon32.png" sizes="32x32">
+        <link rel="icon" href="/static/img/favicon/favicon64.png" sizes="64x64">
+        <link rel="icon" href="/static/img/favicon/favicon128.png" sizes="128x128">
+        <link rel="icon" href="/static/img/favicon/favicon196.png" sizes="196x196">
+    </head>
+    <body>
+        <header>
+            <img src="/static/img/logo.svg">
+            <h1>My Characters</h1>
+        </header>
+        <div id="list">
+            <div id="list-title" class="li">
+                <div class="content">
+                    <div class="title">Title</div>
+                    <div class="owner">Owner</div>
+                    <div class="last-modified">Last Modified</div>
+                </div>
+            </div>
+        </div>
+        <button id="newCharacter"></button>
+    </body>
+</html>

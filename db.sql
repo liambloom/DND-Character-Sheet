@@ -56,7 +56,8 @@ CREATE TABLE public.characters (
     owner uuid NOT NULL,
     title character varying(80) NOT NULL,
     link_sharing public.share_level DEFAULT 'none'::public.share_level NOT NULL,
-    content jsonb NOT NULL
+    content jsonb NOT NULL,
+    last_modified timestamp without time zone
 );
 
 

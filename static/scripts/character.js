@@ -1,27 +1,4 @@
-// #region React
-
-// https://stackoverflow.com/a/42405694/11326662
-const React = {
-  createElement: function (tag, attrs, children) {
-    var element = document.createElement(tag);
-    for (let name in attrs) {
-      if (name && attrs.hasOwnProperty(name)) {
-        let value = attrs[name];
-        if (value === true) {
-          element.setAttribute(name, name);
-        } else if (value !== false && value != null) {
-          element.setAttribute(name, value.toString());
-        }
-      }
-    }
-    for (let i = 2; i < arguments.length; i++) {
-      let child = arguments[i];
-      element.appendChild(child.nodeType == null ? document.createTextNode(child.toString()) : child);
-    }
-    return element;
-  }
-};
-// #endregion
+import React from "./jsx.js";
 
 // #region Constants
 const [, characterOwner,, characterTitle] = new URL(location).pathname.split("/");
@@ -180,16 +157,21 @@ class DataDisplay {
     this.getDefault = args.getDefault;
     this.editable = args.editable ?? editable.inEditingMode;
     this.autoResize = args.autoResize ?? false;
+    this.inCharacterSheet = args.inCharacterSheet ?? true;
     const {
       listenTo = []
     } = args;
     switch (this.editable) {
       case editable.always:
         this.element.contentEditable = contentEditableValue;
-        alwaysEditing.push(this.element);
+        if (this.inCharacterSheet) {
+          alwaysEditing.push(this.element);
+        }
         break;
       case editable.inEditingMode:
-        editingMode.push(this.element);
+        if (this.inCharacterSheet) {
+          editingMode.push(this.element);
+        }
         this.element.contentEditable = editing ? contentEditableValue : "false";
         break;
     }
@@ -284,7 +266,9 @@ class DataDisplay {
         const parse = this.parse(this.element.innerText);
         if (parse.isValid && this.dataObject[this.property] !== parse.value && (this.allowNewlines || !newlineRegex.test(this.element.innerText))) {
           this.dataObject[this.property] = parse.value;
-          characterChanged();
+          if (this.inCharacterSheet) {
+            characterChanged();
+          }
           doListeners = true;
         } else {
           doListeners = false;
@@ -386,14 +370,16 @@ class DataDisplay {
         this.element.dataset.default = this.dataToString(defaultVal);
       }
     }
-    const index = invalid.indexOf(this);
-    if (this.checkElementValidity().display) {
-      if (index >= 0) {
-        invalid.splice(index, 1);
-      }
-    } else {
-      if (index === -1) {
-        invalid.push(this);
+    if (this.inCharacterSheet) {
+      const index = invalid.indexOf(this);
+      if (this.checkElementValidity().display) {
+        if (index >= 0) {
+          invalid.splice(index, 1);
+        }
+      } else {
+        if (index === -1) {
+          invalid.push(this);
+        }
       }
     }
     this.maybeResizeFont();
@@ -612,7 +598,9 @@ if (!charResponse.ok) {
 }
 const {
   content: characterData,
-  editPermission
+  editPermission,
+  ownerDisplayName,
+  title
 } = await charResponse.json();
 window.characterData = characterData;
 if (!editPermission) {
@@ -626,6 +614,20 @@ for (let skill of characterData.skills.proficiencies) {
   }
 }
 // #endregion
+
+document.getElementById("title").innerText = title;
+
+// const titleDisplay = new DataDisplay({
+//     element: document.getElementById("title"),
+//     dataObject: { title },
+//     property: "title",
+//     validator: s => /,
+//     editable: editable.always
+// });
+
+// titleDisplay.addChangeListener(value => {
+
+// })
 
 // #region Character Data
 const characterName = new DataDisplay({
@@ -669,6 +671,14 @@ Object.defineProperty(classAndLvl, "characterLevel", {
 const background = new DataDisplay({
   element: document.getElementById("background"),
   property: "background"
+});
+const playerName = new DataDisplay({
+  element: document.getElementById("playerName"),
+  dataObject: {
+    ownerDisplayName
+  },
+  property: "ownerDisplayName",
+  editable: editable.never
 });
 const race = new DataDisplay({
   element: document.getElementById("race"),
@@ -795,7 +805,15 @@ function hitDieToString(die) {
 }
 const hitDiceArgs = {
   dataFromString: str => str.split("+").map(hitDieFromString),
-  dataToString: dice => dice.map(hitDieToString).join("+"),
+  dataToString: dice => dice.map(hitDieToString).join("+")
+};
+const totalHitDice = new DataDisplay({
+  ...hitDiceArgs,
+  element: document.getElementById("hit-dice-total"),
+  property: "hitDiceTotal",
+  validate: val => val.map(({
+    n
+  }) => n).reduce((sum, v) => sum + v) === classAndLvl.characterLevel,
   getDefault: () => {
     const v = [];
     for (let c of classAndLvl.value) {
@@ -809,15 +827,7 @@ const hitDiceArgs = {
       });
     }
     return v;
-  }
-};
-const totalHitDice = new DataDisplay({
-  ...hitDiceArgs,
-  element: document.getElementById("hit-dice-total"),
-  property: "hitDiceTotal",
-  validate: val => val.map(({
-    n
-  }) => n).reduce((sum, v) => sum + v) === classAndLvl.characterLevel,
+  },
   listenTo: [classAndLvl]
 });
 const hitDice = new DataDisplay({
@@ -839,6 +849,7 @@ const hitDice = new DataDisplay({
     }
     return i === val.length;
   },
+  getDefault: () => totalHitDice.value,
   listenTo: [classAndLvl, totalHitDice],
   autoResize: true
 });
@@ -863,6 +874,8 @@ const killButton = document.getElementById("kill");
 function die() {
   if (!characterData.dead) {
     characterData.dead = true;
+    delete characterData.hitDice;
+    hitDice.update();
     document.body.classList.add("death-animation");
     const animations = document.getElementById("death-overlay").getAnimations();
     animations[0].onfinish = () => {

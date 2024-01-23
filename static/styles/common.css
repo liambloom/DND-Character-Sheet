@@ -1,0 +1,9 @@
+@font-face {
+    font-family: "Overpass";
+    src: url(/static/fonts/Overpass/Overpass-VariableFont_wght.ttf);
+}
+
+body {
+    font-family: Overpass, Helvetica, sans-serif;
+    margin: 0;
+}

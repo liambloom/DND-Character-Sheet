@@ -3,6 +3,7 @@
     <head>
         <title>Character Sheet</title>
         <meta charset="UTF-8">
+        <link rel="stylesheet" href="/static/styles/common.css">
         <link rel="stylesheet" href="/static/styles/character.css">
         <script defer type="module" src="/static/scripts/character.js"></script>
     </head>
@@ -27,7 +28,7 @@
                             <div id="hr2"></div>
                             <div id="classAndLvl"></div>
                             <div id="background"></div>
-                            <div id="playerName">Limabean</div>
+                            <div id="playerName"></div>
                             <div class="header-label">Class & Level</div>
                             <div class="header-label">Background</div>
                             <div class="header-label">Player Name</div>
@@ -202,6 +203,12 @@
                 <div class="sectionTitle">Features & Traits</div>
             </div>
         </main>
+        <div id="top-left">
+            <a id="home" type="button" href="./">
+                <img src="/static/img/logo.svg">
+            </a>
+            <span id="title"></span>
+        </div>
         <div id="buttons">
             <div id="collapsible-buttons" class="collapse">
                 <div>
