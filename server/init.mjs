@@ -6,17 +6,20 @@ import process from "node:process";
 import pg from "pg";
 
 export const app = express();
-export const port = process.env.PORT || 8080;
-const testConfig = {
+const testPoolConfig = {
     user: "liamr",
     host: "localhost",
     database: "dnd5e",
     port: "5432",
     ssl: false
 };
+const prodPoolConfig = {
+    connectionString: process.env.DATABASE_URL,
+    ssl: true,
+}
 export const sendFileOptions = { root: process.cwd() };
 
-export const pool = new pg.Pool(testConfig);
+export const pool = new pg.Pool(app.get("env") === "production" ? prodPoolConfig : testPoolConfig);
 const PGSession = pgConnect(session);
 
 app.use(express.json());
@@ -26,13 +29,14 @@ app.use(session({
         maxAge: 30 * 24 * 60 * 60 * 1000,
         secure: false,
         sameSite: "strict",
+        secure: app.get("env") === "production",
     },
     store: new PGSession({ 
         pool, 
         createTableIfMissing: true, 
     }),
     saveUninitialized: false,
-    secret: "L6WpMp3EJLroE9YtzXLoYr5pU2enJSSj",
+    secret: process.env.SECRET ?? "L6WpMp3EJLroE9YtzXLoYr5pU2enJSSj",
     resave: false,
 }));
 

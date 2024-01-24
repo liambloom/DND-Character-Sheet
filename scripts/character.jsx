@@ -571,7 +571,7 @@ class ListItem {
                 <div></div>
                 <div></div>
             </div>
-            <button class="list-delete" type="button"><img src="/img/trash.png"></img></button>
+            <button class="list-delete" type="button"><img src="/static/img/trash.png"></img></button>
         </div>;
 
         block.getElementsByClassName("list-delete")[0].addEventListener("click", () => {

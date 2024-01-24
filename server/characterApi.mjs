@@ -390,7 +390,7 @@ characterApi.post("/new", async (req, res) => {
         req.body ??= {};
 
         const errors = Object.fromEntries([ "title", "linkSharing", "content" ]
-            .map(column => [column, req.body[column], null, res.session.userId])
+            .map(column => [column, req.body[column], null, req.session.userId])
             .filter(([, value]) => value != null)
             .map(Character.getPropertyError))
         await Promise.all(Object.values(errors));
@@ -448,9 +448,21 @@ characterApi.get("/myCharacterList", async (req, res) => {
     }
 });
 
+ui.get("/my-c/", async (req, res) => {
+    if (!("userId" in req.session)) {
+        res.redirect(303, "/login");
+    }
+    else {
+        res.redirect(303, `/${(await pool.query("SELECT username FROM users WHERE user_id = $1", [req.session.userId])).rows[0].username}/c/`)
+    }
+});
+
 ui.get("/:username/c/", async (req, res) => {
     if (!("userId" in req.session)) {
         res.redirect(303, "/login?returnTo=" + req.parsedUrl);
+    }
+    else if (req.session.userId !== (await pool.query("SELECT user_id FROM users WHERE username = $1", [req.params.username])).rows[0]?.user_id) {
+        res.sendStatus(403).end();
     }
     else {
         await res.status(200).sendFileAsync("./views/characterList.html", sendFileOptions)

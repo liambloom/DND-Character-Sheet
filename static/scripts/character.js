@@ -516,7 +516,7 @@ class ListItem {
       class: "list-delete",
       type: "button"
     }, /*#__PURE__*/React.createElement("img", {
-      src: "/img/trash.png"
+      src: "/static/img/trash.png"
     })));
     block.getElementsByClassName("list-delete")[0].addEventListener("click", () => {
       block.remove();
