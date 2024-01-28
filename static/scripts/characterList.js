@@ -77,6 +77,7 @@ for (let character of characters.sort((a, b) => b.last_modified.getTime() - a.la
     console.log(res.status);
     if (res.status === 204) {
       block.getElementsByClassName("title")[0].innerText = title;
+      block.getElementsByClassName("content")[0].href = title;
     } else if (res.status >= 400 && res.status < 500) {
       alert("Not renamed because: " + (await res.json()).error);
     } else {

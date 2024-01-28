@@ -14,11 +14,13 @@ const testPoolConfig = {
     ssl: false
 };
 const prodPoolConfig = {
-    connectionString: process.env.DATABASE_URL,
-    ssl: true,
+    user: "app-engine-user",
+    host: "/cloudsql/dnd-character-sheet-412205:us-central1:pg-db",
+    database: "postgres",
+    ssl: false,
 }
 export const sendFileOptions = { root: process.cwd() };
-
+console.log(app.get("env"));
 export const pool = new pg.Pool(app.get("env") === "production" ? prodPoolConfig : testPoolConfig);
 const PGSession = pgConnect(session);
 
@@ -27,7 +29,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(session({
     cookie: {
         maxAge: 30 * 24 * 60 * 60 * 1000,
-        secure: false,
         sameSite: "strict",
         secure: app.get("env") === "production",
     },
@@ -35,6 +36,7 @@ app.use(session({
         pool, 
         createTableIfMissing: true, 
     }),
+    proxy: app.get("env") === "production",
     saveUninitialized: false,
     secret: process.env.SECRET ?? "L6WpMp3EJLroE9YtzXLoYr5pU2enJSSj",
     resave: false,
