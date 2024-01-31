@@ -959,13 +959,14 @@ body[data-editing="true"] .proficiency label [contentEditable] {
     display: flex;
     align-items: center;
     gap: 10px;
-    width: calc((100vw - 9.5in) / 2 - 10px);
+    width: calc((100vw - 9.5in) / 2 - 20px);
 }
 #title {
     font-size: 30px;
     font-weight: 450;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
 }
 #home {
     display: block;

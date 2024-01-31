@@ -390,10 +390,12 @@ characterApi.post("/new", async (req, res) => {
         req.body ??= {};
 
         const errors = Object.fromEntries([ "title", "linkSharing", "content" ]
+            .filter(column => column in req.body)
             .map(column => [column, req.body[column], null, req.session.userId])
-            .filter(([, value]) => value != null)
             .map(Character.getPropertyError))
         await Promise.all(Object.values(errors));
+
+        console.log(errors);
         
         let error = false;
         
@@ -409,11 +411,12 @@ characterApi.post("/new", async (req, res) => {
         }
 
         if (error) {
+            console.debug(errors);
             res.status(errors.length === 1 ? errors[0].status : 422).json(errors);
         }
         else {
             const title = req.body.title ?? (await pool.query(`SELECT 'Character-' || COALESCE(
-                (SELECT min(CAST(substring("outer".title FROM 11) AS integer)) + 1 FROM characters as "outer" WHERE owner = $1 
+                (SELECT min(CAST(substring("outer".title FROM 11) AS integer)) + 1 FROM characters as "outer" WHERE owner = $1 AND "outer".title SIMILAR TO 'Character-[0-9]+'
                 AND NOT EXISTS (SELECT FROM characters as "inner" WHERE owner = $1 AND "inner".title = 'Character-' || (cast(substring("outer".title FROM 11) AS integer) + 1)))
                 , 1) AS title`, [req.session.userId])).rows[0].title;
 
