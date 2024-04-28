@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import crypto from "node:crypto";
 
 import { characterApi, ui, pool, sendFileOptions } from "./init.mjs";
+import upgradeCharacter from "./upgradeCharacter.mjs";
 
 const ShareLevel = new Map();
 ShareLevel.none = 0;
@@ -258,13 +259,16 @@ characterApi.get("/:username/:character", async (req, res) => {
         const [editPermission, ownerDisplayNameQuery] = await Promise.all([
             character.canEdit(),
             pool.query("SELECT display_name FROM users WHERE user_id = $1", [character.getOwner()]),
-        ])
+        ]);
+
+        const content = character.getContent();
+        upgradeCharacter(content);
 
         res.status(200).json({
             editPermission, 
             ownerDisplayName: ownerDisplayNameQuery.rows[0].display_name,
             title: character.getTitle(),
-            content: character.getContent(),
+            content,
         });
     }
 });

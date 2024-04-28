@@ -1152,6 +1152,7 @@ for (let denom of moneyDenominations) {
         dataObject: characterData.money,
         property: denom,
         dataFromString: unsignedParseInt,
+        editable: editable.always,
     }));
 
     moneyElement.appendChild(block);
@@ -1231,4 +1232,77 @@ class Feature extends ListItem {
 }
 
 const features = new List(document.getElementById("features-list"), characterData.features, () => ({ name: "Name", text: "Description" }), Feature);
+// #endregion
+
+// #region Spellcasting
+let spellcastingClasses = [];
+
+for (let i = 0; i < 1; i++) {
+    const o = spellcastingClasses[i] = {
+        class: "Wizard",
+        ability: "Intelligence",
+    };
+    const dataObject = characterData.spellcasting[i];
+
+    o.class = new DataDisplay({
+        element: document.getElementsByClassName("spellcasting-class-value")[i],
+        property: "class",
+        dataObject,
+    });
+
+    const ability = new DataDisplay({
+        element: document.getElementsByClassName("spellcasting-ability")[i],
+        property: "ability",
+        dataObject: o,
+        dataFromString: v => {
+            if (!v.length) {
+                throw Error("Empty spellcasting stat");
+            }
+
+            v = v.charAt(0).toUpperCase() + v.substring(1).toLowerCase();
+
+            let j = statNames.indexOf(v);
+            if (j !== -1) {
+                return v;
+            }
+            
+            j = statNames.map(v => v.substring(0, 3)).indexOf(v);
+            if (j !== -1) {
+                return statNames[j];
+            }
+            else {
+                throw Error(v + " is not a stat");
+            }
+        },
+        dataToString: v => {
+            return v.substring(0, 3).toUpperCase();
+        }
+    });
+
+    console.log(ability.value);
+
+    new DataDisplay({
+        element: document.getElementsByClassName("spell-save-dc")[i],
+        getDefault: () => 8 + stats[ability.value].mod.value + proficiencyBonus.value,
+        listenTo: [ability, ...Object.values(stats).map(s => s.mod), proficiencyBonus],
+        editable: editable.never,
+    });
+
+    new DataDisplay({
+        element: document.getElementsByClassName("spell-atk-bonus")[i],
+        getDefault: () => stats[ability.value].mod.value + proficiencyBonus.value,
+        listenTo: [ability, ...Object.values(stats).map(s => s.mod), proficiencyBonus],
+        editable: editable.never,
+        dataToString: signedIntToStr,
+    });
+}
+
+//temp
+const testObj = { total: 3 };
+window.testObj = testObj;
+new Fraction(
+    document.getElementsByClassName("spell-level-title")[0], 
+    { dataObject: testObj, property: "expended", getDefault: () => 0 }, 
+    { dataObject: testObj, property: "total" }
+);
 // #endregion
