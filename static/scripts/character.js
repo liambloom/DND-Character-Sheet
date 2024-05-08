@@ -364,7 +364,6 @@ class DataDisplay {
     return !this.dataObject || this.property in this.dataObject;
   }
   update(doListeners = true) {
-    console.log("update");
     const valueExists = this.valueExists;
     const value = valueExists ? this.value : undefined;
     const str = valueExists ? this.dataToString(this.value) : "";
@@ -391,7 +390,6 @@ class DataDisplay {
     }
     this.maybeResizeFont();
     const changed = value !== this.oldValue;
-    console.log(changed, value, this.oldValue);
     this.oldValue = value;
     if (doListeners && changed) {
       for (let listener of this.changeListeners) {
@@ -418,8 +416,6 @@ class Fraction {
     if (this.element.childNodes.length) {
       this.numerElement = this.element.querySelector("[data-numer]");
       this.denomElement = this.element.querySelector("[data-denom]");
-      console.log("numer", this.numerElement);
-      console.log("denom", this.denomElement);
     } else {
       this.numerElement = document.createElement("span");
       this.denomElement = document.createElement("span");
@@ -1265,7 +1261,6 @@ class SpellLevel {
     } else {
       nHub = dHub = [];
     }
-    console.log(level, element);
     const slots = new Fraction(element, {
       dataObject: characterData.spellSlots[level],
       property: "expended",

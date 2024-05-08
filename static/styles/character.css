@@ -12,7 +12,7 @@
 [contentEditable]:where(:not(#title)), .written, .standaloneLabeledValue > :first-child, .stat-mod, #playerName {
     font-family: "Architects Daughter", "Bradley Hand", cursive;
 }
-#misc > * > * > :not(.topText, .sectionTitle, #death-saves-grid), .stat-val, .standaloneLabeledValue > :first-child, #name-value, .spellcasting-header-value {
+#misc > * > * > :not(.topText, .sectionTitle, #death-saves-grid), .stat-val, .standaloneLabeledValue > :first-child, .spellcasting-header-value, .spellcasting-header-value > [contenteditable],  .header-large-value {
     font-family: Kalam, "Bradley Hand", cursive;
 }
 :is(#misc > * > * > :not(.topText, .sectionTitle, #death-saves-grid), .stat-val, .standaloneLabeledValue > :first-child) [contenteditable] {
