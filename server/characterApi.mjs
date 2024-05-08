@@ -24,8 +24,8 @@ const CaseChanger = {
 
         return {
             toSnakeCase: () => words.join("_"),
-            toCamelCase: () => words.length ? words[0] + words.slice(1).map(s => s && (s.charAt(0).toUpperCase() + s.substring(1))) : "",
-            toCapitalCase: () => words.map(s => s && (s.charAt(0).toUpperCase() + s.substring(1))),
+            toCamelCase: () => words.length ? words[0] + words.slice(1).map(s => s && (s.charAt(0).toUpperCase() + s.substring(1))).join("") : "",
+            toCapitalCase: () => words.map(s => s && (s.charAt(0).toUpperCase() + s.substring(1))).join(""),
         }
     }
 }
@@ -59,7 +59,7 @@ class Character {
     }
 
     getLinkShareLevel() {
-        return ShareLevel.get(this.getLinkSharing);
+        return ShareLevel.get(this.getLinkSharing());
     }
 
     directSharingIds = new Map();
@@ -281,6 +281,9 @@ characterApi.put("/:username/:character", async (req, res) => {
     }
     else if (!await character.canEdit()) {
         res.status("userId" in req.session ? 403 : 401).json({ error: "No edit permission", target: "user" });
+    }
+    else if (req.body == undefined) {
+        res.status(422).json({ error: "Missing request body", target: "request" })
     }
     else {
         let { property, value } = req.body;
