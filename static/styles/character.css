@@ -1002,6 +1002,7 @@ body[data-editing="false"] .spellsheet-delete {
     flex-direction: column;
     height: 100%;
     background-color: white;
+    min-width: 0;
 }
 .spell-level-title {
     display: grid;
