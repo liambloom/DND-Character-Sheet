@@ -88,6 +88,7 @@ async function save() {
   }
   saving = false;
 }
+window.save = save;
 function startEditing() {
   editing = true;
   document.body.dataset.editing = "true";
@@ -123,6 +124,7 @@ function characterChanged() {
   }
 }
 const editButton = document.getElementById("edit");
+alwaysEditingInputs.push(editButton);
 editButton.addEventListener("click", () => {
   if (editing) {
     stopEditing();
@@ -869,8 +871,12 @@ for (let display of [ac, speed, hp.numerDisplay, hp.denomDisplay, tempHp, hitDic
     display.element.parentElement.classList[isValid ? "remove" : "add"]("invalid");
   });
 }
+const newSpellSheetButton = document.getElementById("add-spell-sheet");
+editingModeInputs.push(newSpellSheetButton);
+newSpellSheetButton.disabled = true;
 const deathSaveBoxes = Array.from(document.getElementById("death-saves").getElementsByTagName("input"));
 const killButton = document.getElementById("kill");
+alwaysEditingInputs.push(killButton);
 function die() {
   if (!characterData.dead) {
     characterData.dead = true;
@@ -894,7 +900,7 @@ function die() {
   for (let element of alwaysEditing) {
     element.contentEditable = "false";
   }
-  for (let element of [...alwaysEditingInputs, ...deathSaveBoxes, editButton, killButton]) {
+  for (let element of [...alwaysEditingInputs, ...deathSaveBoxes]) {
     element.disabled = true;
   }
 }
@@ -907,7 +913,7 @@ function revive() {
   for (let element of alwaysEditing) {
     element.contentEditable = contentEditableValue;
   }
-  for (let element of [...alwaysEditingInputs, editButton, killButton]) {
+  for (let element of alwaysEditingInputs) {
     element.disabled = false;
   }
 }
@@ -1161,69 +1167,236 @@ const features = new List(document.getElementById("features-list"), characterDat
 // #endregion
 
 // #region Spellcasting
-let spellcastingClasses = [];
-for (let i = 0; i < 1; i++) {
-  const o = spellcastingClasses[i] = {
-    class: "Wizard",
-    ability: "Intelligence"
-  };
-  const dataObject = characterData.spellcasting[i];
-  o.class = new DataDisplay({
-    element: document.getElementsByClassName("spellcasting-class-value")[i],
-    property: "class",
-    dataObject
-  });
-  const ability = new DataDisplay({
-    element: document.getElementsByClassName("spellcasting-ability")[i],
-    property: "ability",
-    dataObject: o,
-    dataFromString: v => {
-      if (!v.length) {
-        throw Error("Empty spellcasting stat");
-      }
-      v = v.charAt(0).toUpperCase() + v.substring(1).toLowerCase();
-      let j = statNames.indexOf(v);
-      if (j !== -1) {
-        return v;
-      }
-      j = statNames.map(v => v.substring(0, 3)).indexOf(v);
-      if (j !== -1) {
-        return statNames[j];
-      } else {
-        throw Error(v + " is not a stat");
-      }
-    },
-    dataToString: v => {
-      return v.substring(0, 3).toUpperCase();
-    }
-  });
-  console.log(ability.value);
-  new DataDisplay({
-    element: document.getElementsByClassName("spell-save-dc")[i],
-    getDefault: () => 8 + stats[ability.value].mod.value + proficiencyBonus.value,
-    listenTo: [ability, ...Object.values(stats).map(s => s.mod), proficiencyBonus],
-    editable: editable.never
-  });
-  new DataDisplay({
-    element: document.getElementsByClassName("spell-atk-bonus")[i],
-    getDefault: () => stats[ability.value].mod.value + proficiencyBonus.value,
-    listenTo: [ability, ...Object.values(stats).map(s => s.mod), proficiencyBonus],
-    editable: editable.never,
-    dataToString: signedIntToStr
-  });
-}
 
-//temp
-const testObj = {
-  total: 3
-};
-window.testObj = testObj;
-new Fraction(document.getElementsByClassName("spell-level-title")[0], {
-  dataObject: testObj,
-  property: "expended",
-  getDefault: () => 0
-}, {
-  dataObject: testObj,
-  property: "total"
+class Spell {
+  static counter = 0;
+  constructor(castingClass, level, spellNum) {
+    const checkboxName = "spellPreparedCheckbox" + Spell.counter++;
+    const block = this.block = /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+      for: checkboxName,
+      class: "spell-entry"
+    }, /*#__PURE__*/React.createElement("input", {
+      id: checkboxName,
+      type: "checkbox",
+      name: `level-${level}-spells`,
+      class: "spellPrepared",
+      disabled: "true"
+    }), /*#__PURE__*/React.createElement("div", {
+      class: "customCheckbox"
+    }), /*#__PURE__*/React.createElement("div", {
+      class: "spell-name-container"
+    }, /*#__PURE__*/React.createElement("span", {
+      class: "spell-name"
+    })), /*#__PURE__*/React.createElement("div", {
+      class: "spell-phantom",
+      contentEditable: "false"
+    }, ".")));
+    const dataObject = castingClass.levels[level].spells[spellNum];
+    this.name = new DataDisplay({
+      element: block.getElementsByClassName("spell-name")[0],
+      dataObject,
+      property: "name"
+    });
+    if (level > 0) {
+      const checkbox = block.getElementsByClassName("spellPrepared")[0];
+      editingModeInputs.push(checkbox);
+      checkbox.checked = dataObject.prepared;
+      checkbox.addEventListener("input", () => {
+        dataObject.prepared = checkbox.checked;
+        characterChanged();
+      });
+    }
+  }
+}
+class SpellLevel {
+  constructor(dataObject, level) {
+    const block = this.block = /*#__PURE__*/React.createElement("div", {
+      class: `spell-level ${level ? "" : "cantrips"}`
+    }, /*#__PURE__*/React.createElement("div", {
+      class: "spell-level-title"
+    }, /*#__PURE__*/React.createElement("div", {
+      class: "spell-level-label-container"
+    }, /*#__PURE__*/React.createElement("div", {
+      class: "spell-level-label"
+    }, level)), /*#__PURE__*/React.createElement("div", {
+      class: "slots-total-container"
+    }, /*#__PURE__*/React.createElement("div", {
+      class: "slots-total",
+      "data-denom": true
+    })), /*#__PURE__*/React.createElement("div", {
+      class: "slots-expended-outer-container"
+    }, /*#__PURE__*/React.createElement("div", {
+      class: "slots-expended-inner-container"
+    }, /*#__PURE__*/React.createElement("div", {
+      class: "slots-expended",
+      "data-numer": true
+    }, level ? "" : "Cantrips")))), /*#__PURE__*/React.createElement("div", {
+      class: "spell-list"
+    }));
+    const levelObj = dataObject.levels[level];
+    if (level > 0) {
+      new Fraction(block.getElementsByClassName("spell-level-title")[0], {
+        dataObject: levelObj.spellSlots,
+        property: "expended",
+        getDefault: () => 0
+      }, {
+        dataObject: levelObj.spellSlots,
+        property: "total",
+        validate: n => n >= 0
+      });
+    }
+    for (let spell = 0; spell < levelObj.spells.length; spell++) {
+      const spellObj = new Spell(dataObject, level, spell);
+      block.getElementsByClassName("spell-list")[0].appendChild(spellObj.block);
+    }
+  }
+}
+class SpellSheet {
+  constructor(i) {
+    const block = this.block = /*#__PURE__*/React.createElement("div", {
+      class: "page spell-page"
+    }, /*#__PURE__*/React.createElement("header", {
+      class: "page-header"
+    }, /*#__PURE__*/React.createElement("button", {
+      class: "spellsheet-delete",
+      type: "button"
+    }, /*#__PURE__*/React.createElement("img", {
+      src: "/static/img/trash.png"
+    })), /*#__PURE__*/React.createElement("div", {
+      class: "left-header-banner"
+    }, /*#__PURE__*/React.createElement("div", {
+      class: "header-banner-back"
+    })), /*#__PURE__*/React.createElement("div", {
+      class: "header-labeled-container"
+    }, /*#__PURE__*/React.createElement("div", {
+      class: "header-large-value-box"
+    }, /*#__PURE__*/React.createElement("div", {
+      class: "header-large-value-container"
+    }, /*#__PURE__*/React.createElement("div", {
+      class: "spellcasting-class-value header-large-value"
+    }))), /*#__PURE__*/React.createElement("div", {
+      class: "header-label header-large-label"
+    }, "Spellcasting Class")), /*#__PURE__*/React.createElement("div", {
+      class: "header-other spellcasting-header-other"
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      class: "header-other-contents spellcasting-header-other-contents"
+    }, /*#__PURE__*/React.createElement("div", {
+      class: "spellcasting-header-value"
+    }, /*#__PURE__*/React.createElement("div", {
+      class: "spellcasting-ability"
+    })), /*#__PURE__*/React.createElement("div", {
+      class: "spellcasting-header-value"
+    }, /*#__PURE__*/React.createElement("div", {
+      class: "spell-save-dc"
+    })), /*#__PURE__*/React.createElement("div", {
+      class: "spellcasting-header-value"
+    }, /*#__PURE__*/React.createElement("div", {
+      class: "spell-atk-bonus"
+    })), /*#__PURE__*/React.createElement("div", {
+      class: "header-label"
+    }, "Spellcasting Ability"), /*#__PURE__*/React.createElement("div", {
+      class: "header-label"
+    }, "Spell Save DC"), /*#__PURE__*/React.createElement("div", {
+      class: "header-label"
+    }, "Spell Attack Bonus")))), /*#__PURE__*/React.createElement("div", {
+      class: "right-header-banner"
+    })), /*#__PURE__*/React.createElement("div", {
+      class: "spell-columns"
+    }, /*#__PURE__*/React.createElement("div", {
+      class: "spell-column"
+    }), /*#__PURE__*/React.createElement("div", {
+      class: "spell-column"
+    }), /*#__PURE__*/React.createElement("div", {
+      class: "spell-column"
+    })));
+    const dataObject = characterData.spellcasting[i];
+    new DataDisplay({
+      element: block.getElementsByClassName("spellcasting-class-value")[0],
+      property: "class",
+      dataObject
+    });
+    const ability = new DataDisplay({
+      element: block.getElementsByClassName("spellcasting-ability")[0],
+      property: "ability",
+      dataObject: dataObject,
+      dataFromString: v => {
+        if (!v.length) {
+          throw Error("Empty spellcasting stat");
+        }
+        v = v.charAt(0).toUpperCase() + v.substring(1).toLowerCase();
+        let j = statNames.indexOf(v);
+        if (j !== -1) {
+          return v;
+        }
+        j = statNames.map(v => v.substring(0, 3)).indexOf(v);
+        if (j !== -1) {
+          return statNames[j];
+        } else {
+          throw Error(v + " is not a stat");
+        }
+      },
+      dataToString: v => {
+        return v.substring(0, 3).toUpperCase();
+      }
+    });
+    new DataDisplay({
+      element: block.getElementsByClassName("spell-save-dc")[0],
+      getDefault: () => 8 + stats[ability.value].mod.value + proficiencyBonus.value,
+      listenTo: [ability, ...Object.values(stats).map(s => s.mod), proficiencyBonus],
+      editable: editable.never
+    });
+    new DataDisplay({
+      element: block.getElementsByClassName("spell-atk-bonus")[0],
+      getDefault: () => stats[ability.value].mod.value + proficiencyBonus.value,
+      listenTo: [ability, ...Object.values(stats).map(s => s.mod), proficiencyBonus],
+      editable: editable.never,
+      dataToString: signedIntToStr
+    });
+    const delPage = block.getElementsByClassName("spellsheet-delete")[0];
+    editingModeInputs.push(delPage);
+    delPage.addEventListener("click", () => {
+      characterData.spellcasting.splice(characterData.spellcasting.indexOf(dataObject), 1);
+      block.remove();
+    });
+    for (let level = 0; level <= 9; level++) {
+      const levelData = new SpellLevel(dataObject, level);
+      const column = level <= 2 ? 0 : level <= 5 ? 1 : 2;
+      block.getElementsByClassName("spell-columns")[0].children[column].appendChild(levelData.block);
+    }
+  }
+  static spellsPerLevel = [9, 13, 13, 13, 13, 9, 9, 9, 7, 7];
+  static blank() {
+    let r = {
+      class: "",
+      ability: "Intelligence",
+      levels: []
+    };
+    for (let level = 0; level <= 9; level++) {
+      const o = r.levels[level] = {
+        spells: []
+      };
+      if (level > 0) {
+        o.spellSlots = {
+          total: 0,
+          expended: 0
+        };
+      }
+      for (let spell = 0; spell < this.spellsPerLevel[level]; spell++) {
+        o.spells.push({
+          name: "",
+          prepared: false
+        });
+      }
+    }
+    return r;
+  }
+}
+for (let i = 0; i < characterData.spellcasting.length; i++) {
+  const sheet = new SpellSheet(i);
+  document.getElementsByTagName("main")[0].appendChild(sheet.block);
+}
+newSpellSheetButton.addEventListener("click", () => {
+  const sheet = new SpellSheet(characterData.spellcasting.push(SpellSheet.blank()) - 1);
+  document.getElementsByTagName("main")[0].appendChild(sheet.block);
 });
 // #endregion
