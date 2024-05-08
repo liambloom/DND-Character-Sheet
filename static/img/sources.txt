@@ -7,4 +7,6 @@ revive.png (unused) Original of revive-out.png ^^^
 down-arrow.png https://www.flaticon.com/free-icon/down-arrow_625946
 settings.png https://www.flaticon.com/free-icon/settings_503822
 home.png https://www.flaticon.com/free-icon/home_1828879
-magic.png https://www.flaticon.com/free-icon/magic-wand_25301 (modified_)
+magic.png (unused) https://www.flaticon.com/free-icon/magic-wand_25301
+plus.png (unused) https://www.flaticon.com/free-icon/plus_1828921
+magic-plus.png Modified image combining magic.png and plus.png
