@@ -177,6 +177,7 @@ class DataDisplay {
         this.editable = args.editable ?? editable.inEditingMode;
         this.autoResize = args.autoResize ?? false;
         this.inCharacterSheet = args.inCharacterSheet ?? true;
+        this.oldValue = Symbol("Original Value");
         const { listenTo = [] } = args;
 
         switch (this.editable) {
@@ -199,12 +200,7 @@ class DataDisplay {
         }
 
         for (let e of listenTo) {
-            e.addChangeListener(() => {
-                if (editing && this.valueExists) {
-                    this.element.classList.add("changed");
-                }
-                this.update()
-            });
+            this.listenTo(e);
         }
 
         this.element.addEventListener("paste", event => {
@@ -321,6 +317,15 @@ class DataDisplay {
         this.update();
     }
 
+    listenTo(e) {
+        e.addChangeListener(() => {
+            if (editing && this.valueExists) {
+                this.element.classList.add("changed");
+            }
+            this.update()
+        });
+    }
+
     maybeResizeFont() {
         if (this.autoResize) {
             let element = this.element.parentElement.classList.contains("inputLine") ? this.element.parentElement : this.element;
@@ -403,6 +408,7 @@ class DataDisplay {
     }
 
     update(doListeners = true) {
+        console.log("update");
         const valueExists = this.valueExists;
         const value = valueExists ? this.value : undefined;
         const str = valueExists ? this.dataToString(this.value) : "";
@@ -434,7 +440,11 @@ class DataDisplay {
 
         this.maybeResizeFont();
 
-        if (doListeners) {
+        const changed = value !== this.oldValue;
+        console.log(changed, value, this.oldValue);
+        this.oldValue = value;
+
+        if (doListeners && changed) {
             for (let listener of this.changeListeners) {
                 listener(value, str, valueExists);
             }
@@ -464,6 +474,8 @@ class Fraction {
         if (this.element.childNodes.length) {
             this.numerElement = this.element.querySelector("[data-numer]");
             this.denomElement = this.element.querySelector("[data-denom]");
+            console.log("numer", this.numerElement);
+            console.log("denom", this.denomElement);
         }
         else {
             this.numerElement = document.createElement("span");
@@ -1242,7 +1254,6 @@ const features = new List(document.getElementById("features-list"), characterDat
 // #endregion
 
 // #region Spellcasting
-
 class Spell {
     static counter = 0;
 
@@ -1304,17 +1315,45 @@ class SpellLevel {
         const levelObj = dataObject.levels[level];
 
         if (level > 0) {
-            new Fraction(
-                block.getElementsByClassName("spell-level-title")[0], 
-                { dataObject: levelObj.spellSlots, property: "expended", getDefault: () => 0 }, 
-                { dataObject: levelObj.spellSlots, property: "total", validate: n => n >= 0 }
-            );
+            // new Fraction(
+            //     block.getElementsByClassName("spell-level-title")[0], 
+            //     { dataObject: characterData.spellSlots[level], property: "expended", getDefault: () => 0/*, listenTo: nHub*/ }, 
+            //     { dataObject: characterData.spellSlots[level], property: "total", validate: n => n >= 0/*, listenTo: dHub*/ }
+            // );
+            SpellLevel.getSlotsSpoke(level, block.getElementsByClassName("spell-level-title")[0]);
         }
 
         for (let spell = 0; spell < levelObj.spells.length; spell++) {
             const spellObj = new Spell(dataObject, level, spell);
             block.getElementsByClassName("spell-list")[0].appendChild(spellObj.block);
         }
+    }
+
+    static hubs = [];
+
+    static getSlotsSpoke(level, element) {
+        let nHub, dHub;
+        if (this.hubs[level]) {
+            nHub = [this.hubs[level].numerDisplay];
+            dHub = [this.hubs[level].denomDisplay];
+        }
+        else {
+            nHub = dHub = [];
+        }
+
+        console.log(level, element);
+
+        const slots = new Fraction(
+            element, 
+            { dataObject: characterData.spellSlots[level], property: "expended", getDefault: () => 0, listenTo: nHub }, 
+            { dataObject: characterData.spellSlots[level], property: "total", validate: n => n >= 0, listenTo: dHub }
+        );
+        if (this.hubs[level]) {
+            this.hubs[level].numerDisplay.listenTo(slots.numerDisplay);
+            this.hubs[level].denomDisplay.listenTo(slots.denomDisplay);
+        }
+        this.hubs[level] ??= slots;
+        return slots;
     }
 }
 
@@ -1439,9 +1478,9 @@ class SpellSheet {
         };
         for (let level = 0; level <= 9; level++) {
             const o = r.levels[level] = { spells: [] };
-            if (level > 0) {
-                o.spellSlots = { total: 0, expended: 0 };
-            }
+            // if (level > 0) {
+            //     o.spellSlots = { total: 0, expended: 0 };
+            // }
             for (let spell = 0; spell < this.spellsPerLevel[level]; spell++) {
                 o.spells.push({ name: "", prepared: false });
             }
