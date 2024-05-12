@@ -72,7 +72,7 @@ class Character {
             return "none";
         }
         else {
-            const result = await pool.query(`SELECT share_type FROM sharing WHERE character = $1 AND user = $2`, [this.characterId, userId]);
+            const result = await pool.query(`SELECT share_type FROM sharing WHERE character = $1 AND "user" = $2`, [this.characterId, userId]);
             const value = result.rowCount === 0 ? "none" : result.rows[0].share_type;
             this.directSharingIds.set(userId, value);
             return value;
@@ -86,27 +86,29 @@ class Character {
     async setUserDirectSharing(user, value, userIsUsername) {
         delete this.directSharingUsernames;
 
-        const userIdSql = userIsUsername ? "$2" : "(SELECT user_id FROM users WHERE username = $2)";
-        if (value === "none") {
-            const userId = await pool.query(`DELETE FROM sharing WHERE character = $1 AND user = ${userIdSql} RETURNING user`, [this.characterId, user]);
-            if (userId.rowCount === 0) {
+        let userId;
+        if (userIsUsername) {
+            const rows = (await pool.query("SELECT user_id FROM users WHERE username = $1", [user])).rows;
+            if (!rows.length) {
                 return false;
             }
             else {
-                this.directSharingIds.delete(userId);
-                return true;
+                userId = rows[0].user_id;
             }
         }
         else {
-            const userId = await pool.query(`INSERT INTO sharing (character, user, share_type) VALUES ($1, ${userIdSql}, $3) 
-                ON CONFLICT DO UPDATE sharing SET share_type = $3 WHERE character = $1 AND user = ${userIdSql} RETURNING user`, [this.characterId, user, value]);
-            if (userId.rowCount === 0) {
-                return false;
-            }
-            else {
-                this.directSharingIds.set(userId, value);
-                return true;
-            }
+            userId = user;
+        }
+        if (value === "none") {
+            await pool.query(`DELETE FROM sharing WHERE character = $1 AND "user" = $2 RETURNING user`, [this.characterId, userId]);
+            this.directSharingIds.delete(userId);
+            return true;
+        }
+        else {
+            await pool.query(`INSERT INTO sharing (character, "user", share_type) VALUES ($1, $2, $3) 
+                ON CONFLICT (character, "user") DO UPDATE SET share_type = $3 RETURNING user`, [this.characterId, userId, value]);
+            this.directSharingIds.set(userId, value);
+            return true;
         }
     }
 
@@ -115,9 +117,9 @@ class Character {
             return this.directSharingUsernames;
         }
         else {
-            this.directSharingUsernames = await pool.query(`SELECT user.username, user.display_name, sharing.share_type FROM users, sharing 
+            return this.directSharingUsernames = (await pool.query(`SELECT users.username, users.display_name, sharing.share_type FROM users, sharing 
                 WHERE sharing.character = $1 AND sharing.user = users.user_id`, 
-                [this.characterId]).rows;
+                [this.characterId])).rows;
         }
     }
 
@@ -269,6 +271,7 @@ characterApi.get("/:username/:character", async (req, res) => {
             ownerDisplayName: ownerDisplayNameQuery.rows[0].display_name,
             title: character.getTitle(),
             content,
+            linkSharing: character.getLinkSharing(),
         });
     }
 });
@@ -344,6 +347,7 @@ characterApi.get("/:username/:character/sharing", async (req, res) => {
         res.status("userId" in req.session ? 403 : 401).json({ error: "No view permission", target: "user" });
     }
     else {
+        console.log("Get all direct sharing");
         const data = await character.getAllDirectSharing();
         res.status(200).json(data);
     }
@@ -363,11 +367,11 @@ characterApi.post("/:username/:character/sharing", async (req, res) => {
         const notExist = [];
 
         for (let { user, level } of req.body) {
-            if (character.setUserDirectSharing(user, level, true)) {
-                notExist.push(user);
+            if (await character.setUserDirectSharing(user, level, true)) {
+                exist.push(user);
             }
             else {
-                exist.push(user);
+                notExist.push(user);
             }
         }
 

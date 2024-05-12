@@ -220,13 +220,43 @@
                 </div>
             </div>
             <button id="revive" type="button"></button>
-            <button id="add-spell-sheet" type="button"></button>
+            <button id="sharing" type="button" disabled></button>
+            <button id="add-spell-sheet" type="button" disabled></button>
             <button id="edit" type="button"></button>
         </div>
         <div id="saving" style="display: none">Saving...</div>
         <div id="heartbeat-overlay" class="overlay"></div>
         <div id="death-overlay" class="overlay">
             <div id="rip">RIP <span id="rip-name"></span></div>
+        </div>
+        <div id="modal-backdrop"></div>
+        <div id="sharing-modal" class="modal">
+            <h3 class="modal-header">Direct Sharing</h3>
+            <div>Enter the <strong>usernames</strong> of the people you want to share this with, separated by commas</div>
+            <div id="direct-sharing-list" class="list" data-list-override="true">
+                <div class="direct-sharing-row direct-sharing-header">
+                    <div>Username</div>
+                    <div>Permissions</div>
+                </div>
+                <button id="direct-sharing-add" class="list-add" type="button">
+                    <div class="list-add-line"></div>
+                    <div class="list-plus">
+                        <div class="list-plus-h"></div>
+                        <div class="list-plus-v"></div>
+                    </div>
+                    <div class="list-add-line"></div>
+                </button>
+            </div>
+            <h3 class="modal-header">Link Sharing</h3>
+            <div id="link-sharing-box">
+                <div>People with the link to this page have the following permissions:</div>
+                <select name="link-sharing" id="link-sharing-dropdown">
+                    <option value="none">None</option>
+                    <option value="view">View</option>
+                    <option value="edit">Edit</option>
+                </select>
+            </div>
+            <input id="sharing-submit" type="button" value="OK">
         </div>
     </body>
 </html>
