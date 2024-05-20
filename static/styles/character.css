@@ -1230,6 +1230,9 @@ body.dead #revive {
 #kill::before {
     background-image: url(/static/img/skull.png);
 }
+body.dead #kill {
+    display: none;
+}
 #settings::before {
     background-image: url(/static/img/settings.png);
 }

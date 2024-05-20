@@ -67,6 +67,29 @@ const editingModeInputs = [];
 const alwaysEditing = [];
 const alwaysEditingInputs = [];
 const invalid = [];
+const controlButtons = {
+  map: new Map(),
+  enabledWhileViewing: Symbol(),
+  enabledWhileDead: Symbol(),
+  addButton(button, enabledWhileViewing, enabledWhileDead) {
+    this.map.set(button, {
+      [this.enabledWhileViewing]: enabledWhileViewing,
+      [this.enabledWhileDead]: enabledWhileDead
+    });
+  },
+  get all() {
+    return this.map.keys();
+  },
+  getList(check, checkValue) {
+    let r = [];
+    for (let [key, value] of this.map) {
+      if (value[check] === checkValue) {
+        r.push(key);
+      }
+    }
+    return r;
+  }
+};
 const savingIndicator = document.getElementById("saving");
 async function save() {
   saving = true;
@@ -125,7 +148,7 @@ function characterChanged() {
   }
 }
 const editButton = document.getElementById("edit");
-alwaysEditingInputs.push(editButton);
+controlButtons.addButton(editButton, true, false);
 editButton.addEventListener("click", () => {
   if (editing) {
     stopEditing();
@@ -616,10 +639,6 @@ let {
   linkSharing
 } = parsedCharResponse;
 window.characterData = characterData;
-if (!editPermission) {
-  alert("You can't edit this. I haven't finished implementing view-only mode, but the save button won't work.");
-  // TODO
-}
 for (let skill of characterData.skills.proficiencies) {
   if (!(skill in skillToStatMap)) {
     alert("The character sheet is invalid");
@@ -886,7 +905,7 @@ const newSpellSheetButton = document.getElementById("add-spell-sheet");
 editingModeInputs.push(newSpellSheetButton);
 const deathSaveBoxes = Array.from(document.getElementById("death-saves").getElementsByTagName("input"));
 const killButton = document.getElementById("kill");
-alwaysEditingInputs.push(killButton);
+controlButtons.addButton(killButton, true, false);
 function die() {
   if (!characterData.dead) {
     characterData.dead = true;
@@ -910,7 +929,7 @@ function die() {
   for (let element of alwaysEditing) {
     element.contentEditable = "false";
   }
-  for (let element of [...alwaysEditingInputs, ...deathSaveBoxes]) {
+  for (let element of [...alwaysEditingInputs, ...deathSaveBoxes, ...controlButtons.getList(controlButtons.enabledWhileDead, false)]) {
     element.disabled = true;
   }
 }
@@ -923,11 +942,13 @@ function revive() {
   for (let element of alwaysEditing) {
     element.contentEditable = contentEditableValue;
   }
-  for (let element of alwaysEditingInputs) {
+  for (let element of [...alwaysEditingInputs, ...controlButtons.getList(controlButtons.enabledWhileDead, false)]) {
     element.disabled = false;
   }
 }
-document.getElementById("revive").addEventListener("click", revive);
+const reviveButton = document.getElementById("revive");
+reviveButton.addEventListener("click", revive);
+controlButtons.addButton(reviveButton, true, true);
 killButton.addEventListener("click", die);
 function updateConsciousness() {
   const unconscious = hp.numerDisplay.value === 0;
@@ -1458,6 +1479,7 @@ const sharingModal = document.getElementById("sharing-modal");
 const shareListElement = document.getElementById("direct-sharing-list");
 const shareAdd = document.getElementById("direct-sharing-add");
 const linkShareDropdown = document.getElementById("link-sharing-dropdown");
+controlButtons.addButton(shareButton, true, true);
 class ShareTarget {
   isNew = true;
   constructor() {
@@ -1507,8 +1529,6 @@ async function submitDirectSharing() {
   for (let e of shareList) {
     const username = e.usernameInput;
     const permission = e.permissionInput;
-    console.log(e.oldValue);
-    console.log(permission.value);
     if (e.isNew || e.oldValue !== permission.value) {
       body.push({
         user: username.value,
@@ -1587,9 +1607,7 @@ async function submitLinkSharing() {
 }
 shareAdd.addEventListener("click", () => new ShareTarget());
 void async function () {
-  console.log("foo");
   const sharing = await (await fetch(sharingApi)).json();
-  console.log("foo2");
   for (let {
     username,
     share_type: permission
@@ -1600,6 +1618,19 @@ void async function () {
     row.isNew = false;
   }
   linkShareDropdown.value = linkSharing;
-  shareButton.disabled = false;
+  if (editPermission) {
+    shareButton.disabled = false;
+  }
 }();
+// #endregion
+
+// #region edit403
+if (!editPermission) {
+  for (let element of alwaysEditing) {
+    element.contentEditable = "false";
+  }
+  for (let element of [...alwaysEditingInputs, ...deathSaveBoxes, ...controlButtons.all]) {
+    element.disabled = true;
+  }
+}
 // #endregion
