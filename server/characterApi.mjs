@@ -347,7 +347,6 @@ characterApi.get("/:username/:character/sharing", async (req, res) => {
         res.status("userId" in req.session ? 403 : 401).json({ error: "No view permission", target: "user" });
     }
     else {
-        console.log("Get all direct sharing");
         const data = await character.getAllDirectSharing();
         res.status(200).json(data);
     }
