@@ -454,7 +454,8 @@ characterApi.get("/myCharacterList", async (req, res) => {
     }
     else {
         const characters = await pool.query(`SELECT characters.title, characters.last_modified, users.username AS owner_username, users.display_name AS owner_display_name
-            FROM characters, users WHERE characters.owner = $1 AND users.user_id = characters.owner`, [ req.session.userId ]);
+            FROM characters, users, sharing WHERE (characters.owner = $1 OR (sharing.character = characters.character_id AND sharing.user = $1)) AND users.user_id = characters.owner`, 
+            [ req.session.userId ]);
         // ${["name", "classes", "stats", "xp", "dead", "hp"].map(k => `characters.content->'${k}' AS '${k}'`).join(", ")}
 
         res.status(200).json(characters.rows);

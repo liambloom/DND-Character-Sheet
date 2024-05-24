@@ -28,7 +28,7 @@ const hitDiceTable = {
   "cleric": 8,
   "druid": 8,
   "monk": 8,
-  "rouge": 8,
+  "rogue": 8,
   "warlock": 8,
   "fighter": 10,
   "paladin": 10,
