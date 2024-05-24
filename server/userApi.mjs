@@ -46,7 +46,7 @@ userApi.post("/new-user", async (req, res) => {
         }
 
         if (typeof email !== "string") {
-            errors.username = "Email must be a string";
+            errors.email = "Email must be a string";
         }
         else if (email.length < 1) {
             errors.email = "Email cannot be blank";

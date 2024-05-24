@@ -1,665 +1,8 @@
 import React from "./jsx.js";
-
-// #region Constants
-const [, characterOwner,, characterTitle] = new URL(location).pathname.split("/");
-const characterJson = `/api/character/${characterOwner}/${characterTitle}`;
-const sharingApi = `/api/character/${characterOwner}/${characterTitle}/sharing`;
-const newlineRegex = /[\n\r\u2028\u2029]/g;
-const statNames = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
-const statToSkillMap = {
-  "Strength": ["Athletics"],
-  "Dexterity": ["Acrobatics", "Slight of Hand", "Stealth"],
-  "Intelligence": ["Arcana", "History", "Investigation", "Nature", "Religion"],
-  "Wisdom": ["Animal Handling", "Insight", "Medicine", "Perception", "Survival"],
-  "Charisma": ["Deception", "Intimidation", "Performance", "Persuasion"]
-};
-const skillToStatMap = {};
-for (let stat in statToSkillMap) {
-  // skillNames.push(...statToSkillMap[stat]);
-  for (let skill of statToSkillMap[stat]) {
-    skillToStatMap[skill] = stat;
-  }
-}
-const hitDiceTable = {
-  "sorcerer": 6,
-  "wizard": 6,
-  "artificer": 8,
-  "bard": 8,
-  "cleric": 8,
-  "druid": 8,
-  "monk": 8,
-  "rogue": 8,
-  "warlock": 8,
-  "fighter": 10,
-  "paladin": 10,
-  "ranger": 10,
-  "barbarian": 12
-};
-const moneyDenominations = ["CP", "SP", "EP", "GP", "PP"];
-const editable = {
-  always: Symbol("Always Editable"),
-  inEditingMode: Symbol("In Editing Mode"),
-  never: Symbol("Never Editable")
-};
-const testElement = document.createElement("div");
-testElement.setAttribute("contentEditable", "PLAINTEXT-ONLY");
-const supportsPlaintextOnly = testElement.contentEditable === "plaintext-only";
-const contentEditableValue = supportsPlaintextOnly ? "plaintext-only" : "true";
-function betterParseInt(str) {
-  if (/^[+\-]?\d+$/.test(str)) {
-    return parseInt(str);
-  } else throw Error("Invalid int " + str);
-}
-function unsignedParseInt(str) {
-  if (/^\d+$/.test(str)) {
-    return parseInt(str);
-  } else throw Error("Invalid int " + str);
-}
-const signedIntToStr = n => n > 0 ? "+" + n : n;
-const fontCtx = document.createElement("canvas").getContext("2d");
-// #endregion
-
-// #region Editing Mode
-let editing = false;
-let saving = false;
-const editingMode = [];
-const editingModeInputs = [];
-const alwaysEditing = [];
-const alwaysEditingInputs = [];
-const invalid = [];
-const controlButtons = {
-  map: new Map(),
-  enabledWhileViewing: Symbol(),
-  enabledWhileDead: Symbol(),
-  addButton(button, enabledWhileViewing, enabledWhileDead) {
-    this.map.set(button, {
-      [this.enabledWhileViewing]: enabledWhileViewing,
-      [this.enabledWhileDead]: enabledWhileDead
-    });
-  },
-  get all() {
-    return this.map.keys();
-  },
-  getList(check, checkValue) {
-    let r = [];
-    for (let [key, value] of this.map) {
-      if (value[check] === checkValue) {
-        r.push(key);
-      }
-    }
-    return r;
-  }
-};
-const savingIndicator = document.getElementById("saving");
-async function save() {
-  saving = true;
-  savingIndicator.style.display = "initial";
-  const res = await fetch(characterJson, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      property: "content",
-      value: characterData
-    })
-  });
-  savingIndicator.style.display = "none";
-  if (!res.ok) {
-    if (confirm(`Error attempting to save changes: "${res.status} - ${res.json().error}." Reload page (recommended)?`)) {
-      location.reload();
-    }
-  }
-  saving = false;
-}
-window.save = save;
-function startEditing() {
-  editing = true;
-  document.body.dataset.editing = "true";
-  for (let element of editingMode) {
-    element.contentEditable = contentEditableValue;
-  }
-  for (let element of editingModeInputs) {
-    element.disabled = false;
-  }
-}
-function stopEditing() {
-  if (invalid.length !== 0) {
-    alert("The character sheet contained invalid data and could not be saved");
-    return;
-  }
-  editing = false;
-  document.body.dataset.editing = "false";
-  save();
-  for (let element of editingMode) {
-    element.contentEditable = "false";
-  }
-  for (let element of editingModeInputs) {
-    element.disabled = true;
-  }
-  let changed = document.getElementsByClassName("changed");
-  while (changed.length) {
-    changed[0].classList.remove("changed");
-  }
-}
-function characterChanged() {
-  if (!editing) {
-    save();
-  }
-}
-const editButton = document.getElementById("edit");
-controlButtons.addButton(editButton, true, false);
-editButton.addEventListener("click", () => {
-  if (editing) {
-    stopEditing();
-  } else {
-    startEditing();
-  }
-});
-window.addEventListener("beforeunload", event => {
-  if (editing || saving) {
-    event.preventDefault();
-  }
-});
-// #endregion
-
-document.getElementById("collapse").addEventListener("click", () => {
-  document.getElementById("collapsible-buttons").classList.toggle("collapse");
-});
-
-// #region Reactivity & Other Classes
-class DataDisplay {
-  constructor(args) {
-    this.changeListeners = [];
-    this.invalidationListeners = [];
-    this.element = args.element;
-    this.dataObject = args.dataObject ?? characterData;
-    this.property = args.property;
-    this.getValue = args.getValue ?? (() => this.dataObject[this.property]);
-    this.dataToString = args.dataToString ?? (v => "" + v);
-    this.dataFromString = args.dataFromString ?? (v => v);
-    this.validate = args.validate ?? (() => true);
-    this.allowNewlines = args.allowNewlines ?? false;
-    this.getDefault = args.getDefault;
-    this.editable = args.editable ?? editable.inEditingMode;
-    this.autoResize = args.autoResize ?? false;
-    this.inCharacterSheet = args.inCharacterSheet ?? true;
-    this.oldValue = Symbol("Original Value");
-    const {
-      listenTo = []
-    } = args;
-    switch (this.editable) {
-      case editable.always:
-        this.element.contentEditable = contentEditableValue;
-        if (this.inCharacterSheet) {
-          alwaysEditing.push(this.element);
-        }
-        break;
-      case editable.inEditingMode:
-        if (this.inCharacterSheet) {
-          editingMode.push(this.element);
-        }
-        this.element.contentEditable = editing ? contentEditableValue : "false";
-        break;
-    }
-    if (this.allowNewlines) {
-      this.element.classList.add("multi-line-text");
-    }
-    for (let e of listenTo) {
-      this.listenTo(e);
-    }
-    this.element.addEventListener("paste", event => {
-      event.preventDefault();
-      const selection = getSelection();
-      let first = true;
-      for (let i = 0; i < selection.rangeCount; i++) {
-        const range = selection.getRangeAt(i);
-        if (range.startContainer === this.element.childNodes[0] || range.startContainer === this.element) {
-          range.deleteContents();
-          let content = event.clipboardData.getData("text/plain");
-          if (!this.allowNewlines) {
-            content = content.replace(newlineRegex, "");
-          }
-          range.insertNode(document.createTextNode(content));
-          range.collapse();
-          this.element.normalize();
-          if (!first) {
-            selection.removeRange(prevRange);
-          }
-          first = false;
-        }
-      }
-      this.checkElementValidity();
-      this.maybeResizeFont();
-    });
-    let index;
-    this.element.addEventListener("beforeinput", event => {
-      this.element.normalize();
-      const selection = getSelection();
-      const repeatedOffset = event.data ? event.data.replace(newlineRegex, "").length : 0;
-      index = selection.getRangeAt(0).startOffset + repeatedOffset;
-      for (let i = 0; i < selection.rangeCount; i++) {
-        const range = selection.getRangeAt(i);
-        if (range.startContainer === this.element.childNodes[0]) {
-          index = range.startOffset + repeatedOffset;
-          break;
-        }
-      }
-    });
-    this.element.addEventListener("input", event => {
-      if (!this.allowNewlines && newlineRegex.test(this.element.innerText)) {
-        const brs = this.element.getElementsByTagName("br");
-        while (brs.length) {
-          brs[0].remove();
-        }
-        this.element.innerText = this.element.innerText.replace(newlineRegex, "");
-        this.element.normalize();
-        const selection = getSelection();
-        const node = this.element.childNodes[0] ?? this.element;
-        for (let i = 0; i < selection.rangeCount; i++) {
-          const range = selection.getRangeAt(i);
-          if (range.startContainer === this.element || range.startContainer === node) {
-            selection.removeRange(range);
-          }
-        }
-        if (!node.nodeValue?.length) {
-          index = 0;
-        }
-        const range = document.createRange();
-        range.setStart(node, index);
-        range.setEnd(node, index);
-        selection.addRange(range);
-      }
-      this.maybeResizeFont();
-      this.checkElementValidity();
-    });
-    this.element.addEventListener("focus", () => {
-      this.element.classList.remove("changed");
-    });
-    this.element.addEventListener("click", event => {
-      event.preventDefault();
-    });
-    this.element.addEventListener("blur", () => {
-      let doListeners;
-      if (this.getDefault?.() != null && this.element.innerText === "") {
-        delete this.dataObject[this.property];
-        doListeners = true;
-      } else {
-        const parse = this.parse(this.element.innerText);
-        if (parse.isValid && this.dataObject[this.property] !== parse.value && (this.allowNewlines || !newlineRegex.test(this.element.innerText))) {
-          this.dataObject[this.property] = parse.value;
-          if (this.inCharacterSheet) {
-            characterChanged();
-          }
-          doListeners = true;
-        } else {
-          doListeners = false;
-        }
-      }
-      this.element.parentElement.scroll(0, 0);
-      this.update(doListeners);
-    });
-    if (!this.allowNewlines) {
-      this.element.addEventListener("keydown", event => {
-        if (event.key === "Enter" && !(event.ctrlKey || event.altKey || event.shiftKey || event.metaKey)) {
-          this.element.blur();
-        }
-      });
-    }
-    this.update();
-  }
-  listenTo(e) {
-    e.addChangeListener(() => {
-      if (editing && this.valueExists) {
-        this.element.classList.add("changed");
-      }
-      this.update();
-    });
-  }
-  maybeResizeFont() {
-    if (this.autoResize) {
-      let element = this.element.parentElement.classList.contains("inputLine") ? this.element.parentElement : this.element;
-      const computedStyles = getComputedStyle(element);
-      if (!element.style.getPropertyValue("font-size")) {
-        const str = computedStyles.getPropertyValue("font-size");
-        this.initialFontSize = parseInt(str);
-      }
-      if (this.initialFontSize === undefined || isNaN(this.initialFontSize)) {
-        throw new Error("No initial font size calculated");
-      }
-      const style1 = ["style", "variant", "weight"].map(p => computedStyles.getPropertyValue("font-" + p)).join(" ");
-      const family = computedStyles.getPropertyValue("font-family");
-      if (computedStyles.getPropertyValue("font-stretch") !== "100%") {
-        throw new Error("I didn't write support for font auto resizing that takes into account font-stretch");
-      }
-      const generateFont = size => `${style1} ${size}px ${family}`;
-      const text = (this.element.innerText || this.element.dataset.default) ?? "";
-      let fontSize;
-      for (fontSize = this.initialFontSize; fontSize > 10; fontSize--) {
-        fontCtx.font = generateFont(fontSize);
-        if (fontCtx.measureText(text).width <= element.parentElement.clientWidth) {
-          break;
-        }
-      }
-      if (fontSize === this.initialFontSize) {
-        element.style.removeProperty("font-size");
-      } else {
-        element.style.setProperty("font-size", fontSize + "px");
-      }
-    }
-  }
-  checkElementValidity() {
-    const parsed = this.parse(this.element.innerText);
-    const actual = parsed.isValid;
-    const display = actual || this.element.innerText === "" && (this.element === document.activeElement || "default" in this.element.dataset);
-    if (display) {
-      this.element.classList.remove("invalid");
-    } else {
-      this.element.classList.add("invalid");
-    }
-    for (let callback of this.invalidationListeners) {
-      callback(actual, display, parsed.value);
-    }
-    return {
-      actual,
-      display
-    };
-  }
-  parse(v) {
-    try {
-      let val = this.dataFromString(v);
-      if (typeof val === "string") {
-        val = val.replace(/(?:^[\n\r\u2028\u2029]+)|(?:[\n\r\u2028\u2029]+$)/g, "");
-      }
-      return {
-        isValid: this.validate(val) && (typeof val !== "number" || val < Number.MAX_SAFE_INTEGER),
-        value: val
-      };
-    } catch {
-      return {
-        isValid: false
-      };
-    }
-  }
-  get value() {
-    return this.valueExists ? this.getValue() : this.getDefault();
-  }
-  get valueExists() {
-    return !this.dataObject || this.property in this.dataObject;
-  }
-  update(doListeners = true) {
-    const valueExists = this.valueExists;
-    const value = valueExists ? this.value : undefined;
-    const str = valueExists ? this.dataToString(this.value) : "";
-    this.element.innerText = str;
-    if (this.getDefault) {
-      const defaultVal = this.getDefault();
-      if (defaultVal === null) {
-        delete this.element.dataset.default;
-      } else {
-        this.element.dataset.default = this.dataToString(defaultVal);
-      }
-    }
-    if (this.inCharacterSheet) {
-      const index = invalid.indexOf(this);
-      if (this.checkElementValidity().display) {
-        if (index >= 0) {
-          invalid.splice(index, 1);
-        }
-      } else {
-        if (index === -1) {
-          invalid.push(this);
-        }
-      }
-    }
-    this.maybeResizeFont();
-    const changed = value !== this.oldValue;
-    this.oldValue = value;
-    if (doListeners && changed) {
-      for (let listener of this.changeListeners) {
-        listener(value, str, valueExists);
-      }
-    }
-  }
-  addChangeListener(callback) {
-    this.changeListeners.push(callback);
-  }
-  removeChangeListener(callback) {
-    this.changeListeners.splice(this.changeListeners.indexOf(callback), 1);
-  }
-  addInvalidationListener(callback) {
-    this.invalidationListeners.push(callback);
-  }
-  removeInvalidationListener(callback) {
-    this.invalidationListeners.splice(this.invalidationListeners.indexOf(callback), 1);
-  }
-}
-class Fraction {
-  constructor(element, numerArgs, denomArgs) {
-    this.element = element;
-    if (this.element.childNodes.length) {
-      this.numerElement = this.element.querySelector("[data-numer]");
-      this.denomElement = this.element.querySelector("[data-denom]");
-    } else {
-      this.numerElement = document.createElement("span");
-      this.denomElement = document.createElement("span");
-      element.appendChild(this.numerElement);
-      element.appendChild(document.createTextNode(" / "));
-      element.appendChild(this.denomElement);
-    }
-    this.denomDisplay = new DataDisplay({
-      element: this.denomElement,
-      validate: n => n > 0,
-      dataFromString: unsignedParseInt,
-      ...denomArgs
-    });
-    this.numerDisplay = new DataDisplay({
-      element: this.numerElement,
-      validate: n => n >= 0 && n <= this.denomDisplay.value,
-      dataFromString: unsignedParseInt,
-      listenTo: [this.denomDisplay],
-      editable: editable.always,
-      ...numerArgs
-    });
-  }
-}
-class Proficiency {
-  constructor(block, group, name, stat, defaultMap = n => n) {
-    block = this.element ||= /*#__PURE__*/React.createElement("div", {
-      class: group + " proficiency",
-      id: name
-    }, /*#__PURE__*/React.createElement("label", {
-      for: name + "Checkbox"
-    }, /*#__PURE__*/React.createElement("input", {
-      id: name + "Checkbox",
-      type: "checkbox",
-      name: group + "Checkbox",
-      class: group + "Checkbox proficiencyCheckbox",
-      disabled: "true"
-    }), /*#__PURE__*/React.createElement("div", {
-      class: "customCheckbox"
-    }), /*#__PURE__*/React.createElement("span", {
-      class: group + "Bonus proficiencyBonus"
-    }), " ", name, " ", /*#__PURE__*/React.createElement("span", {
-      class: "proficiencyBonusStat"
-    }, "(", stat.substring(0, 3), ")")));
-    const statMod = stats[stat].mod;
-    const bonus = this.bonus = new DataDisplay({
-      element: block.getElementsByClassName("proficiencyBonus")[0],
-      getDefault: () => defaultMap(statMod.value + (characterData[group].proficiencies.indexOf(name) === -1 ? 0 : proficiencyBonus.value)),
-      dataObject: characterData[group].bonuses,
-      property: name,
-      dataToString: signedIntToStr,
-      dataFromString: betterParseInt,
-      validate: n => !isNaN(n),
-      listenTo: [statMod, proficiencyBonus]
-    });
-    const checkbox = this.checkbox = block.getElementsByClassName("proficiencyCheckbox")[0];
-    editingModeInputs.push(checkbox);
-    checkbox.checked = characterData[group].proficiencies.indexOf(name) >= 0;
-    checkbox.addEventListener("input", () => {
-      if (checkbox.checked) {
-        characterData[group].proficiencies.push(name);
-      } else {
-        characterData[group].proficiencies.splice(characterData[group].proficiencies.indexOf(name), 1);
-      }
-      bonus.update();
-    });
-  }
-}
-class List {
-  constructor(element, data, newValue, ThisListItem) {
-    element.classList.add("list");
-    this.element = element;
-    this.data = data;
-    this.contents = [];
-    const addButton = this.addButton = /*#__PURE__*/React.createElement("button", {
-      class: "list-add",
-      type: "button"
-    }, /*#__PURE__*/React.createElement("div", {
-      class: "list-add-line"
-    }), /*#__PURE__*/React.createElement("div", {
-      class: "list-plus"
-    }, /*#__PURE__*/React.createElement("div", {
-      class: "list-plus-h"
-    }), /*#__PURE__*/React.createElement("div", {
-      class: "list-plus-v"
-    })), /*#__PURE__*/React.createElement("div", {
-      class: "list-add-line"
-    }));
-    element.appendChild(addButton);
-    addButton.addEventListener("click", () => {
-      const value = newValue();
-      this.contents.push(new ThisListItem(this, value));
-      data.push(value);
-    });
-    for (let value of data) {
-      this.contents.push(new ThisListItem(this, value));
-    }
-  }
-}
-class ListItem {
-  constructor(list) {
-    const block = this.element = /*#__PURE__*/React.createElement("div", {
-      class: "list-row"
-    }, /*#__PURE__*/React.createElement("div", {
-      class: "list-move"
-    }, /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", null)), /*#__PURE__*/React.createElement("button", {
-      class: "list-delete",
-      type: "button"
-    }, /*#__PURE__*/React.createElement("img", {
-      src: "/static/img/trash.png"
-    })));
-    block.getElementsByClassName("list-delete")[0].addEventListener("click", () => {
-      block.remove();
-      const index = list.contents.indexOf(this);
-      list.contents.splice(index, 1);
-      list.data.splice(index, 1);
-    });
-    const handle = block.getElementsByClassName("list-move")[0];
-    let dragging = false;
-    let startY;
-    handle.addEventListener("mousedown", e => {
-      dragging = true;
-      block.classList.add("dragging");
-      document.body.classList.add("dragHappening");
-      startY = e.screenY;
-    });
-    window.addEventListener("mousemove", e => {
-      if (dragging) {
-        let dy = e.screenY - startY;
-        if (this === list.contents[0] && dy < 0) {
-          dy = 0;
-        }
-        if (this === list.contents[list.contents.length - 1] && dy > 0) {
-          dy = 0;
-        }
-        block.style.setProperty("translate", `0 ${dy}px`);
-        const midpoint = block.offsetTop + block.clientHeight / 2 + dy;
-        let colliding;
-        let collidingIndex;
-        for (let i = 0; i < list.contents.length; i++) {
-          const other = list.contents[i];
-          if (this === other) {
-            continue;
-          }
-          const otherMidpoint = other.element.offsetTop + other.element.clientHeight / 2;
-          if (other.element.offsetTop <= midpoint && midpoint <= other.element.offsetTop + other.element.clientHeight && this.element.offsetTop + dy <= otherMidpoint && otherMidpoint <= this.element.offsetTop + dy + this.element.clientHeight) {
-            colliding = other;
-            collidingIndex = i;
-            break;
-          }
-        }
-        if (colliding) {
-          const ownIndex = list.contents.indexOf(this);
-          const prevY = block.offsetTop;
-          block.remove();
-          if (ownIndex > collidingIndex) {
-            list.element.insertBefore(block, colliding.element);
-          } else {
-            list.element.insertBefore(block, colliding.element.nextElementSibling);
-          }
-          list.contents.splice(ownIndex, 1);
-          list.contents.splice(collidingIndex, 0, this);
-          const jsonValue = list.data[ownIndex];
-          list.data.splice(ownIndex, 1);
-          list.data.splice(collidingIndex, 0, jsonValue);
-          startY += block.offsetTop - prevY;
-          dy = e.screenY - startY;
-          block.style.setProperty("translate", `0 ${dy}px`);
-        }
-      }
-    });
-    function endDrag() {
-      dragging = false;
-      block.classList.remove("dragging");
-      block.style.removeProperty("translate");
-      document.body.classList.remove("dragHappening");
-    }
-    window.addEventListener("mouseup", endDrag);
-    window.addEventListener("mouseleave", endDrag);
-    list.element.insertBefore(block, list.addButton);
-  }
-}
-// #endregion
-
-// #region Fetch character data
-const charResponse = await fetch(characterJson);
-if (!charResponse.ok) {
-  alert(`Error retrieving character data\n${charResponse.status} - ${charResponse.statusText}\n$${res.text()}`);
-}
-const parsedCharResponse = await charResponse.json();
-const {
-  content: characterData,
-  editPermission,
-  ownerDisplayName,
-  title
-} = parsedCharResponse;
-let {
-  linkSharing
-} = parsedCharResponse;
-window.characterData = characterData;
-for (let skill of characterData.skills.proficiencies) {
-  if (!(skill in skillToStatMap)) {
-    alert("The character sheet is invalid");
-    throw new Error(`Cannot have proficiency in ${skill} because no such skill exists`);
-  }
-}
-// #endregion
-
+import { DataDisplay, Fraction, List, ListItem, util, editable, editing, contentEditableValue } from "./reactiveDisplay.js";
+import { controlButtons } from "./characterControls.js";
+import { characterData, ownerDisplayName, title } from "./loadCharacter.js";
 document.getElementById("title").innerText = title;
-
-// const titleDisplay = new DataDisplay({
-//     element: document.getElementById("title"),
-//     dataObject: { title },
-//     property: "title",
-//     validator: s => /,
-//     editable: editable.always
-// });
-
-// titleDisplay.addChangeListener(value => {
-
-// })
 
 // #region Character Data
 const characterName = new DataDisplay({
@@ -723,9 +66,24 @@ const alignment = new DataDisplay({
 const xp = new DataDisplay({
   element: document.getElementById("xp"),
   property: "xp",
-  dataFromString: unsignedParseInt,
+  dataFromString: util.unsignedParseInt,
   editable: editable.always
 });
+const statNames = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
+const statToSkillMap = {
+  "Strength": ["Athletics"],
+  "Dexterity": ["Acrobatics", "Slight of Hand", "Stealth"],
+  "Intelligence": ["Arcana", "History", "Investigation", "Nature", "Religion"],
+  "Wisdom": ["Animal Handling", "Insight", "Medicine", "Perception", "Survival"],
+  "Charisma": ["Deception", "Intimidation", "Performance", "Persuasion"]
+};
+const skillToStatMap = {};
+for (let stat in statToSkillMap) {
+  // skillNames.push(...statToSkillMap[stat]);
+  for (let skill of statToSkillMap[stat]) {
+    skillToStatMap[skill] = stat;
+  }
+}
 const stats = {};
 for (let statName of statNames) {
   const block = /*#__PURE__*/React.createElement("div", {
@@ -745,12 +103,12 @@ for (let statName of statNames) {
     validate: n => n > 0 && n <= 20,
     dataObject: characterData.stats,
     property: statName,
-    dataFromString: betterParseInt
+    dataFromString: util.betterParseInt
   });
   const args = {
     element: block.getElementsByClassName("stat-mod")[0].children[0],
     getDefault: () => Math.floor((stat.value - 10) / 2),
-    dataToString: signedIntToStr,
+    dataToString: util.signedIntToStr,
     listenTo: [stat],
     editable: editable.never
   };
@@ -766,6 +124,50 @@ const proficiencyBonus = new DataDisplay({
   listenTo: [classAndLvl],
   editable: editable.never
 });
+class Proficiency {
+  constructor(block, group, name, stat, defaultMap = n => n) {
+    block = this.element ||= /*#__PURE__*/React.createElement("div", {
+      class: group + " proficiency",
+      id: name
+    }, /*#__PURE__*/React.createElement("label", {
+      for: name + "Checkbox"
+    }, /*#__PURE__*/React.createElement("input", {
+      id: name + "Checkbox",
+      type: "checkbox",
+      name: group + "Checkbox",
+      class: group + "Checkbox proficiencyCheckbox",
+      disabled: "true"
+    }), /*#__PURE__*/React.createElement("div", {
+      class: "customCheckbox"
+    }), /*#__PURE__*/React.createElement("span", {
+      class: group + "Bonus proficiencyBonus"
+    }), " ", name, " ", /*#__PURE__*/React.createElement("span", {
+      class: "proficiencyBonusStat"
+    }, "(", stat.substring(0, 3), ")")));
+    const statMod = stats[stat].mod;
+    const bonus = this.bonus = new DataDisplay({
+      element: block.getElementsByClassName("proficiencyBonus")[0],
+      getDefault: () => defaultMap(statMod.value + (characterData[group].proficiencies.indexOf(name) === -1 ? 0 : proficiencyBonus.value)),
+      dataObject: characterData[group].bonuses,
+      property: name,
+      dataToString: util.signedIntToStr,
+      dataFromString: util.betterParseInt,
+      validate: n => !isNaN(n),
+      listenTo: [statMod, proficiencyBonus]
+    });
+    const checkbox = this.checkbox = block.getElementsByClassName("proficiencyCheckbox")[0];
+    editing.ui.editingModeInputs.push(checkbox);
+    checkbox.checked = characterData[group].proficiencies.indexOf(name) >= 0;
+    checkbox.addEventListener("input", () => {
+      if (checkbox.checked) {
+        characterData[group].proficiencies.push(name);
+      } else {
+        characterData[group].proficiencies.splice(characterData[group].proficiencies.indexOf(name), 1);
+      }
+      bonus.update();
+    });
+  }
+}
 const skills = {};
 for (let skill of Object.keys(skillToStatMap).sort()) {
   const skillData = new Proficiency(undefined, "skills", skill, skillToStatMap[skill]);
@@ -790,13 +192,13 @@ if (characterData.inspiration) {
 }
 inspiration.addEventListener("change", () => {
   characterData.inspiration = inspiration.checked;
-  characterChanged();
+  editing.characterChanged();
 });
-alwaysEditingInputs.push(inspiration);
+editing.ui.alwaysEditingInputs.push(inspiration);
 const ac = new DataDisplay({
   element: document.getElementById("ac"),
   property: "ac",
-  dataFromString: unsignedParseInt,
+  dataFromString: util.unsignedParseInt,
   validate: n => n > 0,
   listenTo: [stats.Dexterity.mod],
   autoResize: true
@@ -804,32 +206,47 @@ const ac = new DataDisplay({
 const initiative = new DataDisplay({
   element: document.getElementById("initiative"),
   getDefault: () => stats.Dexterity.mod.value,
-  dataToString: signedIntToStr,
+  dataToString: util.signedIntToStr,
   editable: editable.never,
   listenTo: [stats.Dexterity.mod]
 });
 const speed = new DataDisplay({
   element: document.getElementById("speed"),
   property: "speed",
-  dataFromString: unsignedParseInt,
+  dataFromString: util.unsignedParseInt,
   validate: n => n > 0,
   autoResize: true
 });
 const tempHp = new DataDisplay({
   element: document.getElementById("temp-hp-value"),
   property: "tempHp",
-  dataFromString: unsignedParseInt,
+  dataFromString: util.unsignedParseInt,
   validate: n => n >= 0,
   editable: editable.always
 });
+const hitDiceTable = {
+  "sorcerer": 6,
+  "wizard": 6,
+  "artificer": 8,
+  "bard": 8,
+  "cleric": 8,
+  "druid": 8,
+  "monk": 8,
+  "rogue": 8,
+  "warlock": 8,
+  "fighter": 10,
+  "paladin": 10,
+  "ranger": 10,
+  "barbarian": 12
+};
 function hitDieFromString(str) {
   let [n, d, err] = str.split("d");
   if (err || !n || !d) {
     throw new Error();
   }
   return {
-    d: unsignedParseInt(d),
-    n: unsignedParseInt(n)
+    d: util.unsignedParseInt(d),
+    n: util.unsignedParseInt(n)
   };
 }
 function hitDieToString(die) {
@@ -902,8 +319,9 @@ for (let display of [ac, speed, hp.numerDisplay, hp.denomDisplay, tempHp, hitDic
   });
 }
 const newSpellSheetButton = document.getElementById("add-spell-sheet");
-editingModeInputs.push(newSpellSheetButton);
+editing.ui.editingModeInputs.push(newSpellSheetButton);
 const deathSaveBoxes = Array.from(document.getElementById("death-saves").getElementsByTagName("input"));
+editing.ui.special.push(...deathSaveBoxes);
 const killButton = document.getElementById("kill");
 controlButtons.addButton(killButton, true, false);
 function die() {
@@ -925,12 +343,10 @@ function die() {
   }
   characterData.hp = 0;
   hp.numerDisplay.update();
-  stopEditing();
-  for (let element of alwaysEditing) {
-    element.contentEditable = "false";
-  }
-  for (let element of [...alwaysEditingInputs, ...deathSaveBoxes, ...controlButtons.getList(controlButtons.enabledWhileDead, false)]) {
-    element.disabled = true;
+  editing.stopEditing();
+  editing.viewOnlyMode();
+  for (let element of controlButtons.getList(controlButtons.enabledWhileDead, true)) {
+    element.disabled = false;
   }
 }
 function revive() {
@@ -938,11 +354,11 @@ function revive() {
   document.body.classList.remove("dead");
   characterData.hp = 1;
   hp.numerDisplay.update();
-  characterChanged();
-  for (let element of alwaysEditing) {
+  editing.characterChanged();
+  for (let element of editing.ui.alwaysEditing) {
     element.contentEditable = contentEditableValue;
   }
-  for (let element of [...alwaysEditingInputs, ...controlButtons.getList(controlButtons.enabledWhileDead, false)]) {
+  for (let element of [...editing.ui.alwaysEditingInputs, ...controlButtons.all]) {
     element.disabled = false;
   }
 }
@@ -964,13 +380,13 @@ function updateConsciousness() {
         success: 0,
         fail: 0
       };
-      characterChanged();
+      editing.characterChanged();
     }
     document.documentElement.dataset.failedDeathSaves = characterData.deathSaves.fail;
   } else {
     if ("deathSaves" in characterData) {
       delete characterData.deathSaves;
-      characterChanged();
+      editing.characterChanged();
     }
     delete document.documentElement.dataset.failedDeathSaves;
   }
@@ -991,7 +407,7 @@ class DeathSaves {
           value--;
         }
         characterData.deathSaves[type] = value;
-        characterChanged();
+        editing.characterChanged();
         this.update();
       });
     }
@@ -1067,8 +483,8 @@ class Weapon extends ListItem {
         element: block.getElementsByClassName("weapon-bonus-value")[0],
         dataObject: weapon,
         property: "bonus",
-        dataFromString: betterParseInt,
-        dataToString: signedIntToStr,
+        dataFromString: util.betterParseInt,
+        dataToString: util.signedIntToStr,
         listenTo: [stats.Strength.mod, stats.Dexterity.mod, proficiencyBonus]
       }),
       damage: new DataDisplay({
@@ -1086,6 +502,7 @@ const weapons = new List(document.getElementById("attacks-table"), characterData
   bonus: 0,
   damage: "0 type"
 }), Weapon);
+const moneyDenominations = ["CP", "SP", "EP", "GP", "PP"];
 const moneyElement = document.getElementById("money");
 const money = [];
 for (let denom of moneyDenominations) {
@@ -1105,7 +522,7 @@ for (let denom of moneyDenominations) {
     element: block.getElementsByClassName("money-value")[0],
     dataObject: characterData.money,
     property: denom,
-    dataFromString: unsignedParseInt,
+    dataFromString: util.unsignedParseInt,
     editable: editable.always
   }));
   moneyElement.appendChild(block);
@@ -1157,8 +574,8 @@ class Feature extends ListItem {
     this.checkbox.checked = "maxUses" in data;
     this.updateFeatureUses();
     this.checkbox.addEventListener("change", () => this.updateFeatureUses());
-    editingModeInputs.push(this.checkbox);
-    this.checkbox.disabled = !editing;
+    editing.ui.editingModeInputs.push(this.checkbox);
+    this.checkbox.disabled = !editing.isEditing;
     this.element.appendChild(block);
   }
   updateFeatureUses() {
@@ -1181,9 +598,9 @@ class Feature extends ListItem {
       delete this.data.maxUses;
       if (this.uses) {
         for (let display of [this.uses.numerDisplay, this.uses.denomDisplay]) {
-          const index = invalid.indexOf(display);
+          const index = editing.invalid.indexOf(display);
           if (index >= 0) {
-            invalid.splice(display, 1);
+            editing.invalid.splice(display, 1);
           }
         }
       }
@@ -1229,11 +646,11 @@ class Spell {
     });
     if (level > 0) {
       const checkbox = block.getElementsByClassName("spellPrepared")[0];
-      editingModeInputs.push(checkbox);
+      editing.ui.editingModeInputs.push(checkbox);
       checkbox.checked = dataObject.prepared;
       checkbox.addEventListener("input", () => {
         dataObject.prepared = checkbox.checked;
-        characterChanged();
+        editing.characterChanged();
       });
     }
   }
@@ -1404,10 +821,10 @@ class SpellSheet {
       getDefault: () => stats[ability.value].mod.value + proficiencyBonus.value,
       listenTo: [ability, ...Object.values(stats).map(s => s.mod), proficiencyBonus],
       editable: editable.never,
-      dataToString: signedIntToStr
+      dataToString: util.signedIntToStr
     });
     const delPage = block.getElementsByClassName("spellsheet-delete")[0];
-    editingModeInputs.push(delPage);
+    editing.ui.editingModeInputs.push(delPage);
     delPage.addEventListener("click", () => {
       characterData.spellcasting.splice(characterData.spellcasting.indexOf(dataObject), 1);
       block.remove();
@@ -1450,187 +867,4 @@ newSpellSheetButton.addEventListener("click", () => {
   const sheet = new SpellSheet(characterData.spellcasting.push(SpellSheet.blank()) - 1);
   document.getElementsByTagName("main")[0].appendChild(sheet.block);
 });
-// #endregion
-
-// #region Sharing
-let currentModal = undefined;
-function blurListener(event) {
-  if (currentModal && !currentModal.contains(event.target)) {
-    event.target.blur();
-  }
-}
-function openModal(element) {
-  if (currentModal) {
-    throw new Error("Cannot open two modals at once");
-  }
-  currentModal = element;
-  document.body.dataset.modalOpen = "true";
-  document.body.addEventListener("focusin", blurListener);
-  element.classList.add("open-modal");
-}
-function closeModal() {
-  document.body.dataset.modalOpen = "false";
-  document.body.addEventListener("focusin", blurListener);
-  currentModal.classList.remove("open-modal");
-  currentModal = undefined;
-}
-const shareButton = document.getElementById("sharing");
-const sharingModal = document.getElementById("sharing-modal");
-const shareListElement = document.getElementById("direct-sharing-list");
-const shareAdd = document.getElementById("direct-sharing-add");
-const linkShareDropdown = document.getElementById("link-sharing-dropdown");
-controlButtons.addButton(shareButton, true, true);
-class ShareTarget {
-  isNew = true;
-  constructor() {
-    const block = this.element = /*#__PURE__*/React.createElement("div", {
-      class: "direct-sharing-row"
-    }, /*#__PURE__*/React.createElement("input", {
-      type: "text",
-      placeholder: "username",
-      class: "direct-sharing-target"
-    }), /*#__PURE__*/React.createElement("select", {
-      name: "link-sharing",
-      class: "direct-sharing-dropdown"
-    }, /*#__PURE__*/React.createElement("option", {
-      value: "edit"
-    }, "Edit"), /*#__PURE__*/React.createElement("option", {
-      value: "view"
-    }, "View"), /*#__PURE__*/React.createElement("option", {
-      value: "none"
-    }, "None")));
-    shareList.push(this);
-    shareListElement.insertBefore(block, shareAdd);
-  }
-  get usernameInput() {
-    return this.element.getElementsByClassName("direct-sharing-target")[0];
-  }
-  get permissionInput() {
-    return this.element.getElementsByClassName("direct-sharing-dropdown")[0];
-  }
-}
-const shareList = [];
-shareButton.addEventListener("click", () => {
-  openModal(sharingModal);
-});
-document.getElementById("sharing-submit").addEventListener("click", async () => {
-  Promise.all([submitDirectSharing(), submitLinkSharing()]);
-  closeModal();
-  for (let i = shareList.length - 1; i >= 0; i--) {
-    shareList[i].usernameInput.readOnly = true;
-    if (shareList[i].permissionInput.value === "none") {
-      shareList[i].element.remove();
-      shareList.splice(i, 1);
-    }
-  }
-});
-async function submitDirectSharing() {
-  const body = [];
-  for (let e of shareList) {
-    const username = e.usernameInput;
-    const permission = e.permissionInput;
-    if (e.isNew || e.oldValue !== permission.value) {
-      body.push({
-        user: username.value,
-        level: permission.value
-      });
-    }
-    e.oldValue = permission.value;
-    e.isNew = false;
-  }
-  if (body.length) {
-    document.body.classList.add("wait");
-    const res = await fetch(sharingApi, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
-    });
-    document.body.classList.remove("wait");
-    if (res.status === 207) {
-      const success = [];
-      const fail = [];
-      for (let {
-        user,
-        status
-      } of await res.json()) {
-        if (status === 204) {
-          success.push(user);
-        } else {
-          fail.push(user);
-        }
-      }
-      for (let failed of fail) {
-        const i = shareList.findIndex(e => e.usernameInput.value === failed);
-        shareList[i].element.remove();
-        shareList.splice(i, 1);
-      }
-      let message = "The following user";
-      if (fail.length !== 1) {
-        message += "s do";
-      } else {
-        message += " does";
-      }
-      message += " not exist: ";
-      message += fail.join(", ");
-      if (success.length) {
-        message += "\nSuccessfully shared with: ";
-        message += success.join(", ");
-      }
-      alert(message);
-    } else if (res.status !== 204) {
-      if (confirm(`Error ${res.status} attempting to share. Reload page (recommended)?`)) {
-        location.reload();
-      }
-    }
-  }
-}
-async function submitLinkSharing() {
-  if (linkShareDropdown.value !== linkSharing) {
-    const res = await fetch(characterJson, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        property: "linkSharing",
-        value: linkSharing = linkShareDropdown.value
-      })
-    });
-    if (!res.ok) {
-      if (confirm(`Error ${res.status} attempting to share. Reload page (recommended)?`)) {
-        location.reload();
-      }
-    }
-  }
-}
-shareAdd.addEventListener("click", () => new ShareTarget());
-void async function () {
-  const sharing = await (await fetch(sharingApi)).json();
-  for (let {
-    username,
-    share_type: permission
-  } of sharing) {
-    const row = new ShareTarget();
-    row.usernameInput.value = username;
-    row.permissionInput.value = row.oldValue = permission;
-    row.isNew = false;
-  }
-  linkShareDropdown.value = linkSharing;
-  if (editPermission) {
-    shareButton.disabled = false;
-  }
-}();
-// #endregion
-
-// #region edit403
-if (!editPermission) {
-  for (let element of alwaysEditing) {
-    element.contentEditable = "false";
-  }
-  for (let element of [...alwaysEditingInputs, ...deathSaveBoxes, ...controlButtons.all]) {
-    element.disabled = true;
-  }
-}
 // #endregion
