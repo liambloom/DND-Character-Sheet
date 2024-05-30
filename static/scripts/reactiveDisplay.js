@@ -1,11 +1,8 @@
 import React from "./jsx.js";
 import { characterApi, characterData, editPermission } from "./loadCharacter.js";
+import { contentEditableValue } from "./characterUiLayer.js";
 const newlineRegex = /[\n\r\u2028\u2029]/g;
 const fontCtx = document.createElement("canvas").getContext("2d");
-const testElement = document.createElement("div");
-testElement.setAttribute("contentEditable", "PLAINTEXT-ONLY");
-const supportsPlaintextOnly = testElement.contentEditable === "plaintext-only";
-export const contentEditableValue = supportsPlaintextOnly ? "plaintext-only" : "true";
 export const editable = {
   always: Symbol("Always Editable"),
   inEditingMode: Symbol("In Editing Mode"),
