@@ -1,5 +1,6 @@
 import React from "./jsx.js";
-import { DataDisplay, Fraction, List, ListItem, util, editable, editing, contentEditableValue } from "./reactiveDisplay.js";
+import { contentEditableValue } from "./characterUiLayer.js";
+import { DataDisplay, Fraction, List, ListItem, util, editable, editing } from "./reactiveDisplay.js";
 import { controlButtons } from "./characterControls.js";
 import { characterData, ownerDisplayName, title } from "./loadCharacter.js";
 
