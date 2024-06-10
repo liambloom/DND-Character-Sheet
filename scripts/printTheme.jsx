@@ -1,3 +1,4 @@
+import { statNames, skillNames, skillToStatMap, moneyDenominations } from "./5eData.js";
 function ListAddButton() {
     return (
         <button class="list-add" type="button">
@@ -20,6 +21,8 @@ function DsCheckbox({ type }) {
     );
 }
 
+DsCheckbox({type: "foo"});
+
 function DsCounter({ type }) {
     return (
         <div id={`ds-${type}-counter`} class="ds-counter">
@@ -33,7 +36,7 @@ function DsCounter({ type }) {
     );
 }
 
-export const mainContent = <div id="mainpage" class="page">
+const mainContent = <div id="mainpage" class="page">
     <header class="page-header">
         <div class="left-header-banner">
             <div class="header-banner-back"></div>
@@ -140,9 +143,9 @@ export const mainContent = <div id="mainpage" class="page">
         <div id="misc-row-2">
             <div id="health">
                 <div class="topText inputLine">
-                    <span>Hit Point Maximum:&nbsp;</span><span id="maxHpValue" class="ignore-invalid" data-denom></span>
+                    <span>Hit Point Maximum:&nbsp;</span><span id="maxHpValue" class="ignore-invalid"></span>
                 </div>
-                <div class="inputLine"><div id="currentHp" class="ignore-invalid" data-numer></div></div>
+                <div class="inputLine"><div id="currentHp" class="ignore-invalid"></div></div>
                 <div class="sectionTitle">Current Hit Points</div>
             </div>
             <div id="temp-hp">
@@ -153,7 +156,7 @@ export const mainContent = <div id="mainpage" class="page">
         <div id="misc-row-3">
             <div id="hit-dice">
                 <div class="topText inputLine">
-                    <span>Total:&nbsp;</span><span id="hit-dice-total" class="ignore-invalid" data-denom></span>
+                    <span>Total:&nbsp;</span><span id="hit-dice-total" class="ignore-invalid"></span>
                 </div>
                 <div class="inputLine"><div id="hit-dice-value" class="ignore-invalid"></div></div>
                 <div class="sectionTitle">Hit Dice</div>
@@ -203,7 +206,7 @@ export const mainContent = <div id="mainpage" class="page">
 
 const $ = mainContent.querySelector;
 
-const moneyDenominations = ["CP", "SP", "EP", "GP", "PP"];
+
 const moneyElement = $("#money");
 for (let denom of moneyDenominations) {
     const block = <div id={"money-" + denom.toLowerCase()} class="money-denom">
@@ -218,7 +221,6 @@ for (let denom of moneyDenominations) {
     moneyElement.appendChild(block);
 }
 
-const statNames = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
 for (let statName of statNames) {
     const block = <div class="stat" id={statName}>
         <div class="sectionTitle staticPos">{statName}</div>
@@ -228,20 +230,7 @@ for (let statName of statNames) {
     $("#stats").appendChild(block);
 }
 
-const statToSkillMap = {
-    "Strength": ["Athletics"],
-    "Dexterity": ["Acrobatics", "Slight of Hand", "Stealth"],
-    "Intelligence": ["Arcana", "History", "Investigation", "Nature", "Religion"],
-    "Wisdom": ["Animal Handling", "Insight", "Medicine", "Perception", "Survival"],
-    "Charisma": ["Deception", "Intimidation", "Performance", "Persuasion"],
-}
-const skillToStatMap = {};
-for (let stat in statToSkillMap) {
-    // skillNames.push(...statToSkillMap[stat]);
-    for (let skill of statToSkillMap[stat]) {
-        skillToStatMap[skill] = stat;
-    }
-}
+
 
 function createProficiency(group, name, stat) {
     const block = <div class={group + " proficiency"} id={name}>
@@ -260,8 +249,8 @@ function createProficiency(group, name, stat) {
 }
 
 class ListItem {
-    constructor(list) {
-        const block = <div class="list-row">
+    constructor() {
+        this.element = <div class="list-row">
             <div class="list-move">
                 <div></div>
                 <div></div>
@@ -273,13 +262,14 @@ class ListItem {
             <button class="list-delete" type="button"><img src="/static/img/trash.png"></img></button>
         </div>;
 
-        list.element.insertBefore(block, list.addButton);
+        this.moveHandle = this.element.getElementsByClassName("list-move")[0];
+        this.deleteButton = this.element.getElementsByClassName("list-delete")[0];
     }
 }
 
 class Weapon extends ListItem {
-    constructor(list, weapon) {
-        super(list);
+    constructor() {
+        super();
         
         const block = <div class="weapon-content">
             <div class="weapon-name"><span class="weapon-name-value"></span></div>
@@ -287,7 +277,7 @@ class Weapon extends ListItem {
             <div class="weapon-damage"><span class="weapon-damage-value"></span></div>
         </div>;
 
-        this.value = {
+        this.data = {
             name: block.getElementsByClassName("weapon-name-value")[0],
             bonus: block.getElementsByClassName("weapon-bonus-value")[0],
             damage: block.getElementsByClassName("weapon-damage-value")[0],
@@ -297,42 +287,33 @@ class Weapon extends ListItem {
     }
 }
 
-const weapons = new List(document.getElementById("attacks-table"), characterData.weapons, 
-    () => ({ name: "Name", bonus: 0, damage: "0 type" }), Weapon);
-
 class Feature extends ListItem {
-    constructor(list, data) {
-        super(list);
+    constructor() {
+        super();
         const block = <div class="feature multi-line-text">
             <span class="feature-name multi-line-text">
                 <span class="feature-name-text multi-line-text"></span><span class="feature-uses">
                     <input type="checkbox" class="feature-uses-checkbox default-checkbox"></input>
-                    <span class="feature-uses-blank">(_ / _)</span><span class="feature-uses-value-container">(<span class="feature-uses-value"></span>)</span>
+                    <span class="feature-uses-blank">(_ / _)</span><span class="feature-uses-value-container"
+                    >(<span class="feature-uses-value"><span class="current-feature-uses"></span> / <span class="max-feature-uses"></span></span>)</span>
                 </span>:</span> <span class="feature-text multi-line-text"></span>
         </div>;
 
-        this.data = data;
-
-        this.name = block.getElementsByClassName("feature-name-text")[0],
-
-        this.text = block.getElementsByClassName("feature-text")[0],
-
-        this.checkbox = block.getElementsByClassName("feature-uses-checkbox")[0];
-        // this.usesBlank = block.getElementsByClassName("feature-uses-blank")[0];
-        this.usesValue = block.getElementsByClassName("feature-uses-value")[0];
-        this.usesContainer = block.getElementsByClassName("feature-uses")[0];
+        this.data = {
+            name: block.getElementsByClassName("feature-name-text")[0],
+            text: block.getElementsByClassName("feature-text")[0],
+            checkbox: block.getElementsByClassName("feature-uses-checkbox")[0],
+            currentUses: block.getElementsByClassName("feature-uses-value")[0],
+            maxUses: block.getElementsByClassName("feature-uses")[0],
+        }
 
         this.element.appendChild(block);
     }
 }
 
-const features = new List(document.getElementById("features-list"), characterData.features, () => ({ name: "Name", text: "Description" }), Feature);
+const templates = { Weapon, Feature };
 
-export const templates = {
-
-}
-
-export const character = {
+const character = {
     name: $("#name-value"),
     classAndLevel: $("#classAndLvl"),
     background: $("#background"),
@@ -342,9 +323,8 @@ export const character = {
     stats: Object.fromEntries(statNames.map(statName => [statName, { value: $(`#${statName} .stat-val`), modifier: $(`#${statName} .stat-mod`) }])),
     inspiration: $("#inspiration"),
     proficiencyBonus: $("#proficiencyBonus"),
-    savingThrows: Object.fromEntries(Object.keys(skillToStatMap).map(stat => [stat, createProficiency("savingThrows", stat, stat)])),
-    skills: Object.fromEntries(Object.keys(skillToStatMap).sort().map(skill => [skill, createProficiency("skills", skill, skillToStatMap[skill])])),
-    // TODO: mirror passive perception
+    savingThrows: Object.fromEntries(statNames.map(stat => [stat, createProficiency("savingThrows", stat, stat)])),
+    skills: Object.fromEntries(skillNames.map(skill => [skill, createProficiency("skills", skill, skillToStatMap[skill])])),
     otherProficiencies: {
         armor: $("#armor-prof"),
         weapons: $("#weapons-prof"),
@@ -368,21 +348,22 @@ export const character = {
         fail: [...main.getElementsByClassName("ds-fail")],
     },
     weapons: {
+        list: $("#attacks-table"),
         addButton: $("#attacks-table .list-add"),
-        add(element) {
-            $("#attacks-table").insertBefore(element, this.addButton)
-        }
     },
     attackText: $("#attacks-text"),
     money: moneyDenominations.map(d => "money-" + d.toLowerCase()).map($),
     equipmentText: $("#equipment-text"),
     features: {
+        list: $("#attacks-text"),
         addButton: $("#features-list .list-add"),
-        add(element) {
-            $("#features-list").insertBefore(element, this.addButton)
-        }
     },
+};
+
+const mirrors = {
     readOnlyMirror: {
         "skills.perception.bonus": $("#perceptionValue"),
     }
-};
+}
+
+export default { mainContent, templates, character, mirrors };

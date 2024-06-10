@@ -1,3 +1,4 @@
+import { statNames, skillNames, skillToStatMap, moneyDenominations } from "./5eData.js";
 function ListAddButton() {
   return /*#__PURE__*/React.createElement("button", {
     class: "list-add",
@@ -24,6 +25,9 @@ function DsCheckbox({
     class: "customCheckbox"
   }));
 }
+DsCheckbox({
+  type: "foo"
+});
 function DsCounter({
   type
 }) {
@@ -42,7 +46,7 @@ function DsCounter({
     type: type
   })));
 }
-export const mainContent = /*#__PURE__*/React.createElement("div", {
+const mainContent = /*#__PURE__*/React.createElement("div", {
   id: "mainpage",
   class: "page"
 }, /*#__PURE__*/React.createElement("header", {
@@ -194,14 +198,12 @@ export const mainContent = /*#__PURE__*/React.createElement("div", {
   class: "topText inputLine"
 }, /*#__PURE__*/React.createElement("span", null, "Hit Point Maximum:\xA0"), /*#__PURE__*/React.createElement("span", {
   id: "maxHpValue",
-  class: "ignore-invalid",
-  "data-denom": true
+  class: "ignore-invalid"
 })), /*#__PURE__*/React.createElement("div", {
   class: "inputLine"
 }, /*#__PURE__*/React.createElement("div", {
   id: "currentHp",
-  class: "ignore-invalid",
-  "data-numer": true
+  class: "ignore-invalid"
 })), /*#__PURE__*/React.createElement("div", {
   class: "sectionTitle"
 }, "Current Hit Points")), /*#__PURE__*/React.createElement("div", {
@@ -221,8 +223,7 @@ export const mainContent = /*#__PURE__*/React.createElement("div", {
   class: "topText inputLine"
 }, /*#__PURE__*/React.createElement("span", null, "Total:\xA0"), /*#__PURE__*/React.createElement("span", {
   id: "hit-dice-total",
-  class: "ignore-invalid",
-  "data-denom": true
+  class: "ignore-invalid"
 })), /*#__PURE__*/React.createElement("div", {
   class: "inputLine"
 }, /*#__PURE__*/React.createElement("div", {
@@ -290,7 +291,6 @@ export const mainContent = /*#__PURE__*/React.createElement("div", {
   class: "sectionTitle"
 }, "Features & Traits")));
 const $ = mainContent.querySelector;
-const moneyDenominations = ["CP", "SP", "EP", "GP", "PP"];
 const moneyElement = $("#money");
 for (let denom of moneyDenominations) {
   const block = /*#__PURE__*/React.createElement("div", {
@@ -307,7 +307,6 @@ for (let denom of moneyDenominations) {
   })));
   moneyElement.appendChild(block);
 }
-const statNames = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
 for (let statName of statNames) {
   const block = /*#__PURE__*/React.createElement("div", {
     class: "stat",
@@ -320,20 +319,6 @@ for (let statName of statNames) {
     class: "stat-mod inherit-invalid"
   }, /*#__PURE__*/React.createElement("div", null)));
   $("#stats").appendChild(block);
-}
-const statToSkillMap = {
-  "Strength": ["Athletics"],
-  "Dexterity": ["Acrobatics", "Slight of Hand", "Stealth"],
-  "Intelligence": ["Arcana", "History", "Investigation", "Nature", "Religion"],
-  "Wisdom": ["Animal Handling", "Insight", "Medicine", "Perception", "Survival"],
-  "Charisma": ["Deception", "Intimidation", "Performance", "Persuasion"]
-};
-const skillToStatMap = {};
-for (let stat in statToSkillMap) {
-  // skillNames.push(...statToSkillMap[stat]);
-  for (let skill of statToSkillMap[stat]) {
-    skillToStatMap[skill] = stat;
-  }
 }
 function createProficiency(group, name, stat) {
   const block = /*#__PURE__*/React.createElement("div", {
@@ -361,8 +346,8 @@ function createProficiency(group, name, stat) {
   };
 }
 class ListItem {
-  constructor(list) {
-    const block = /*#__PURE__*/React.createElement("div", {
+  constructor() {
+    this.element = /*#__PURE__*/React.createElement("div", {
       class: "list-row"
     }, /*#__PURE__*/React.createElement("div", {
       class: "list-move"
@@ -372,12 +357,13 @@ class ListItem {
     }, /*#__PURE__*/React.createElement("img", {
       src: "/static/img/trash.png"
     })));
-    list.element.insertBefore(block, list.addButton);
+    this.moveHandle = this.element.getElementsByClassName("list-move")[0];
+    this.deleteButton = this.element.getElementsByClassName("list-delete")[0];
   }
 }
 class Weapon extends ListItem {
-  constructor(list, weapon) {
-    super(list);
+  constructor() {
+    super();
     const block = /*#__PURE__*/React.createElement("div", {
       class: "weapon-content"
     }, /*#__PURE__*/React.createElement("div", {
@@ -393,7 +379,7 @@ class Weapon extends ListItem {
     }, /*#__PURE__*/React.createElement("span", {
       class: "weapon-damage-value"
     })));
-    this.value = {
+    this.data = {
       name: block.getElementsByClassName("weapon-name-value")[0],
       bonus: block.getElementsByClassName("weapon-bonus-value")[0],
       damage: block.getElementsByClassName("weapon-damage-value")[0]
@@ -401,14 +387,9 @@ class Weapon extends ListItem {
     this.element.appendChild(block);
   }
 }
-const weapons = new List(document.getElementById("attacks-table"), characterData.weapons, () => ({
-  name: "Name",
-  bonus: 0,
-  damage: "0 type"
-}), Weapon);
 class Feature extends ListItem {
-  constructor(list, data) {
-    super(list);
+  constructor() {
+    super();
     const block = /*#__PURE__*/React.createElement("div", {
       class: "feature multi-line-text"
     }, /*#__PURE__*/React.createElement("span", {
@@ -426,23 +407,28 @@ class Feature extends ListItem {
       class: "feature-uses-value-container"
     }, "(", /*#__PURE__*/React.createElement("span", {
       class: "feature-uses-value"
-    }), ")")), ":"), " ", /*#__PURE__*/React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("span", {
+      class: "current-feature-uses"
+    }), " / ", /*#__PURE__*/React.createElement("span", {
+      class: "max-feature-uses"
+    })), ")")), ":"), " ", /*#__PURE__*/React.createElement("span", {
       class: "feature-text multi-line-text"
     }));
-    this.data = data;
-    this.name = block.getElementsByClassName("feature-name-text")[0], this.text = block.getElementsByClassName("feature-text")[0], this.checkbox = block.getElementsByClassName("feature-uses-checkbox")[0];
-    // this.usesBlank = block.getElementsByClassName("feature-uses-blank")[0];
-    this.usesValue = block.getElementsByClassName("feature-uses-value")[0];
-    this.usesContainer = block.getElementsByClassName("feature-uses")[0];
+    this.data = {
+      name: block.getElementsByClassName("feature-name-text")[0],
+      text: block.getElementsByClassName("feature-text")[0],
+      checkbox: block.getElementsByClassName("feature-uses-checkbox")[0],
+      currentUses: block.getElementsByClassName("feature-uses-value")[0],
+      maxUses: block.getElementsByClassName("feature-uses")[0]
+    };
     this.element.appendChild(block);
   }
 }
-const features = new List(document.getElementById("features-list"), characterData.features, () => ({
-  name: "Name",
-  text: "Description"
-}), Feature);
-export const templates = {};
-export const character = {
+const templates = {
+  Weapon,
+  Feature
+};
+const character = {
   name: $("#name-value"),
   classAndLevel: $("#classAndLvl"),
   background: $("#background"),
@@ -455,9 +441,8 @@ export const character = {
   }])),
   inspiration: $("#inspiration"),
   proficiencyBonus: $("#proficiencyBonus"),
-  savingThrows: Object.fromEntries(Object.keys(skillToStatMap).map(stat => [stat, createProficiency("savingThrows", stat, stat)])),
-  skills: Object.fromEntries(Object.keys(skillToStatMap).sort().map(skill => [skill, createProficiency("skills", skill, skillToStatMap[skill])])),
-  // TODO: mirror passive perception
+  savingThrows: Object.fromEntries(statNames.map(stat => [stat, createProficiency("savingThrows", stat, stat)])),
+  skills: Object.fromEntries(skillNames.map(skill => [skill, createProficiency("skills", skill, skillToStatMap[skill])])),
   otherProficiencies: {
     armor: $("#armor-prof"),
     weapons: $("#weapons-prof"),
@@ -481,21 +466,25 @@ export const character = {
     fail: [...main.getElementsByClassName("ds-fail")]
   },
   weapons: {
-    addButton: $("#attacks-table .list-add"),
-    add(element) {
-      $("#attacks-table").insertBefore(element, this.addButton);
-    }
+    list: $("#attacks-table"),
+    addButton: $("#attacks-table .list-add")
   },
   attackText: $("#attacks-text"),
   money: moneyDenominations.map(d => "money-" + d.toLowerCase()).map($),
   equipmentText: $("#equipment-text"),
   features: {
-    addButton: $("#features-list .list-add"),
-    add(element) {
-      $("#features-list").insertBefore(element, this.addButton);
-    }
-  },
+    list: $("#attacks-text"),
+    addButton: $("#features-list .list-add")
+  }
+};
+const mirrors = {
   readOnlyMirror: {
     "skills.perception.bonus": $("#perceptionValue")
   }
+};
+export default {
+  mainContent,
+  templates,
+  character,
+  mirrors
 };
