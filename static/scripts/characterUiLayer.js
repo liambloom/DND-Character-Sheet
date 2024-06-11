@@ -8,6 +8,8 @@ export const contentEditableValue = supportsPlaintextOnly ? "plaintext-only" : "
 const initialInnerElement = Symbol("Initial Element")
 export const isUiElement = Symbol("Is UI Element?");
 
+let theme;
+
 class CustomDOMTokenList {
     values = new Set();
 
@@ -55,12 +57,12 @@ class CustomDOMTokenList {
 - Set/get .dataset.default
 - Change content?
 */
-export class UITextElement {
+class UISimpleElement {
     [isUiElement] = true;
     classList = new CustomDOMTokenList();
 
-    constructor(inner = initialInnerElement) {
-        this.inner = inner;
+    constructor() {
+        this.inner = initialInnerElement;
     }
 
     innerValue = initialInnerElement;
@@ -74,14 +76,15 @@ export class UITextElement {
     }
 
     set inner(value) {
-        if (!this.isUnset) {
+        const isInitial = this.isUnset;
+        if (!isInitial) {
             for (let {type, listener} of this.eventListeners) {
                 this.inner.removeEventListener(type, listener);
             }
         }
         this.innerValue = value;
         this.classList.element = this.inner;
-        if (this.isUnset) {
+        if (isInitial) {
             this.editableValue = "disabled" in this.inner ? !this.inner.disabled : this.inner.contentEditable;
         }
         else {
@@ -111,19 +114,82 @@ export class UITextElement {
 
     addEventListener(type, listener) {
         this.eventListeners.push({type, listener});
-        this.inner.addEventListener(type, listener);
+        if (!this.isUnset) {
+            this.inner.addEventListener(type, listener);
+        }        
     }
 }
 
-class UIBooleanElement {
+class UITextElement extends UISimpleElement {
+    get textValueProp() {
+        return this.inner instanceof HTMLInputElement || this.inner instanceof HTMLTextAreaElement ? "value" : "innerText";
+    }
 
+    get textValue() {
+        return this.inner[this.textValueProp];
+    }
+
+    set textValue(value) {
+        this.inner[this.textValueProp] = value;
+    }
+
+    set inner(value) {
+        const isInitial = this.isUnset;
+        const oldTextValue = isInitial ? null : this.textValue;
+        super.inner = value;
+        if (!isInitial) {
+            this.textValue = oldTextValue;
+        }
+    }
 }
 
-export function setTheme(theme) {
+class UIBooleanElement extends UISimpleElement {
+    get boolValue() {
+        return this.inner.checked;
+    }
 
+    set boolValue(value) {
+        this.inner.checked = value;
+    }
+
+    set inner(value) {
+        const isInitial = this.isUnset;
+        const oldBoolValue = isInitial ? null : this.boolValue;
+        super.inner = value;
+        if (!isInitial) {
+            this.boolValue = oldBoolValue;
+        }
+    }
 }
 
-function textListUiBuilder(ElType, content) {
+class UIListElement {
+    [isUiElement] = true;
+    addButton = UISimpleElement();
+
+    constructor(listItemType) {
+        this.listItemType = listItemType;
+        this.addButton.addEventListener("click", () => {
+
+        });
+    }
+
+    get ListItem() {
+        return theme.templates[listItemType];
+    }
+
+    get inner() {
+        return this.innerValue;
+    }
+
+    set inner(value) {
+
+        this.innerValue = value;
+        this.addButton.inner = this.inner.querySelector("[data-list-add-button]");
+
+    }
+}
+
+function textListUiBuilder(content, ElType = UITextElement) {
     return Object.fromEntries(content.map(k => {k, new ElType()}));
 }
 
@@ -132,7 +198,7 @@ function proficiencyUiBuilder(props) {
 }
 
 export const ui = {
-    ...textListUiBuilder(UITextElement, "name", "classAndLevel", "background", "playerName",
+    ...textListUiBuilder("name", "classAndLevel", "background", "playerName",
     "race", "xp", "proficiencyBonus", "ac", "initiative", "speed", "attackText","equipmentText"),
     inspiration: new UIBooleanElement(),
     stats: Object.fromEntries(statNames.map(stat => 
@@ -146,10 +212,38 @@ export const ui = {
     // deathSaves = { success: [bool, bool, bool], fail: (same) }
     deathSaves: Object.fromEntries(["success", "fail"].map(k => 
         [k, Array.apply(null, Array(3)).map(() => new UIBooleanElement())])),
+    features: new UIListElement("Feature"),
+    weapons: new UIListElement("Weapon"),
+}
 
-    // featuresList: {
-    //     listElement,
-    //     addButton
-    // }
-    // weaponsList
+function getUiElements(root, path) {
+    if (Array.isArray(root)) {
+        return root.flatMap((e, i) => getUiElements(e, `${path}[${i}]`));
+    }
+    else if (root[isUiElement]) {
+        root.name = path;
+        return [root];
+    }
+    else if (typeof root === object) {
+        return Object.entries(root).flatMap(([k, v]) => getUiElements(v, `${path}.${k}`));
+    }
+    else {
+        return [];
+    }
+}
+
+const uiElements = getUiElements(ui, "");
+
+for (let e of uiElements) {
+    if (e.name.charAt(0) === ".") {
+        e.name = e.name.substring(1);
+    }
+}
+
+export function setTheme(newTheme) {
+    theme = newTheme;
+    for (let e of uiElements) {
+        const domElements = [...theme.mainContent.querySelector(`[data-character="${e.name}"]`)];
+        e.inner = domElements.find(e => e.dataset.mirrorType !== "readonly")
+    }
 }
