@@ -2,7 +2,8 @@ import { statNames, skillNames, skillToStatMap, moneyDenominations } from "./5eD
 function ListAddButton() {
   return /*#__PURE__*/React.createElement("button", {
     class: "list-add",
-    type: "button"
+    type: "button",
+    "data-list-add-button": true
   }, /*#__PURE__*/React.createElement("div", {
     class: "list-add-line"
   }), /*#__PURE__*/React.createElement("div", {
@@ -16,11 +17,13 @@ function ListAddButton() {
   }));
 }
 function DsCheckbox({
-  type
+  type,
+  index
 }) {
   return /*#__PURE__*/React.createElement("label", null, /*#__PURE__*/React.createElement("input", {
     type: "checkbox",
-    name: "ds-" + type
+    name: "ds-" + type,
+    "data-character": `deathSaves.${type}[${index}]`
   }), /*#__PURE__*/React.createElement("div", {
     class: "customCheckbox"
   }));
@@ -39,11 +42,14 @@ function DsCounter({
   }), /*#__PURE__*/React.createElement("div", {
     class: "ds-boxes"
   }, /*#__PURE__*/React.createElement(DsCheckbox, {
-    type: type
+    type: type,
+    index: "1"
   }), /*#__PURE__*/React.createElement(DsCheckbox, {
-    type: type
+    type: type,
+    index: "2"
   }), /*#__PURE__*/React.createElement(DsCheckbox, {
-    type: type
+    type: type,
+    index: "3"
   })));
 }
 const mainContent = /*#__PURE__*/React.createElement("div", {
@@ -63,7 +69,8 @@ const mainContent = /*#__PURE__*/React.createElement("div", {
   class: "header-large-value-container"
 }, /*#__PURE__*/React.createElement("div", {
   id: "name-value",
-  class: "header-large-value"
+  class: "header-large-value",
+  "data-character": "name"
 }))), /*#__PURE__*/React.createElement("div", {
   class: "header-label header-large-label"
 }, "Character Name")), /*#__PURE__*/React.createElement("div", {
@@ -76,11 +83,14 @@ const mainContent = /*#__PURE__*/React.createElement("div", {
 }), /*#__PURE__*/React.createElement("div", {
   id: "hr2"
 }), /*#__PURE__*/React.createElement("div", {
-  id: "classAndLvl"
+  id: "classAndLvl",
+  "data-character": "classAndLvl"
 }), /*#__PURE__*/React.createElement("div", {
-  id: "background"
+  id: "background",
+  "data-character": "background"
 }), /*#__PURE__*/React.createElement("div", {
-  id: "playerName"
+  id: "playerName",
+  "data-character": ""
 }), /*#__PURE__*/React.createElement("div", {
   class: "header-label"
 }, "Class & Level"), /*#__PURE__*/React.createElement("div", {
@@ -88,11 +98,13 @@ const mainContent = /*#__PURE__*/React.createElement("div", {
 }, "Background"), /*#__PURE__*/React.createElement("div", {
   class: "header-label"
 }, "Player Name"), /*#__PURE__*/React.createElement("div", {
-  id: "race"
+  id: "race",
+  "data-character": "race"
 }), /*#__PURE__*/React.createElement("div", {
   id: "alignment"
 }), /*#__PURE__*/React.createElement("div", {
-  id: "xp"
+  id: "xp",
+  "data-character": "xp"
 }), /*#__PURE__*/React.createElement("div", {
   class: "header-label"
 }, "Race"), /*#__PURE__*/React.createElement("div", {
@@ -113,11 +125,13 @@ const mainContent = /*#__PURE__*/React.createElement("div", {
   class: "standaloneLabeledValue"
 }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("input", {
   type: "checkbox",
-  id: "inspiration"
+  id: "inspiration",
+  "data-character": "inspiration"
 }), /*#__PURE__*/React.createElement("div", null, "&check;")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", null, "Inspiration"))), /*#__PURE__*/React.createElement("div", {
   class: "standaloneLabeledValue"
 }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-  id: "proficiencyBonus"
+  id: "proficiencyBonus",
+  "data-character": "proficiencyBonus"
 })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", null, "Proficiency Bonus"))), /*#__PURE__*/React.createElement("div", {
   id: "savingThrowsContainer"
 }, /*#__PURE__*/React.createElement("div", {
@@ -136,7 +150,9 @@ const mainContent = /*#__PURE__*/React.createElement("div", {
   id: "perception",
   class: "standaloneLabeledValue"
 }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-  id: "perceptionValue"
+  id: "perceptionValue",
+  "data-character": "skills.perception.bonus",
+  "data-mirror-type": "readonly"
 })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", null, "Passive Perception"))), /*#__PURE__*/React.createElement("div", {
   id: "other-proficiencies"
 }, /*#__PURE__*/React.createElement("div", {
@@ -144,19 +160,23 @@ const mainContent = /*#__PURE__*/React.createElement("div", {
 }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("span", {
   class: "prof-type"
 }, "Armor:"), " ", /*#__PURE__*/React.createElement("span", {
-  id: "armor-prof"
+  id: "armor-prof",
+  "data-character": "otherProficiencies.armor"
 })), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("span", {
   class: "prof-type"
 }, "Weapons:"), " ", /*#__PURE__*/React.createElement("span", {
-  id: "weapons-prof"
+  id: "weapons-prof",
+  "data-character": "otherProficiencies.weapons"
 })), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("span", {
   class: "prof-type"
 }, "Tools:"), " ", /*#__PURE__*/React.createElement("span", {
-  id: "tools-prof"
+  id: "tools-prof",
+  "data-character": "otherProficiencies.tools"
 })), /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("span", {
   class: "prof-type"
 }, "Languages:"), " ", /*#__PURE__*/React.createElement("span", {
-  id: "languages-prof"
+  id: "languages-prof",
+  "data-character": "otherProficiencies.languages"
 }))), /*#__PURE__*/React.createElement("div", {
   class: "sectionTitle"
 }, "Other Proficiencies & Languages"))), /*#__PURE__*/React.createElement("div", {
@@ -169,7 +189,8 @@ const mainContent = /*#__PURE__*/React.createElement("div", {
   class: "inputLine"
 }, /*#__PURE__*/React.createElement("div", {
   id: "ac",
-  class: "ignore-invalid"
+  class: "ignore-invalid",
+  "data-character": "ac"
 })), /*#__PURE__*/React.createElement("div", {
   class: "sectionTitle"
 }, "Armor Class")), /*#__PURE__*/React.createElement("div", {
@@ -178,7 +199,8 @@ const mainContent = /*#__PURE__*/React.createElement("div", {
   class: "written"
 }, /*#__PURE__*/React.createElement("div", {
   id: "initiative",
-  class: "ignore-invalid"
+  class: "ignore-invalid",
+  "data-character": "initiative"
 })), /*#__PURE__*/React.createElement("div", {
   class: "sectionTitle"
 }, "Initiative")), /*#__PURE__*/React.createElement("div", {
@@ -187,7 +209,8 @@ const mainContent = /*#__PURE__*/React.createElement("div", {
   class: "inputLine"
 }, /*#__PURE__*/React.createElement("div", {
   id: "speed",
-  class: "ignore-invalid"
+  class: "ignore-invalid",
+  "data-character": "speed"
 })), /*#__PURE__*/React.createElement("div", {
   class: "sectionTitle"
 }, "Speed"))), /*#__PURE__*/React.createElement("div", {
@@ -198,12 +221,14 @@ const mainContent = /*#__PURE__*/React.createElement("div", {
   class: "topText inputLine"
 }, /*#__PURE__*/React.createElement("span", null, "Hit Point Maximum:\xA0"), /*#__PURE__*/React.createElement("span", {
   id: "maxHpValue",
-  class: "ignore-invalid"
+  class: "ignore-invalid",
+  "data-character": "hp.max"
 })), /*#__PURE__*/React.createElement("div", {
   class: "inputLine"
 }, /*#__PURE__*/React.createElement("div", {
   id: "currentHp",
-  class: "ignore-invalid"
+  class: "ignore-invalid",
+  "data-character": "hp.current"
 })), /*#__PURE__*/React.createElement("div", {
   class: "sectionTitle"
 }, "Current Hit Points")), /*#__PURE__*/React.createElement("div", {
@@ -212,7 +237,8 @@ const mainContent = /*#__PURE__*/React.createElement("div", {
   class: "inputLine"
 }, /*#__PURE__*/React.createElement("div", {
   id: "temp-hp-value",
-  class: "ignore-invalid"
+  class: "ignore-invalid",
+  "data-character": "hp.temp"
 })), /*#__PURE__*/React.createElement("div", {
   class: "sectionTitle"
 }, "Temporary Hit Points"))), /*#__PURE__*/React.createElement("div", {
@@ -223,12 +249,14 @@ const mainContent = /*#__PURE__*/React.createElement("div", {
   class: "topText inputLine"
 }, /*#__PURE__*/React.createElement("span", null, "Total:\xA0"), /*#__PURE__*/React.createElement("span", {
   id: "hit-dice-total",
-  class: "ignore-invalid"
+  class: "ignore-invalid",
+  "data-character": "hitDice.max"
 })), /*#__PURE__*/React.createElement("div", {
   class: "inputLine"
 }, /*#__PURE__*/React.createElement("div", {
   id: "hit-dice-value",
-  class: "ignore-invalid"
+  class: "ignore-invalid",
+  "data-character": "hitDice.current"
 })), /*#__PURE__*/React.createElement("div", {
   class: "sectionTitle"
 }, "Hit Dice")), /*#__PURE__*/React.createElement("div", {
@@ -260,11 +288,13 @@ const mainContent = /*#__PURE__*/React.createElement("div", {
   class: "weapon-damage"
 }, "Damage/Type")), /*#__PURE__*/React.createElement("div", {
   id: "attacks-table",
-  class: "list"
+  class: "list",
+  "data-character": "weapons"
 }, /*#__PURE__*/React.createElement(ListAddButton, null)), /*#__PURE__*/React.createElement("div", {
   id: "attacks-text-container"
 }, /*#__PURE__*/React.createElement("span", {
-  id: "attacks-text"
+  id: "attacks-text",
+  "data-character": "attackText"
 })), /*#__PURE__*/React.createElement("div", {
   class: "sectionTitle"
 }, "Attacks & Spellcasting")), /*#__PURE__*/React.createElement("div", {
@@ -276,7 +306,8 @@ const mainContent = /*#__PURE__*/React.createElement("div", {
 }), /*#__PURE__*/React.createElement("div", {
   id: "equipment-text-container"
 }, /*#__PURE__*/React.createElement("span", {
-  id: "equipment-text"
+  id: "equipment-text",
+  "data-character": "equipmentText"
 }))), /*#__PURE__*/React.createElement("div", {
   class: "sectionTitle"
 }, "Equipment")), /*#__PURE__*/React.createElement("div", {
@@ -286,7 +317,8 @@ const mainContent = /*#__PURE__*/React.createElement("div", {
   id: "features"
 }, /*#__PURE__*/React.createElement("div", {
   id: "features-list",
-  class: "list"
+  class: "list",
+  "data-character": "features"
 }, /*#__PURE__*/React.createElement(ListAddButton, null)), /*#__PURE__*/React.createElement("div", {
   class: "sectionTitle"
 }, "Features & Traits")));
@@ -303,7 +335,8 @@ for (let denom of moneyDenominations) {
   }, denom.toUpperCase())), /*#__PURE__*/React.createElement("div", {
     class: "money-value-container"
   }, /*#__PURE__*/React.createElement("div", {
-    class: "money-value"
+    class: "money-value",
+    "data-character": "money." + denom.toLowerCase()
   })));
   moneyElement.appendChild(block);
 }
@@ -315,9 +348,13 @@ for (let statName of statNames) {
     class: "sectionTitle staticPos"
   }, statName), /*#__PURE__*/React.createElement("div", {
     class: "stat-val ignore-invalid"
-  }, /*#__PURE__*/React.createElement("div", null)), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
+    "data-character": `stats.${statName}.value`
+  })), /*#__PURE__*/React.createElement("div", {
     class: "stat-mod inherit-invalid"
-  }, /*#__PURE__*/React.createElement("div", null)));
+  }, /*#__PURE__*/React.createElement("div", {
+    "data-character": `stats.${statName}.modifier`
+  })));
   $("#stats").appendChild(block);
 }
 function createProficiency(group, name, stat) {
@@ -331,11 +368,13 @@ function createProficiency(group, name, stat) {
     type: "checkbox",
     name: group + "Checkbox",
     class: group + "Checkbox proficiencyCheckbox",
-    disabled: "true"
+    disabled: "true",
+    "data-character": `${group}.${name}.proficiencyCheckbox`
   }), /*#__PURE__*/React.createElement("div", {
     class: "customCheckbox"
   }), /*#__PURE__*/React.createElement("span", {
-    class: group + "Bonus proficiencyBonus"
+    class: group + "Bonus proficiencyBonus",
+    "data-character": `${group}.${name}.bonus`
   }), " ", name, " ", /*#__PURE__*/React.createElement("span", {
     class: "proficiencyBonusStat"
   }, "(", stat.substring(0, 3), ")")));
@@ -345,6 +384,8 @@ function createProficiency(group, name, stat) {
     bonus: block.getElementsByClassName("proficiencyBonus")[0]
   };
 }
+statNames.forEach(stat => createProficiency("savingThrows", stat, stat));
+skillNames.forEach(skill => createProficiency("skills", skill, skillToStatMap[skill]));
 class ListItem {
   constructor() {
     this.element = /*#__PURE__*/React.createElement("div", {
@@ -428,63 +469,7 @@ const templates = {
   Weapon,
   Feature
 };
-const character = {
-  name: $("#name-value"),
-  classAndLevel: $("#classAndLvl"),
-  background: $("#background"),
-  playerName: $("playerName"),
-  race: $("#race"),
-  xp: $("#xp"),
-  stats: Object.fromEntries(statNames.map(statName => [statName, {
-    value: $(`#${statName} .stat-val`),
-    modifier: $(`#${statName} .stat-mod`)
-  }])),
-  inspiration: $("#inspiration"),
-  proficiencyBonus: $("#proficiencyBonus"),
-  savingThrows: Object.fromEntries(statNames.map(stat => [stat, createProficiency("savingThrows", stat, stat)])),
-  skills: Object.fromEntries(skillNames.map(skill => [skill, createProficiency("skills", skill, skillToStatMap[skill])])),
-  otherProficiencies: {
-    armor: $("#armor-prof"),
-    weapons: $("#weapons-prof"),
-    tools: $("#tools-prof"),
-    languages: $("languages-prof")
-  },
-  ac: $("#ac"),
-  initiative: $("initiative"),
-  speed: $("#speed"),
-  hp: {
-    current: $("currentHp"),
-    max: $("maxHpValue"),
-    temp: $("temp-hp-value")
-  },
-  hitDice: {
-    current: $("hit-dice-value"),
-    max: $("hit-dice-total")
-  },
-  deathSaves: {
-    success: [...main.getElementsByClassName("ds-success")],
-    fail: [...main.getElementsByClassName("ds-fail")]
-  },
-  weapons: {
-    list: $("#attacks-table"),
-    addButton: $("#attacks-table .list-add")
-  },
-  attackText: $("#attacks-text"),
-  money: moneyDenominations.map(d => "money-" + d.toLowerCase()).map($),
-  equipmentText: $("#equipment-text"),
-  features: {
-    list: $("#attacks-text"),
-    addButton: $("#features-list .list-add")
-  }
-};
-const mirrors = {
-  readOnlyMirror: {
-    "skills.perception.bonus": $("#perceptionValue")
-  }
-};
 export default {
   mainContent,
-  templates,
-  character,
-  mirrors
+  templates
 };
