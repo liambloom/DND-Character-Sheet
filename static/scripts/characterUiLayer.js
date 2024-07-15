@@ -62,6 +62,7 @@ class CustomDOMTokenList {
             this.innerElement.classList.remove(...values);
         }
         this.innerElement = element;
+        console.debug(element);
         this.innerElement.classList.add(...values);
     }
 }
@@ -76,8 +77,7 @@ class UISimpleElement {
 
     constructor() {
         const self = this;
-        this.inner = initialInnerElement;
-        this.dataset = new Proxy(innerDataset, {
+        this.dataset = new Proxy(this.innerDataset, {
             set(target, key, value) {
                 self.inner.dataset[key] = value;
                 Reflect.set(...arguments);
@@ -105,8 +105,7 @@ class UISimpleElement {
                 delete this.inner.dataset[key];
             }
         }
-        this.innerValue = value;
-        this.classList.element = this.inner;
+        this.innerValue = this.classList.element = value;
         if (isInitial) {
             this.editableValue = "disabled" in this.inner ? !this.inner.disabled : this.inner.contentEditable;
         }
@@ -190,7 +189,7 @@ class UIBooleanElement extends UISimpleElement {
 
 class UIList {
     [isUiElement] = true;
-    addButton = UISimpleElement();
+    addButton = new UISimpleElement();
     content = [];
 
     constructor(listItemType) {
@@ -364,8 +363,8 @@ class UIListItem {
     }
 }
 
-function textListUiBuilder(content, ElType = UITextElement) {
-    return Object.fromEntries(content.map(k => {k, new ElType()}));
+function textListUiBuilder(...content) {
+    return Object.fromEntries(content.map(k => [k, new UITextElement()]));
 }
 
 function proficiencyUiBuilder(props) {
@@ -399,7 +398,7 @@ function getUiElements(root, path) {
         root.name = path;
         return [root];
     }
-    else if (typeof root === object) {
+    else if (typeof root === "object") {
         return Object.entries(root).flatMap(([k, v]) => getUiElements(v, `${path}.${k}`));
     }
     else {
