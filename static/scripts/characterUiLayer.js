@@ -1,9 +1,4 @@
-import { statNames, moneyDenominations, skillNames } from "./5eData.js";
-
-const testElement = document.createElement("div");
-testElement.setAttribute("contentEditable", "PLAINTEXT-ONLY");
-const supportsPlaintextOnly = testElement.contentEditable === "plaintext-only";
-export const contentEditableValue = supportsPlaintextOnly ? "plaintext-only" : "true";
+import { statNames, moneyDenominations, skillNames, contentEditableValue } from "./globalConsts.js";
 
 const initialInnerElement = Symbol("Initial Element")
 export const isUiElement = Symbol("Is UI Element?");
@@ -146,6 +141,13 @@ class UISimpleElement {
 }
 
 class UITextElement extends UISimpleElement {
+    constructor() {
+        super();
+        this.addEventListener("input", () => {
+            setTimeout(() => this.onValueChanged(), 0);
+        });
+    }
+
     get textValueProp() {
         return this.inner instanceof HTMLInputElement || this.inner instanceof HTMLTextAreaElement ? "value" : "innerText";
     }
@@ -156,6 +158,7 @@ class UITextElement extends UISimpleElement {
 
     set textValue(value) {
         this.inner[this.textValueProp] = value;
+        this.onValueChanged();
     }
 
     set inner(value) {
@@ -164,6 +167,47 @@ class UITextElement extends UISimpleElement {
         super.inner = value;
         if (!isInitial) {
             this.textValue = oldTextValue;
+        }
+    }
+
+    onValueChanged() {
+        if (this.dataset.autoScaleFont) {
+            // TODO: inputLine is theme specific
+            let element = this.element.parentElement.classList.contains("inputLine") ? this.element.parentElement : this.element;
+
+            const computedStyles = getComputedStyle(element);
+            if (!element.style.getPropertyValue("font-size")) {
+                const str = computedStyles.getPropertyValue("font-size");
+                this.initialFontSize = parseInt(str);
+            }
+            if (this.initialFontSize === undefined || isNaN(this.initialFontSize)) {
+                throw new Error("No initial font size calculated");
+            }
+            const style1 = ["style", "variant", "weight"].map(p => computedStyles.getPropertyValue("font-" + p)).join(" ");
+            const family = computedStyles.getPropertyValue("font-family");
+
+            if (computedStyles.getPropertyValue("font-stretch") !== "100%") {
+                throw new Error("I didn't write support for font auto resizing that takes into account font-stretch");
+            }
+
+            const generateFont = size => `${style1} ${size}px ${family}`;
+
+            const text = (this.element.innerText || this.element.dataset.default) ?? "";
+
+            let fontSize;
+            for (fontSize = this.initialFontSize; fontSize > 10; fontSize--) {
+                fontCtx.font = generateFont(fontSize);
+                if (fontCtx.measureText(text).width <= element.parentElement.clientWidth) {
+                    break;
+                }
+            }
+
+            if (fontSize === this.initialFontSize) {
+                element.style.removeProperty("font-size");
+            }
+            else {
+                element.style.setProperty("font-size", fontSize + "px");
+            }
         }
     }
 }
@@ -379,6 +423,7 @@ export const ui = {
         [stat, { value: new UITextElement(), modifier: new UITextElement() }])),
     savingThrows: proficiencyUiBuilder(statNames),
     skills: proficiencyUiBuilder(skillNames),
+    passiveSkills: proficiencyUiBuilder(skillNames),
     otherProficiencies: textListUiBuilder("armor", "weapons", "tools", "languages"),
     hp: textListUiBuilder("current", "max", "temp"),
     hitDice: textListUiBuilder("current", "max"),
@@ -418,7 +463,7 @@ export function setTheme(newTheme) {
     theme = newTheme;
     for (let e of uiElements) {
         const domElements = [...theme.mainContent.querySelector(`[data-character="${e.name}"]`)];
-        e.inner = domElements.find(e => e.dataset.mirrorType !== "readonly")
+        e.inner = domElements.find(e => e.dataset.mirrorType !== "readonly") ?? document.createElement("div");
     }
     for (let listener of themeChangeListeners) {
         listener();

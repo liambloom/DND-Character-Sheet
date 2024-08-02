@@ -1,4 +1,4 @@
-import { statNames, skillNames, skillToStatMap, moneyDenominations } from "./5eData.js";
+import { statNames, skillNames, skillToStatMap, moneyDenominations } from "./globalConsts.js";
 function ListAddButton() {
     return (
         <button class="list-add" type="button" data-list-add-button>
@@ -108,7 +108,7 @@ const mainContent = <div id="mainpage" class="page">
     <div id="lower-proficiencies">
         <div id="perception" class="standaloneLabeledValue">
             <div>
-                <div id="perceptionValue" data-character="skills.perception.bonus" data-mirror-type="readonly"></div>
+                <div id="perceptionValue" data-character="passiveSkills.perception.bonus"></div>
             </div>
             <div>
                 <div>Passive Perception</div>

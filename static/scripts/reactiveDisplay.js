@@ -1,12 +1,12 @@
 import React from "./jsx.js";
 import { characterApi, characterData, editPermission } from "./loadCharacter.js";
-import { contentEditableValue } from "./characterUiLayer.js";
+import { contentEditableValue } from "./globalConsts.js";
 const newlineRegex = /[\n\r\u2028\u2029]/g;
 const fontCtx = document.createElement("canvas").getContext("2d");
-export const editable = {
-  always: Symbol("Always Editable"),
-  inEditingMode: Symbol("In Editing Mode"),
-  never: Symbol("Never Editable")
+export const Editable = {
+  ALWAYS: Symbol("Always Editable"),
+  IN_EDITING_MODE: Symbol("In Editing Mode"),
+  NEVER: Symbol("Never Editable")
 };
 export const util = {
   betterParseInt(str) {
@@ -117,7 +117,7 @@ export class DataDisplay {
     this.validate = args.validate ?? (() => true);
     this.allowNewlines = args.allowNewlines ?? false;
     this.getDefault = args.getDefault;
-    this.editable = args.editable ?? editable.inEditingMode;
+    this.editable = args.editable ?? Editable.IN_EDITING_MODE;
     this.autoResize = args.autoResize ?? false;
     this.inCharacterSheet = args.inCharacterSheet ?? true;
     this.oldValue = Symbol("Original Value");
@@ -125,17 +125,17 @@ export class DataDisplay {
       listenTo = []
     } = args;
     switch (this.editable) {
-      case editable.always:
-        this.element.contentEditable = contentEditableValue;
+      case Editable.ALWAYS:
+        this.element.editable = true;
         if (this.inCharacterSheet) {
           editing.ui.alwaysEditing.push(this.element);
         }
         break;
-      case editable.inEditingMode:
+      case Editable.IN_EDITING_MODE:
         if (this.inCharacterSheet) {
           editing.ui.editingMode.push(this.element);
         }
-        this.element.contentEditable = editing.isEditing ? contentEditableValue : "false";
+        this.element.editable = editing.isEditing;
         break;
     }
     if (this.allowNewlines) {
@@ -150,7 +150,7 @@ export class DataDisplay {
       let first = true;
       for (let i = 0; i < selection.rangeCount; i++) {
         const range = selection.getRangeAt(i);
-        if (range.startContainer === this.element.childNodes[0] || range.startContainer === this.element) {
+        if (range.startContainer === this.element.inner.childNodes[0] || range.startContainer === this.element.inner) {
           range.deleteContents();
           let content = event.clipboardData.getData("text/plain");
           if (!this.allowNewlines) {
@@ -158,7 +158,7 @@ export class DataDisplay {
           }
           range.insertNode(document.createTextNode(content));
           range.collapse();
-          this.element.normalize();
+          this.element.inner.normalize();
           if (!first) {
             selection.removeRange(prevRange);
           }
@@ -170,31 +170,31 @@ export class DataDisplay {
     });
     let index;
     this.element.addEventListener("beforeinput", event => {
-      this.element.normalize();
+      this.element.inner.normalize();
       const selection = getSelection();
       const repeatedOffset = event.data ? event.data.replace(newlineRegex, "").length : 0;
       index = selection.getRangeAt(0).startOffset + repeatedOffset;
       for (let i = 0; i < selection.rangeCount; i++) {
         const range = selection.getRangeAt(i);
-        if (range.startContainer === this.element.childNodes[0]) {
+        if (range.startContainer === this.element.inner.childNodes[0]) {
           index = range.startOffset + repeatedOffset;
           break;
         }
       }
     });
     this.element.addEventListener("input", event => {
-      if (!this.allowNewlines && newlineRegex.test(this.element.innerText)) {
-        const brs = this.element.getElementsByTagName("br");
+      if (!this.allowNewlines && newlineRegex.test(this.element.textValue)) {
+        const brs = this.element.inner.getElementsByTagName("br");
         while (brs.length) {
           brs[0].remove();
         }
-        this.element.innerText = this.element.innerText.replace(newlineRegex, "");
-        this.element.normalize();
+        this.element.textValue = this.element.textValue.replace(newlineRegex, "");
+        this.element.inner.normalize();
         const selection = getSelection();
-        const node = this.element.childNodes[0] ?? this.element;
+        const node = this.element.inner.childNodes[0] ?? this.element.inner;
         for (let i = 0; i < selection.rangeCount; i++) {
           const range = selection.getRangeAt(i);
-          if (range.startContainer === this.element || range.startContainer === node) {
+          if (range.startContainer === this.element.inner || range.startContainer === node) {
             selection.removeRange(range);
           }
         }
@@ -217,12 +217,12 @@ export class DataDisplay {
     });
     this.element.addEventListener("blur", () => {
       let doListeners;
-      if (this.getDefault?.() != null && this.element.innerText === "") {
+      if (this.getDefault?.() != null && this.element.textValue === "") {
         delete this.dataObject[this.property];
         doListeners = true;
       } else {
-        const parse = this.parse(this.element.innerText);
-        if (parse.isValid && this.dataObject[this.property] !== parse.value && (this.allowNewlines || !newlineRegex.test(this.element.innerText))) {
+        const parse = this.parse(this.element.textValue);
+        if (parse.isValid && this.dataObject[this.property] !== parse.value && (this.allowNewlines || !newlineRegex.test(this.element.textValue))) {
           this.dataObject[this.property] = parse.value;
           if (this.inCharacterSheet) {
             editing.characterChanged();
@@ -232,13 +232,13 @@ export class DataDisplay {
           doListeners = false;
         }
       }
-      this.element.parentElement.scroll(0, 0);
+      this.element.inner.parentElement.scroll(0, 0);
       this.update(doListeners);
     });
     if (!this.allowNewlines) {
       this.element.addEventListener("keydown", event => {
         if (event.key === "Enter" && !(event.ctrlKey || event.altKey || event.shiftKey || event.metaKey)) {
-          this.element.blur();
+          this.element.inner.blur();
         }
       });
     }
@@ -252,42 +252,15 @@ export class DataDisplay {
       this.update();
     });
   }
+
+  // TODO: This should be in UITextElement, not DataDisplay
   maybeResizeFont() {
-    if (this.autoResize) {
-      let element = this.element.parentElement.classList.contains("inputLine") ? this.element.parentElement : this.element;
-      const computedStyles = getComputedStyle(element);
-      if (!element.style.getPropertyValue("font-size")) {
-        const str = computedStyles.getPropertyValue("font-size");
-        this.initialFontSize = parseInt(str);
-      }
-      if (this.initialFontSize === undefined || isNaN(this.initialFontSize)) {
-        throw new Error("No initial font size calculated");
-      }
-      const style1 = ["style", "variant", "weight"].map(p => computedStyles.getPropertyValue("font-" + p)).join(" ");
-      const family = computedStyles.getPropertyValue("font-family");
-      if (computedStyles.getPropertyValue("font-stretch") !== "100%") {
-        throw new Error("I didn't write support for font auto resizing that takes into account font-stretch");
-      }
-      const generateFont = size => `${style1} ${size}px ${family}`;
-      const text = (this.element.innerText || this.element.dataset.default) ?? "";
-      let fontSize;
-      for (fontSize = this.initialFontSize; fontSize > 10; fontSize--) {
-        fontCtx.font = generateFont(fontSize);
-        if (fontCtx.measureText(text).width <= element.parentElement.clientWidth) {
-          break;
-        }
-      }
-      if (fontSize === this.initialFontSize) {
-        element.style.removeProperty("font-size");
-      } else {
-        element.style.setProperty("font-size", fontSize + "px");
-      }
-    }
+    return;
   }
   checkElementValidity() {
-    const parsed = this.parse(this.element.innerText);
+    const parsed = this.parse(this.element.textValue);
     const actual = parsed.isValid;
-    const display = actual || this.element.innerText === "" && (this.element === document.activeElement || "default" in this.element.dataset);
+    const display = actual || this.element.textValue === "" && (this.element.inner === document.activeElement || "default" in this.element.dataset);
     if (display) {
       this.element.classList.remove("invalid");
     } else {
@@ -327,7 +300,7 @@ export class DataDisplay {
     const valueExists = this.valueExists;
     const value = valueExists ? this.value : undefined;
     const str = valueExists ? this.dataToString(this.value) : "";
-    this.element.innerText = str;
+    this.element.textValue = str;
     if (this.getDefault) {
       const defaultVal = this.getDefault();
       if (defaultVal === null) {
@@ -394,7 +367,7 @@ export class Fraction {
       validate: n => n >= 0 && n <= this.denomDisplay.value,
       dataFromString: util.unsignedParseInt,
       listenTo: [this.denomDisplay],
-      editable: editable.always,
+      editable: Editable.ALWAYS,
       ...numerArgs
     });
   }

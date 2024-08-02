@@ -1,324 +1,300 @@
 import React from "./jsx.js";
-import { contentEditableValue } from "./characterUiLayer.js";
 import { DataDisplay, Fraction, List, ListItem, util, editable, editing } from "./reactiveDisplay.js";
 import { controlButtons } from "./characterControls.js";
-import { characterData, ownerDisplayName, title } from "./loadCharacter.js";
+import { statNames, statToSkillMap, skillToStatMap, skillNames, hitDiceTable, contentEditableValue } from "./globalConsts.js";
+import { ui } from "./characterUiLayer.js";
 
-document.getElementById("title").innerText = title;
+export default function({ characterData, ownerDisplayName, title}) {
+    // document.getElementById("title").innerText = title;
 
-// #region Character Data
-const characterName = new DataDisplay({
-    element: document.getElementById("name-value"),
-    property: "name",
-    autoResize: true,
-});
-const ripName = new DataDisplay({
-    element: document.getElementById("rip-name"),
-    getDefault: () => characterName.value,
-    listenTo: [ characterName ],
-    editable: editable.never,
-});
-characterName.addChangeListener((_, str) => document.title = str + " Character Sheet");
-document.title = characterData.name + " Character Sheet";
-
-const characterLevel = classes => classes.reduce((total, c) => total + c.level, 0);
-
-const classAndLvl = new DataDisplay({
-    element: document.getElementById("classAndLvl"),
-    property: "classes",
-    dataFromString: str => {
-        const regex = /^\s*([^\n/]+?)\s+(1?[1-9]|[12]0)\s*$/;
-        let data = [];
-        for (let readClass of str.split("/")) {
-            let parsed = readClass.match(regex);
-            
-            data.push({"class": parsed[1], level: +parsed[2]});
-        }
-
-        return data;
-    },
-    validate: arr => arr.length !== 0 && characterLevel(arr) <= 20,
-    dataToString: data => data.map(d => `${d["class"]} ${d.level}`).join(" / "),
-});
-
-Object.defineProperty(classAndLvl, "characterLevel", {
-    get() {
-        return characterLevel(classAndLvl.value);
-    },
-    enumerable: true,
-});
-
-const background = new DataDisplay({
-    element: document.getElementById("background"),
-    property: "background",
-});
-
-const playerName = new DataDisplay({
-    element: document.getElementById("playerName"),
-    dataObject: { ownerDisplayName },
-    property: "ownerDisplayName",
-    editable: editable.never,
-})
-
-const race = new DataDisplay({
-    element: document.getElementById("race"),
-    property: "race",
-});
-
-const alignment = new DataDisplay({
-    element: document.getElementById("alignment"),
-    property: "alignment",
-})
-
-const xp = new DataDisplay({
-    element: document.getElementById("xp"),
-    property: "xp",
-    dataFromString: util.unsignedParseInt,
-    editable: editable.always,
-});
-
-const statNames = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
-const statToSkillMap = {
-    "Strength": ["Athletics"],
-    "Dexterity": ["Acrobatics", "Slight of Hand", "Stealth"],
-    "Intelligence": ["Arcana", "History", "Investigation", "Nature", "Religion"],
-    "Wisdom": ["Animal Handling", "Insight", "Medicine", "Perception", "Survival"],
-    "Charisma": ["Deception", "Intimidation", "Performance", "Persuasion"],
-}
-const skillToStatMap = {};
-for (let stat in statToSkillMap) {
-    // skillNames.push(...statToSkillMap[stat]);
-    for (let skill of statToSkillMap[stat]) {
-        skillToStatMap[skill] = stat;
-    }
-}
-const stats = {};
-
-for (let statName of statNames) {
-    const block = <div class="stat" id={statName}>
-        <div class="sectionTitle staticPos">{statName}</div>
-        <div class="stat-val ignore-invalid"><div></div></div>
-        <div class="stat-mod inherit-invalid"><div></div></div>
-    </div>
-    document.getElementById("stats").appendChild(block);
-
-    stats[statName] = {};
-    const stat = stats[statName].stat = new DataDisplay({
-        element: block.getElementsByClassName("stat-val")[0].children[0],
-        validate: n => n > 0 && n <= 20,
-        dataObject: characterData.stats, 
-        property: statName, 
-        dataFromString: util.betterParseInt,
+    // #region Character Data
+    const characterName = new DataDisplay({
+        element: ui.name,
+        property: "name",
+        autoResize: true,
     });
-    const args = {
-        element: block.getElementsByClassName("stat-mod")[0].children[0],
-        getDefault: () => Math.floor((stat.value - 10) / 2),
-        dataToString: util.signedIntToStr,
-        listenTo: [ stat ],
-        editable: editable.never,
-    };
-    const mod = stats[statName].mod = new DataDisplay(args);
-
-    stat.addInvalidationListener((_, isValid) => {
-        block.classList[isValid ? "remove" : "add"]("invalid");
+    // const ripName = new DataDisplay({
+    //     element: document.getElementById("rip-name"),
+    //     getDefault: () => characterName.value,
+    //     listenTo: [ characterName ],
+    //     editable: Editable.NEVER,
+    // });
+    characterName.addChangeListener((_, str) => document.title = str + " Character Sheet");
+    document.title = characterData.name + " Character Sheet";
+    
+    const characterLevel = classes => classes.reduce((total, c) => total + c.level, 0);
+    
+    const classAndLvl = new DataDisplay({
+        element: ui.classAndLvl,
+        property: "classes",
+        dataFromString: str => {
+            const regex = /^\s*([^\n/]+?)\s+(1?[1-9]|[12]0)\s*$/;
+            let data = [];
+            for (let readClass of str.split("/")) {
+                let parsed = readClass.match(regex);
+                
+                data.push({"class": parsed[1], level: +parsed[2]});
+            }
+    
+            return data;
+        },
+        validate: arr => arr.length !== 0 && characterLevel(arr) <= 20,
+        dataToString: data => data.map(d => `${d["class"]} ${d.level}`).join(" / "),
     });
-}
+    
+    Object.defineProperty(classAndLvl, "characterLevel", {
+        get() {
+            return characterLevel(classAndLvl.value);
+        },
+        enumerable: true,
+    });
+    
+    const background = new DataDisplay({
+        element: ui.background,
+        property: "background",
+    });
+    
+    const playerName = new DataDisplay({
+        element: ui.playerName,
+        dataObject: { ownerDisplayName },
+        property: "ownerDisplayName",
+        editable: Editable.NEVER,
+    })
+    
+    const race = new DataDisplay({
+        element: ui.race,
+        property: "race",
+    });
+    
+    const alignment = new DataDisplay({
+        element: ui.alignment,
+        property: "alignment",
+    })
 
-const proficiencyBonus = new DataDisplay({
-    element: document.getElementById("proficiencyBonus"),
-    getDefault: () => Math.floor((classAndLvl.characterLevel - 1) / 4) + 2,
-    dataToString: n => "+" + n,
-    listenTo: [ classAndLvl ],
-    editable: editable.never,
-});
+    // TODO More
+    
+    const xp = new DataDisplay({
+        element: document.getElementById("xp"),
+        property: "xp",
+        dataFromString: util.unsignedParseInt,
+        editable: Editable.ALWAYS,
+    });
 
-class Proficiency {
-    constructor(block, group, name, stat, defaultMap = n => n) {
-        block = this.element ||= <div class={group + " proficiency"} id={name}>
-            <label for={name + "Checkbox"}><input id={name + "Checkbox"} type="checkbox" name={group + "Checkbox"}
-                   class={group + "Checkbox proficiencyCheckbox"} disabled="true"></input><div class="customCheckbox"></div><span class={group + "Bonus proficiencyBonus"}></span> {name} <span
-                class="proficiencyBonusStat">({stat.substring(0, 3)})</span>
-            </label>
-        </div>;
-        const statMod = stats[stat].mod;
-        const bonus = this.bonus = new DataDisplay({
-            element: block.getElementsByClassName("proficiencyBonus")[0],
-            getDefault: () => defaultMap(statMod.value
-                + (characterData[group].proficiencies.indexOf(name) === -1 ? 0 : proficiencyBonus.value)),
-            dataObject: characterData[group].bonuses,
-            property: name,
-            dataToString: util.signedIntToStr,
+    const stats = {};
+
+    for (let statName of statNames) {
+        const block = <div class="stat" id={statName}>
+            <div class="sectionTitle staticPos">{statName}</div>
+            <div class="stat-val ignore-invalid"><div></div></div>
+            <div class="stat-mod inherit-invalid"><div></div></div>
+        </div>
+        document.getElementById("stats").appendChild(block);
+
+        stats[statName] = {};
+        const stat = stats[statName].stat = new DataDisplay({
+            element: block.getElementsByClassName("stat-val")[0].children[0],
+            validate: n => n > 0 && n <= 20,
+            dataObject: characterData.stats, 
+            property: statName, 
             dataFromString: util.betterParseInt,
-            validate: n => !isNaN(n),
-            listenTo: [ statMod, proficiencyBonus ],
         });
+        const args = {
+            element: block.getElementsByClassName("stat-mod")[0].children[0],
+            getDefault: () => Math.floor((stat.value - 10) / 2),
+            dataToString: util.signedIntToStr,
+            listenTo: [ stat ],
+            editable: Editable.NEVER,
+        };
+        const mod = stats[statName].mod = new DataDisplay(args);
 
-        const checkbox = this.checkbox = block.getElementsByClassName("proficiencyCheckbox")[0];
-
-        editing.ui.editingModeInputs.push(checkbox);
-
-        checkbox.checked = characterData[group].proficiencies.indexOf(name) >= 0;
-
-        checkbox.addEventListener("input", () => {
-            if (checkbox.checked) {
-                characterData[group].proficiencies.push(name);
-            }
-            else {
-                characterData[group].proficiencies.splice(characterData[group].proficiencies.indexOf(name), 1);
-            }
-
-            bonus.update();
+        stat.addInvalidationListener((_, isValid) => {
+            block.classList[isValid ? "remove" : "add"]("invalid");
         });
     }
-}
 
-const skills = {};
-for (let skill of Object.keys(skillToStatMap).sort()) {
-    const skillData = new Proficiency(undefined, "skills", skill, skillToStatMap[skill]);
-    skills[skill] = skillData;
-    document.getElementById("skills").appendChild(skillData.element);
-}
-
-const savingThrows = [];
-for (let stat of statNames) {
-    const savingThrowData = new Proficiency(undefined, "savingThrows", stat, stat);
-    savingThrows.push(savingThrowData);
-    document.getElementById("savingThrows").appendChild(savingThrowData.element);
-}
-
-const perceptionStandalone = new DataDisplay({
-    element: document.getElementById("perceptionValue"),
-    getDefault: () => 10 + skills.Perception.bonus.value,
-    listenTo: [ skills.Perception.bonus ],
-    editable: editable.never,
-})
-
-const inspiration = document.getElementById("inspiration");
-if (characterData.inspiration) {
-    inspiration.checked = true;
-}
-inspiration.addEventListener("change", () => {
-    characterData.inspiration = inspiration.checked;
-    editing.characterChanged();
-});
-editing.ui.alwaysEditingInputs.push(inspiration);
-
-const ac = new DataDisplay({
-    element: document.getElementById("ac"),
-    property: "ac",
-    dataFromString: util.unsignedParseInt,
-    validate: n => n > 0,
-    listenTo: [ stats.Dexterity.mod ],
-    autoResize: true,
-});
-const initiative = new DataDisplay({
-    element: document.getElementById("initiative"),
-    getDefault: () => stats.Dexterity.mod.value,
-    dataToString: util.signedIntToStr,
-    editable: editable.never,
-    listenTo: [ stats.Dexterity.mod ],
-});
-const speed = new DataDisplay({
-    element: document.getElementById("speed"),
-    property: "speed",
-    dataFromString: util.unsignedParseInt,
-    validate: n => n > 0,
-    autoResize: true,
-});
-const tempHp = new DataDisplay({
-    element: document.getElementById("temp-hp-value"),
-    property: "tempHp",
-    dataFromString: util.unsignedParseInt,
-    validate: n => n >= 0,
-    editable: editable.always,
-});
-
-const hitDiceTable = {
-    "sorcerer": 6,
-    "wizard": 6,
-    "artificer": 8,
-    "bard": 8,
-    "cleric": 8,
-    "druid": 8,
-    "monk": 8,
-    "rogue": 8,
-    "warlock": 8,
-    "fighter": 10,
-    "paladin": 10,
-    "ranger": 10,
-    "barbarian": 12,
-};
-function hitDieFromString(str) {
-    let [ n, d, err ] = str.split("d");
-    if (err || !n || !d) {
-        throw new Error();
-    }
-    return {d: util.unsignedParseInt(d), n: util.unsignedParseInt(n)};
-}
-function hitDieToString(die) {
-    return `${die.n}d${die.d}`;
-}
-const hitDiceArgs = {
-    dataFromString: str => str.split("+").map(hitDieFromString),
-    dataToString: dice => dice.map(hitDieToString).join("+"),
-}
-const totalHitDice = new DataDisplay({
-    ...hitDiceArgs,
-    element: document.getElementById("hit-dice-total"),
-    property: "hitDiceTotal",
-    validate: val => val.map(({n}) => n).reduce((sum, v) => sum + v) === classAndLvl.characterLevel,
-    getDefault: () => {
-        const v = [];
-        for (let c of classAndLvl.value) {
-            const d = hitDiceTable[c.class.toLowerCase()];
-            if (!d) {
-                return null;
-            }
-            v.push({ n: c.level, d });
-        }
-        return v;
-    },
-    listenTo: [ classAndLvl ],
-});
-const hitDice = new DataDisplay({
-    ...hitDiceArgs,
-    element: document.getElementById("hit-dice-value"),
-    property: "hitDice",
-    validate: val => {
-        const total = totalHitDice.value;
-        let i = 0;
-        for (let j = 0; j < total.length; j++) {{
-            if (i >= val.length) {
-                break;
-            }
-            if (val[i]?.d === total[j].d && val[i]?.n <= total[j].n) {
-                i++;
-            }
-        }}
-        return i === val.length;
-    }, 
-    getDefault: () => totalHitDice.value,
-    listenTo: [ classAndLvl, totalHitDice ],
-    autoResize: true,
-});
-
-const dieAvg = (d, n) => (Math.ceil((d - 1) / 2) + 1) * n;
-const hp = new Fraction(
-    document.getElementById("health"), 
-    { property: "hp" }, 
-    { 
-        property: "maxHp", 
-        getDefault: () => totalHitDice.value === null ? null : totalHitDice.value[0].d + stats.Constitution.mod.value * classAndLvl.characterLevel 
-            + dieAvg(totalHitDice.value[0].d, totalHitDice.value[0].n - 1) + totalHitDice.value.slice(1).map(({d, n}) => dieAvg(d, n)).reduce((sum, v) => sum + v, 0),
-        listenTo: [ stats.Constitution.mod, classAndLvl, totalHitDice ],
-    }
-);
-
-for (let display of [ac, speed, hp.numerDisplay, hp.denomDisplay, tempHp, hitDice, totalHitDice]) {
-    display.addInvalidationListener((_, isValid) => {
-        display.element.parentElement.classList[isValid ? "remove" : "add"]("invalid");
+    const proficiencyBonus = new DataDisplay({
+        element: document.getElementById("proficiencyBonus"),
+        getDefault: () => Math.floor((classAndLvl.characterLevel - 1) / 4) + 2,
+        dataToString: n => "+" + n,
+        listenTo: [ classAndLvl ],
+        editable: Editable.NEVER,
     });
+
+    class Proficiency {
+        constructor(block, group, name, stat, defaultMap = n => n) {
+            const statMod = stats[stat].mod;
+            const bonus = this.bonus = new DataDisplay({
+                element: block.getElementsByClassName("proficiencyBonus")[0],
+                getDefault: () => defaultMap(statMod.value
+                    + (characterData[group].proficiencies.indexOf(name) === -1 ? 0 : proficiencyBonus.value)),
+                dataObject: characterData[group].bonuses,
+                property: name,
+                dataToString: util.signedIntToStr,
+                dataFromString: util.betterParseInt,
+                validate: n => !isNaN(n),
+                listenTo: [ statMod, proficiencyBonus ],
+            });
+    
+            const checkbox = this.checkbox = block.getElementsByClassName("proficiencyCheckbox")[0];
+    
+            editing.ui.editingModeInputs.push(checkbox);
+    
+            checkbox.checked = characterData[group].proficiencies.indexOf(name) >= 0;
+    
+            checkbox.addEventListener("input", () => {
+                if (checkbox.checked) {
+                    characterData[group].proficiencies.push(name);
+                }
+                else {
+                    characterData[group].proficiencies.splice(characterData[group].proficiencies.indexOf(name), 1);
+                }
+    
+                bonus.update();
+            });
+        }
+    }
+    
+    const skills = {};
+    for (let skill of skillNames) {
+        const skillData = new Proficiency(undefined, "skills", skill, skillToStatMap[skill]);
+        skills[skill] = skillData;
+        document.getElementById("skills").appendChild(skillData.element);
+    }
+
+    const passiveSkills = {};
+    for (let skill of skillNames) {
+        passiveSkills[skill] = new DataDisplay({
+            element: null,
+            getDefault: () => 10 + skills[skill].bonus.value,
+            listenTo: [ skills[skill].bonus ],
+            editable: Editable.NEVER,
+        });
+    }
+    
+    const savingThrows = [];
+    for (let stat of statNames) {
+        const savingThrowData = new Proficiency(undefined, "savingThrows", stat, stat);
+        savingThrows.push(savingThrowData);
+        document.getElementById("savingThrows").appendChild(savingThrowData.element);
+    }
+
+    const inspiration = document.getElementById("inspiration");
+    if (characterData.inspiration) {
+        inspiration.checked = true;
+    }
+    inspiration.addEventListener("change", () => {
+        characterData.inspiration = inspiration.checked;
+        editing.characterChanged();
+    });
+    editing.ui.alwaysEditingInputs.push(inspiration);
+
+    const ac = new DataDisplay({
+        element: document.getElementById("ac"),
+        property: "ac",
+        dataFromString: util.unsignedParseInt,
+        validate: n => n > 0,
+        listenTo: [ stats.Dexterity.mod ],
+        autoResize: true,
+    });
+    const initiative = new DataDisplay({
+        element: document.getElementById("initiative"),
+        getDefault: () => stats.Dexterity.mod.value,
+        dataToString: util.signedIntToStr,
+        editable: Editable.NEVER,
+        listenTo: [ stats.Dexterity.mod ],
+    });
+    const speed = new DataDisplay({
+        element: document.getElementById("speed"),
+        property: "speed",
+        dataFromString: util.unsignedParseInt,
+        validate: n => n > 0,
+        autoResize: true,
+    });
+    const tempHp = new DataDisplay({
+        element: document.getElementById("temp-hp-value"),
+        property: "tempHp",
+        dataFromString: util.unsignedParseInt,
+        validate: n => n >= 0,
+        editable: Editable.ALWAYS,
+    });
+
+    function hitDieFromString(str) {
+        let [ n, d, err ] = str.split("d");
+        if (err || !n || !d) {
+            throw new Error();
+        }
+        return {d: util.unsignedParseInt(d), n: util.unsignedParseInt(n)};
+    }
+    function hitDieToString(die) {
+        return `${die.n}d${die.d}`;
+    }
+    const hitDiceArgs = {
+        dataFromString: str => str.split("+").map(hitDieFromString),
+        dataToString: dice => dice.map(hitDieToString).join("+"),
+    }
+    const totalHitDice = new DataDisplay({
+        ...hitDiceArgs,
+        element: document.getElementById("hit-dice-total"),
+        property: "hitDiceTotal",
+        validate: val => val.map(({n}) => n).reduce((sum, v) => sum + v) === classAndLvl.characterLevel,
+        getDefault: () => {
+            const v = [];
+            for (let c of classAndLvl.value) {
+                const d = hitDiceTable[c.class.toLowerCase()];
+                if (!d) {
+                    return null;
+                }
+                v.push({ n: c.level, d });
+            }
+            return v;
+        },
+        listenTo: [ classAndLvl ],
+    });
+    const hitDice = new DataDisplay({
+        ...hitDiceArgs,
+        element: document.getElementById("hit-dice-value"),
+        property: "hitDice",
+        validate: val => {
+            const total = totalHitDice.value;
+            let i = 0;
+            for (let j = 0; j < total.length; j++) {{
+                if (i >= val.length) {
+                    break;
+                }
+                if (val[i]?.d === total[j].d && val[i]?.n <= total[j].n) {
+                    i++;
+                }
+            }}
+            return i === val.length;
+        }, 
+        getDefault: () => totalHitDice.value,
+        listenTo: [ classAndLvl, totalHitDice ],
+        autoResize: true,
+    });
+    
+    const dieAvg = (d, n) => (Math.ceil((d - 1) / 2) + 1) * n;
+    const hp = new Fraction(
+        document.getElementById("health"), 
+        { property: "hp" }, 
+        { 
+            property: "maxHp", 
+            getDefault: () => totalHitDice.value === null ? null : totalHitDice.value[0].d + stats.Constitution.mod.value * classAndLvl.characterLevel 
+                + dieAvg(totalHitDice.value[0].d, totalHitDice.value[0].n - 1) + totalHitDice.value.slice(1).map(({d, n}) => dieAvg(d, n)).reduce((sum, v) => sum + v, 0),
+            listenTo: [ stats.Constitution.mod, classAndLvl, totalHitDice ],
+        }
+    );
+    
+    for (let display of [ac, speed, hp.numerDisplay, hp.denomDisplay, tempHp, hitDice, totalHitDice]) {
+        display.addInvalidationListener((_, isValid) => {
+            display.element.parentElement.classList[isValid ? "remove" : "add"]("invalid");
+        });
+    }
 }
+
+
+
+
+
 
 const newSpellSheetButton = document.getElementById("add-spell-sheet");
 editing.ui.editingModeInputs.push(newSpellSheetButton);
@@ -537,7 +513,7 @@ for (let denom of moneyDenominations) {
         dataObject: characterData.money,
         property: denom,
         dataFromString: util.unsignedParseInt,
-        editable: editable.always,
+        editable: Editable.ALWAYS,
     }));
 
     moneyElement.appendChild(block);
@@ -807,14 +783,14 @@ class SpellSheet {
             element: block.getElementsByClassName("spell-save-dc")[0],
             getDefault: () => 8 + stats[ability.value].mod.value + proficiencyBonus.value,
             listenTo: [ability, ...Object.values(stats).map(s => s.mod), proficiencyBonus],
-            editable: editable.never,
+            editable: Editable.NEVER,
         });
 
         new DataDisplay({
             element: block.getElementsByClassName("spell-atk-bonus")[0],
             getDefault: () => stats[ability.value].mod.value + proficiencyBonus.value,
             listenTo: [ability, ...Object.values(stats).map(s => s.mod), proficiencyBonus],
-            editable: editable.never,
+            editable: Editable.NEVER,
             dataToString: util.signedIntToStr,
         });
 

@@ -1,4 +1,4 @@
-import { statNames, skillNames, skillToStatMap, moneyDenominations } from "./5eData.js";
+import { statNames, skillNames, skillToStatMap, moneyDenominations } from "./globalConsts.js";
 function ListAddButton() {
   return /*#__PURE__*/React.createElement("button", {
     class: "list-add",
@@ -151,8 +151,7 @@ const mainContent = /*#__PURE__*/React.createElement("div", {
   class: "standaloneLabeledValue"
 }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
   id: "perceptionValue",
-  "data-character": "skills.perception.bonus",
-  "data-mirror-type": "readonly"
+  "data-character": "passiveSkills.perception.bonus"
 })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", null, "Passive Perception"))), /*#__PURE__*/React.createElement("div", {
   id: "other-proficiencies"
 }, /*#__PURE__*/React.createElement("div", {
