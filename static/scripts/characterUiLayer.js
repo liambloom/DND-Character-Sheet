@@ -423,7 +423,7 @@ export const ui = {
         [stat, { value: new UITextElement(), modifier: new UITextElement() }])),
     savingThrows: proficiencyUiBuilder(statNames),
     skills: proficiencyUiBuilder(skillNames),
-    passiveSkills: proficiencyUiBuilder(skillNames),
+    passiveSkills: textListUiBuilder(skillNames),
     otherProficiencies: textListUiBuilder("armor", "weapons", "tools", "languages"),
     hp: textListUiBuilder("current", "max", "temp"),
     hitDice: textListUiBuilder("current", "max"),

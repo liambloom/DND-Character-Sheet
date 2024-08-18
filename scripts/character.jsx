@@ -71,10 +71,10 @@ export default function({ characterData, ownerDisplayName, title}) {
         property: "alignment",
     })
 
-    // TODO More
+    // TODO More`
     
     const xp = new DataDisplay({
-        element: document.getElementById("xp"),
+        element: ui.xp,
         property: "xp",
         dataFromString: util.unsignedParseInt,
         editable: Editable.ALWAYS,
@@ -83,29 +83,21 @@ export default function({ characterData, ownerDisplayName, title}) {
     const stats = {};
 
     for (let statName of statNames) {
-        const block = <div class="stat" id={statName}>
-            <div class="sectionTitle staticPos">{statName}</div>
-            <div class="stat-val ignore-invalid"><div></div></div>
-            <div class="stat-mod inherit-invalid"><div></div></div>
-        </div>
-        document.getElementById("stats").appendChild(block);
-
         stats[statName] = {};
-        const stat = stats[statName].stat = new DataDisplay({
-            element: block.getElementsByClassName("stat-val")[0].children[0],
+        const stat = ui.stats[statName].stat = new DataDisplay({
+            element: ui.stats[statName].value,
             validate: n => n > 0 && n <= 20,
             dataObject: characterData.stats, 
             property: statName, 
             dataFromString: util.betterParseInt,
         });
-        const args = {
-            element: block.getElementsByClassName("stat-mod")[0].children[0],
+        const mod = stats[statName].mod = new DataDisplay({
+            element: ui.stats[statName].value,
             getDefault: () => Math.floor((stat.value - 10) / 2),
             dataToString: util.signedIntToStr,
             listenTo: [ stat ],
             editable: Editable.NEVER,
-        };
-        const mod = stats[statName].mod = new DataDisplay(args);
+        });
 
         stat.addInvalidationListener((_, isValid) => {
             block.classList[isValid ? "remove" : "add"]("invalid");
@@ -113,7 +105,7 @@ export default function({ characterData, ownerDisplayName, title}) {
     }
 
     const proficiencyBonus = new DataDisplay({
-        element: document.getElementById("proficiencyBonus"),
+        element: ui.proficiencyBonus,
         getDefault: () => Math.floor((classAndLvl.characterLevel - 1) / 4) + 2,
         dataToString: n => "+" + n,
         listenTo: [ classAndLvl ],
@@ -121,12 +113,12 @@ export default function({ characterData, ownerDisplayName, title}) {
     });
 
     class Proficiency {
-        constructor(block, group, name, stat, defaultMap = n => n) {
+        constructor(group, name, stat) {
             const statMod = stats[stat].mod;
             const bonus = this.bonus = new DataDisplay({
-                element: block.getElementsByClassName("proficiencyBonus")[0],
-                getDefault: () => defaultMap(statMod.value
-                    + (characterData[group].proficiencies.indexOf(name) === -1 ? 0 : proficiencyBonus.value)),
+                element: ui[group][name].bonus,
+                getDefault: () => statMod.value
+                    + (characterData[group].proficiencies.indexOf(name) === -1 ? 0 : proficiencyBonus.value),
                 dataObject: characterData[group].bonuses,
                 property: name,
                 dataToString: util.signedIntToStr,
@@ -135,7 +127,7 @@ export default function({ characterData, ownerDisplayName, title}) {
                 listenTo: [ statMod, proficiencyBonus ],
             });
     
-            const checkbox = this.checkbox = block.getElementsByClassName("proficiencyCheckbox")[0];
+            const checkbox = this.checkbox = ui[group][name].proficiencyCheckbox;
     
             editing.ui.editingModeInputs.push(checkbox);
     
@@ -156,15 +148,14 @@ export default function({ characterData, ownerDisplayName, title}) {
     
     const skills = {};
     for (let skill of skillNames) {
-        const skillData = new Proficiency(undefined, "skills", skill, skillToStatMap[skill]);
+        const skillData = new Proficiency("skills", skill, skillToStatMap[skill]);
         skills[skill] = skillData;
-        document.getElementById("skills").appendChild(skillData.element);
     }
 
     const passiveSkills = {};
     for (let skill of skillNames) {
         passiveSkills[skill] = new DataDisplay({
-            element: null,
+            element: ui.passiveSkills[skill],
             getDefault: () => 10 + skills[skill].bonus.value,
             listenTo: [ skills[skill].bonus ],
             editable: Editable.NEVER,
@@ -173,23 +164,22 @@ export default function({ characterData, ownerDisplayName, title}) {
     
     const savingThrows = [];
     for (let stat of statNames) {
-        const savingThrowData = new Proficiency(undefined, "savingThrows", stat, stat);
+        const savingThrowData = new Proficiency("savingThrows", stat, stat);
         savingThrows.push(savingThrowData);
-        document.getElementById("savingThrows").appendChild(savingThrowData.element);
     }
 
-    const inspiration = document.getElementById("inspiration");
+    const inspiration = ui.inspiration;
     if (characterData.inspiration) {
-        inspiration.checked = true;
+        inspiration.boolValue = true;
     }
     inspiration.addEventListener("change", () => {
-        characterData.inspiration = inspiration.checked;
+        characterData.inspiration = inspiration.boolValue;
         editing.characterChanged();
     });
     editing.ui.alwaysEditingInputs.push(inspiration);
 
     const ac = new DataDisplay({
-        element: document.getElementById("ac"),
+        element: ui.ac,
         property: "ac",
         dataFromString: util.unsignedParseInt,
         validate: n => n > 0,
@@ -197,21 +187,21 @@ export default function({ characterData, ownerDisplayName, title}) {
         autoResize: true,
     });
     const initiative = new DataDisplay({
-        element: document.getElementById("initiative"),
+        element: ui.initiative,
         getDefault: () => stats.Dexterity.mod.value,
         dataToString: util.signedIntToStr,
         editable: Editable.NEVER,
         listenTo: [ stats.Dexterity.mod ],
     });
     const speed = new DataDisplay({
-        element: document.getElementById("speed"),
+        element: ui.speed,
         property: "speed",
         dataFromString: util.unsignedParseInt,
         validate: n => n > 0,
         autoResize: true,
     });
     const tempHp = new DataDisplay({
-        element: document.getElementById("temp-hp-value"),
+        element: ui.hp.temp,
         property: "tempHp",
         dataFromString: util.unsignedParseInt,
         validate: n => n >= 0,
