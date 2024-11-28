@@ -224,7 +224,7 @@ export default function({ characterData, ownerDisplayName, title}) {
     }
     const totalHitDice = new DataDisplay({
         ...hitDiceArgs,
-        element: document.getElementById("hit-dice-total"),
+        element: ui.hitDice.max,
         property: "hitDiceTotal",
         validate: val => val.map(({n}) => n).reduce((sum, v) => sum + v) === classAndLvl.characterLevel,
         getDefault: () => {
@@ -242,7 +242,7 @@ export default function({ characterData, ownerDisplayName, title}) {
     });
     const hitDice = new DataDisplay({
         ...hitDiceArgs,
-        element: document.getElementById("hit-dice-value"),
+        element: ui.hitDice.current,
         property: "hitDice",
         validate: val => {
             const total = totalHitDice.value;
@@ -264,9 +264,12 @@ export default function({ characterData, ownerDisplayName, title}) {
     
     const dieAvg = (d, n) => (Math.ceil((d - 1) / 2) + 1) * n;
     const hp = new Fraction(
-        document.getElementById("health"), 
-        { property: "hp" }, 
         { 
+            property: "hp",
+            element: ui.hp.current
+        }, 
+        { 
+            element: ui.hp.max,
             property: "maxHp", 
             getDefault: () => totalHitDice.value === null ? null : totalHitDice.value[0].d + stats.Constitution.mod.value * classAndLvl.characterLevel 
                 + dieAvg(totalHitDice.value[0].d, totalHitDice.value[0].n - 1) + totalHitDice.value.slice(1).map(({d, n}) => dieAvg(d, n)).reduce((sum, v) => sum + v, 0),

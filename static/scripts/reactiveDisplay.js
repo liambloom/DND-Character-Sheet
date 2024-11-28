@@ -344,18 +344,7 @@ export class DataDisplay {
   }
 }
 export class Fraction {
-  constructor(element, numerArgs, denomArgs) {
-    this.element = element;
-    if (this.element.childNodes.length) {
-      this.numerElement = this.element.querySelector("[data-numer]");
-      this.denomElement = this.element.querySelector("[data-denom]");
-    } else {
-      this.numerElement = document.createElement("span");
-      this.denomElement = document.createElement("span");
-      element.appendChild(this.numerElement);
-      element.appendChild(document.createTextNode(" / "));
-      element.appendChild(this.denomElement);
-    }
+  constructor(numerArgs, denomArgs) {
     this.denomDisplay = new DataDisplay({
       element: this.denomElement,
       validate: n => n > 0,

@@ -208,7 +208,7 @@ export default function ({
   };
   const totalHitDice = new DataDisplay({
     ...hitDiceArgs,
-    element: document.getElementById("hit-dice-total"),
+    element: ui.hitDice.max,
     property: "hitDiceTotal",
     validate: val => val.map(({
       n
@@ -231,7 +231,7 @@ export default function ({
   });
   const hitDice = new DataDisplay({
     ...hitDiceArgs,
-    element: document.getElementById("hit-dice-value"),
+    element: ui.hitDice.current,
     property: "hitDice",
     validate: val => {
       const total = totalHitDice.value;
@@ -253,9 +253,11 @@ export default function ({
     autoResize: true
   });
   const dieAvg = (d, n) => (Math.ceil((d - 1) / 2) + 1) * n;
-  const hp = new Fraction(document.getElementById("health"), {
-    property: "hp"
+  const hp = new Fraction({
+    property: "hp",
+    element: ui.hp.current
   }, {
+    element: ui.hp.max,
     property: "maxHp",
     getDefault: () => totalHitDice.value === null ? null : totalHitDice.value[0].d + stats.Constitution.mod.value * classAndLvl.characterLevel + dieAvg(totalHitDice.value[0].d, totalHitDice.value[0].n - 1) + totalHitDice.value.slice(1).map(({
       d,
