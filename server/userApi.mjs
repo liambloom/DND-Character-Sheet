@@ -4,6 +4,10 @@ import validator from "validator";
 
 import { userApi, pool, bindPromisify, ui, sendFileOptions }  from "./init.mjs";
 
+userApi.get("/amILoggedIn", async (req, res) => {
+    res.status(200).json(!!req.session.userId);
+})
+
 userApi.post("/new-user", async (req, res) => {
     const client = await pool.connect();
     console.log(req.body);

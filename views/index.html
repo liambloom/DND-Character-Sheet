@@ -3,10 +3,49 @@
     <head>
         <meta charset="utf8">
         <title>DnD Character Creator</title>
+        <link rel="stylesheet" href="/static/styles/common.css">
+        <link rel="stylesheet" href="/static/styles/homepage.css">
+        <script>
+            function fixButtons(loggedIn) {
+                if (loggedIn) {
+                    document.getElementById("signup").style.display = "none";
+                    document.getElementById("login").innerText = "Go to my character sheets";
+                }
+            }
+            fetch("/api/user/amILoggedIn")
+                .then(res => res.json())
+                .then(res => {
+                    if (document.readyState === "loading") {
+                        window.addEventListener("DOMContentLoaded", () => {
+                            fixButtons(res);
+                        })
+                    }
+                    else {
+                        fixButtons(res);
+                    }
+                });
+        </script>
     </head>
     <body>
-        Hi! I made a character creator and the homepage is not my priority. Eventually this will look nicer.<br>
-        <a href="/login">Log in/Go to character list</a><br>
-        <a href="/signup">Sign up</a>
+        <div id="card-1">
+            <img src="/static/img/logo.svg" id="logo">
+            <img src="/static/img/Sample-p3.png" id="page3" class="c1page">
+            <img src="/static/img/Sample-p2.png" id="page2" class="c1page">
+            <img src="/static/img/Sample-p1.png" id="page1" class="c1page">
+            <div id="red-container">
+                <div id="red-shape"></div>
+            </div>
+            <div id="back-title-container" class="title-container">
+                <h1 id="back-tagline">A simple, versatile online character sheet for D&D<span class="footnote">1</span> 5E</span></h1>
+            </div>
+            <div id="front-title-container" class="title-container">
+                <h1 id="tagline">A simple, versatile online character sheet for D&D<span class="footnote">1</span> 5E</span></h1>
+                <div id="buttons">
+                    <a href="/login" class="button" id="login">Log In</a>
+                    <a href="/signup" class="button" id="signup">Sign Up</a>
+                </div>
+            </div>
+            <div id="footnotes"><span class="footnote">1</span>D&D is a trademark of Wizards of the Coast </div>
+        </div>
     </body>
 </html>
