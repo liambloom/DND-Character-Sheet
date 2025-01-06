@@ -5,26 +5,7 @@
         <title>DnD Character Creator</title>
         <link rel="stylesheet" href="/static/styles/common.css">
         <link rel="stylesheet" href="/static/styles/homepage.css">
-        <script>
-            function fixButtons(loggedIn) {
-                if (loggedIn) {
-                    document.getElementById("signup").style.display = "none";
-                    document.getElementById("login").innerText = "Go to my character sheets";
-                }
-            }
-            fetch("/api/user/amILoggedIn")
-                .then(res => res.json())
-                .then(res => {
-                    if (document.readyState === "loading") {
-                        window.addEventListener("DOMContentLoaded", () => {
-                            fixButtons(res);
-                        })
-                    }
-                    else {
-                        fixButtons(res);
-                    }
-                });
-        </script>
+        <script src="/static/scripts/homepage.js" defer ></script>
     </head>
     <body>
         <div id="card-1">

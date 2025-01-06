@@ -104,21 +104,22 @@ h1 {
     margin-left: 20px;
     display: flex;
     gap: 10px;
+    align-items: center;
 }
 .button {
     padding: 10px 15px;
     height: 20px;
-    border-radius: 20px;
     display: block;
-}
-#login {
+    text-decoration: none;
+    font-size: 16px;
     border: 2px solid #eee;
-    background-color: #E40712;
-    color: #eee;
     border-radius: 22px;
 }
+#login {
+    background-color: #E40712;
+    color: #eee;
+}
 #signup {
-    /* border: 2px solid #aa0b13; */
     background-color: #eee;
     color: #E40712;
 }
