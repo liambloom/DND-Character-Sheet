@@ -392,12 +392,14 @@ class DataDisplay {
     const value = valueExists ? this.value : undefined;
     const str = valueExists ? this.dataToString(this.value) : "";
     this.element.innerText = str;
+    let publicValue, publicValueString;
     if (this.getDefault) {
       const defaultVal = this.getDefault();
       if (defaultVal === null) {
         delete this.element.dataset.default;
       } else {
-        this.element.dataset.default = this.dataToString(defaultVal);
+        publicValue = defaultVal;
+        publicValueString = this.element.dataset.default = this.dataToString(defaultVal);
       }
     }
     if (this.inCharacterSheet) {
@@ -413,11 +415,15 @@ class DataDisplay {
       }
     }
     this.maybeResizeFont();
-    const changed = value !== this.oldValue;
-    this.oldValue = value;
+    if (valueExists) {
+      publicValue = value;
+      publicValueString = str;
+    }
+    const changed = publicValue !== this.oldValue;
+    this.oldValue = publicValue;
     if (doListeners && changed) {
       for (let listener of this.changeListeners) {
-        listener(value, str, valueExists);
+        listener(publicValue, publicValueString, valueExists);
       }
     }
   }
