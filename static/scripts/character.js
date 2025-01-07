@@ -742,7 +742,7 @@ for (let statName of statNames) {
   stats[statName] = {};
   const stat = stats[statName].stat = new DataDisplay({
     element: block.getElementsByClassName("stat-val")[0].children[0],
-    validate: n => n > 0 && n <= 20,
+    validate: n => n > 0,
     dataObject: characterData.stats,
     property: statName,
     dataFromString: betterParseInt
