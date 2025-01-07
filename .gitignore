@@ -1,3 +1,8 @@
 node_modules/
 characters/
 secrets.yaml
+static/scripts/character.js
+static/scripts/characterList.js
+static/scripts/characterControls.js
+static/scripts/printTheme.js
+static/scripts/reactiveDisplay.js
