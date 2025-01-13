@@ -1,6 +1,6 @@
 import React from "./jsx.js";
-import { characterApi, characterData, editPermission } from "./loadCharacter.js";
-import { contentEditableValue } from "./globalConsts.js";
+import { characterApi, contentEditableValue } from "./globalConsts.js";
+import { characterData, editPermission } from "./loadCharacter.js";
 
 const newlineRegex = /[\n\r\u2028\u2029]/g;
 const fontCtx = document.createElement("canvas").getContext("2d");

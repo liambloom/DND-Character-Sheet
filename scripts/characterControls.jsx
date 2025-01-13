@@ -1,6 +1,7 @@
 import React from "./jsx.js";
 import { editing } from "./reactiveDisplay.js";
-import { sharingApi, initialLinkSharing, editPermission, characterApi } from "./loadCharacter.js";
+import { characterApi, sharingApi } from "./globalConsts.js";
+import { initialLinkSharing, editPermission } from "./loadCharacter.js";
 
 let linkSharing = initialLinkSharing;
 

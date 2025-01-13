@@ -1,3 +1,4 @@
+import React from "./jsx.js";
 import { statNames, skillNames, skillToStatMap, moneyDenominations } from "./globalConsts.js";
 function ListAddButton() {
     return (
@@ -204,7 +205,7 @@ const mainContent = <div id="mainpage" class="page">
     </div>
 </div>;
 
-const $ = mainContent.querySelector;
+const $ = Element.prototype.querySelector.bind(mainContent);
 
 const moneyElement = $("#money");
 for (let denom of moneyDenominations) {

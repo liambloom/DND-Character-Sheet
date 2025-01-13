@@ -1,5 +1,5 @@
 import React from "./jsx.js";
-import { DataDisplay, Fraction, List, ListItem, util, editable, editing } from "./reactiveDisplay.js";
+import { DataDisplay, Fraction, List, ListItem, util, editing } from "./reactiveDisplay.js";
 import { controlButtons } from "./characterControls.js";
 import { statNames, statToSkillMap, skillToStatMap, skillNames, hitDiceTable, contentEditableValue } from "./globalConsts.js";
 import { ui } from "./characterUiLayer.js";
@@ -284,156 +284,159 @@ export default function({ characterData, ownerDisplayName, title}) {
     }
 }
 
+// ^ Updated
+// **************************************************************************************
+// v Todo
 
 
 
+// // Death stuff is complicated and messy so I am going to comment it out for now and come back
+// const newSpellSheetButton = document.getElementById("add-spell-sheet");
+// editing.ui.editingModeInputs.push(newSpellSheetButton);
 
+// const deathSaveBoxes = Array.from(document.getElementById("death-saves").getElementsByTagName("input"));
+// editing.ui.special.push(...ui.deathSaves.success);
+// editing.ui.special.push(...ui.deathSaves.fail);
+// const killButton = document.getElementById("kill");
+// controlButtons.addButton(killButton, true, false);
 
-const newSpellSheetButton = document.getElementById("add-spell-sheet");
-editing.ui.editingModeInputs.push(newSpellSheetButton);
+// function die() {
+//     if (!characterData.dead) {
+//         characterData.dead = true;
 
-const deathSaveBoxes = Array.from(document.getElementById("death-saves").getElementsByTagName("input"));
-editing.ui.special.push(...deathSaveBoxes);
-const killButton = document.getElementById("kill");
-controlButtons.addButton(killButton, true, false);
+//         delete characterData.hitDice;
+//         hitDice.update();
 
-function die() {
-    if (!characterData.dead) {
-        characterData.dead = true;
+//         document.body.classList.add("death-animation");
+//         const animations = document.getElementById("death-overlay").getAnimations();
+//         animations[0].onfinish = () => {
+//             document.body.classList.remove("unconscious");
+//             document.body.classList.add("dead");
+//         };
+//         animations[1].onfinish = () => {
+//             document.body.classList.remove("death-animation");
+//         }
+//     }
+//     else {
+//         document.body.classList.add("dead");
+//     }
 
-        delete characterData.hitDice;
-        hitDice.update();
+//     characterData.hp = 0;
+//     hp.numerDisplay.update();
+//     editing.stopEditing();
 
-        document.body.classList.add("death-animation");
-        const animations = document.getElementById("death-overlay").getAnimations();
-        animations[0].onfinish = () => {
-            document.body.classList.remove("unconscious");
-            document.body.classList.add("dead");
-        };
-        animations[1].onfinish = () => {
-            document.body.classList.remove("death-animation");
-        }
-    }
-    else {
-        document.body.classList.add("dead");
-    }
+//     editing.viewOnlyMode();
 
-    characterData.hp = 0;
-    hp.numerDisplay.update();
-    editing.stopEditing();
+//     for (let element of controlButtons.getList(controlButtons.enabledWhileDead, true)) {
+//         element.disabled = false;
+//     }
+// }
 
-    editing.viewOnlyMode();
+// function revive() {
+//     characterData.dead = false;
+//     document.body.classList.remove("dead");
 
-    for (let element of controlButtons.getList(controlButtons.enabledWhileDead, true)) {
-        element.disabled = false;
-    }
-}
+//     characterData.hp = 1;
+//     hp.numerDisplay.update();
+//     editing.characterChanged();
 
-function revive() {
-    characterData.dead = false;
-    document.body.classList.remove("dead");
+//     for (let element of editing.ui.alwaysEditing) {
+//         element.contentEditable = contentEditableValue;
+//     }
+//     for (let element of [...editing.ui.alwaysEditingInputs, ...controlButtons.all]) {
+//         element.disabled = false;
+//     }
+// }
 
-    characterData.hp = 1;
-    hp.numerDisplay.update();
-    editing.characterChanged();
+// const reviveButton = document.getElementById("revive");
+// reviveButton.addEventListener("click", revive);
+// controlButtons.addButton(reviveButton, true, true);
+// killButton.addEventListener("click", die);
 
-    for (let element of editing.ui.alwaysEditing) {
-        element.contentEditable = contentEditableValue;
-    }
-    for (let element of [...editing.ui.alwaysEditingInputs, ...controlButtons.all]) {
-        element.disabled = false;
-    }
-}
+// function updateConsciousness() {
+//     const unconscious = hp.numerDisplay.value === 0;
+//     for (let checkbox of deathSaveBoxes) {
+//         checkbox.disabled = !unconscious;
+//         if (!unconscious) {
+//             checkbox.checked = false;
+//         }
+//     }
 
-const reviveButton = document.getElementById("revive");
-reviveButton.addEventListener("click", revive);
-controlButtons.addButton(reviveButton, true, true);
-killButton.addEventListener("click", die);
+//     if (unconscious) {
+//         if (!("deathSaves" in characterData)) {
+//             characterData.deathSaves = { success: 0, fail: 0 };
+//             editing.characterChanged();
+//         }
+//         document.documentElement.dataset.failedDeathSaves = characterData.deathSaves.fail;
+//     }
+//     else {
+//         if ("deathSaves" in characterData) {
+//             delete characterData.deathSaves;
+//             editing.characterChanged();
+//         }
+//         delete document.documentElement.dataset.failedDeathSaves
+//     }
 
-function updateConsciousness() {
-    const unconscious = hp.numerDisplay.value === 0;
-    for (let checkbox of deathSaveBoxes) {
-        checkbox.disabled = !unconscious;
-        if (!unconscious) {
-            checkbox.checked = false;
-        }
-    }
+//     document.body.classList[unconscious && characterData.deathSaves?.success !== 3 && !characterData.dead 
+//         ? "add" : "remove"]("unconscious");
+// };
+// hp.numerDisplay.addChangeListener(updateConsciousness);
+// updateConsciousness();
 
-    if (unconscious) {
-        if (!("deathSaves" in characterData)) {
-            characterData.deathSaves = { success: 0, fail: 0 };
-            editing.characterChanged();
-        }
-        document.documentElement.dataset.failedDeathSaves = characterData.deathSaves.fail;
-    }
-    else {
-        if ("deathSaves" in characterData) {
-            delete characterData.deathSaves;
-            editing.characterChanged();
-        }
-        delete document.documentElement.dataset.failedDeathSaves
-    }
+// class DeathSaves {
+//     constructor(type) {
+//         this.type = type;
 
-    document.body.classList[unconscious && characterData.deathSaves?.success !== 3 && !characterData.dead 
-        ? "add" : "remove"]("unconscious");
-};
-hp.numerDisplay.addChangeListener(updateConsciousness);
-updateConsciousness();
+//         this.checkboxes = Array.from(document.getElementById(`ds-${this.type}-counter`).getElementsByTagName("input"));
 
-class DeathSaves {
-    constructor(type) {
-        this.type = type;
+//         for (let i = 0; i < this.checkboxes.length; i++) {
+//             const checkbox = this.checkboxes[i];
+//             checkbox.addEventListener("click", () => {
+//                 let value = i + 1;//this.checkboxes.findLastIndex(box => box.checked) + 1;
+//                 if (value === characterData.deathSaves[type]) {
+//                     value--;
+//                 }
+//                 characterData.deathSaves[type] = value;
+//                 editing.characterChanged();
+//                 this.update();
+//             });
+//         }
 
-        this.checkboxes = Array.from(document.getElementById(`ds-${this.type}-counter`).getElementsByTagName("input"));
+//         this.update();
+//     }
 
-        for (let i = 0; i < this.checkboxes.length; i++) {
-            const checkbox = this.checkboxes[i];
-            checkbox.addEventListener("click", () => {
-                let value = i + 1;//this.checkboxes.findLastIndex(box => box.checked) + 1;
-                if (value === characterData.deathSaves[type]) {
-                    value--;
-                }
-                characterData.deathSaves[type] = value;
-                editing.characterChanged();
-                this.update();
-            });
-        }
-
-        this.update();
-    }
-
-    update() {
-        if ("deathSaves" in characterData) {
-            for (let i = 0; i < characterData.deathSaves[this.type]; i++) {
-                this.checkboxes[i].checked = true;
-            }
-            for (let i = characterData.deathSaves[this.type]; i < this.checkboxes.length; i++) {
-                this.checkboxes[i].checked = false;
-            }
-            if (this.type === "fail") {
-                if (characterData.deathSaves.fail === 3) {
-                    die();
-                }
-                else {  
-                    document.documentElement.dataset.failedDeathSaves = characterData.deathSaves.fail;
-                }
-            }
-            if (this.type === "success") {
-                updateConsciousness();
-            }
-        }
-    }
-}
-const successfulDeathSaves = new DeathSaves("success");
-const failedDeathSaves = new DeathSaves("fail");
-if (characterData.dead && characterData.deathSaves?.fail !== 3) {
-    die();
-}
+//     update() {
+//         if ("deathSaves" in characterData) {
+//             for (let i = 0; i < characterData.deathSaves[this.type]; i++) {
+//                 this.checkboxes[i].checked = true;
+//             }
+//             for (let i = characterData.deathSaves[this.type]; i < this.checkboxes.length; i++) {
+//                 this.checkboxes[i].checked = false;
+//             }
+//             if (this.type === "fail") {
+//                 if (characterData.deathSaves.fail === 3) {
+//                     die();
+//                 }
+//                 else {  
+//                     document.documentElement.dataset.failedDeathSaves = characterData.deathSaves.fail;
+//                 }
+//             }
+//             if (this.type === "success") {
+//                 updateConsciousness();
+//             }
+//         }
+//     }
+// }
+// 
+// 
+// const successfulDeathSaves = new DeathSaves("success");
+// const failedDeathSaves = new DeathSaves("fail");
+// if (characterData.dead && characterData.deathSaves?.fail !== 3) {
+//     die();
+// }
 
 const otherProficiencies = [];
-for (let prof of ["armor", "weapons", "tools", "languages"]) {
-    const element = document.getElementById(prof + "-prof");
-
+for (let [prof, element] of Object.entries(ui.otherProficiencies)) {
     const display = new DataDisplay({
         element,
         dataObject: characterData.otherProficiencies,
@@ -444,7 +447,7 @@ for (let prof of ["armor", "weapons", "tools", "languages"]) {
 }
 
 const attacksText = new DataDisplay({
-    element: document.getElementById("attacks-text"),
+    element: ui.attacksText,
     property: "attacksText",
     allowNewlines: true,
 });

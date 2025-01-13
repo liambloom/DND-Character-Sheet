@@ -1,6 +1,9 @@
 // https://stackoverflow.com/a/42405694/11326662
 export default {
     createElement: function (tag, attrs, children) {
+        if (typeof tag === "function") {
+            return tag(attrs);
+        }
         var element = document.createElement(tag);
 
         for (let name in attrs) {

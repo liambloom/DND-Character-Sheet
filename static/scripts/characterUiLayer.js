@@ -130,6 +130,10 @@ class UISimpleElement {
         }
     }
 
+    get allowMultiline() {
+        return this.inner
+    }
+
     eventListeners = [];
 
     addEventListener(type, listener) {
