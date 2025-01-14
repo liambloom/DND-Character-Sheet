@@ -130,10 +130,6 @@ class UISimpleElement {
         }
     }
 
-    get allowMultiline() {
-        return this.inner
-    }
-
     eventListeners = [];
 
     addEventListener(type, listener) {
@@ -242,16 +238,17 @@ class UIList {
 
     constructor(listItemType) {
         this.listItemType = listItemType;
+        const self = this;
         this.addButton.addEventListener("click", () => {
-
+            self.addListItem();
         });
     }
 
-    addListItem() {
-        const item = new UIListItem(this.listItemType);
+    addListItem(itemData = null) {
+        const item = new UIListItem(this);
         const i = this.content.push(item);
-        this.hooks.itemAdded(i - 1, item);
-        this.inner.insertBefore(item, this.addButton.inner);
+        this.hooks.itemAdded(i - 1, item, itemData);
+        this.inner.insertBefore(item.inner, this.addButton.inner);
     }
 
     removeListItem(index) {
@@ -260,7 +257,11 @@ class UIList {
         this.hooks.itemRemoved(index);
     }
 
-
+    setInitialContent(content) {
+        for (let itemData of content) {
+            this.addListItem(itemData);
+        }
+    }
 
     get inner() {
         return this.innerValue;
@@ -270,7 +271,10 @@ class UIList {
 
         this.innerValue = value;
         this.addButton.inner = this.inner.querySelector("[data-list-add-button]");
-
+        for (let item of this.content) {
+            item.inner = new theme.templates[this.listItemType]();
+            this.inner.insertBefore(item.inner)
+        }
     }
 
     hooks = {}

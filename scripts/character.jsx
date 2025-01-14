@@ -3,11 +3,12 @@ import { DataDisplay, Fraction, List, ListItem, util, editing } from "./reactive
 import { controlButtons } from "./characterControls.js";
 import { statNames, statToSkillMap, skillToStatMap, skillNames, hitDiceTable, contentEditableValue } from "./globalConsts.js";
 import { ui } from "./characterUiLayer.js";
+import { characterData } from "../static/scripts/loadCharacter.js";
 
 export default function({ characterData, ownerDisplayName, title}) {
     // document.getElementById("title").innerText = title;
 
-    // #region Character Data
+    // #region Simple Character Data
     const characterName = new DataDisplay({
         element: ui.name,
         property: "name",
@@ -282,14 +283,83 @@ export default function({ characterData, ownerDisplayName, title}) {
             display.element.parentElement.classList[isValid ? "remove" : "add"]("invalid");
         });
     }
+
+    const otherProficiencies = [];
+    for (let [prof, element] of Object.entries(ui.otherProficiencies)) {
+        const display = new DataDisplay({
+            element,
+            dataObject: characterData.otherProficiencies,
+            property: prof,
+            allowNewlines: true,
+        });
+        otherProficiencies.push(display);
+    }
+
+    const attacksText = new DataDisplay({
+        element: ui.attacksText,
+        property: "attacksText",
+        allowNewlines: true,
+    });
+    //#endregion
+
+    //#region List Character Data
+    class ListHook {
+        constructor(dataObject, defaultItem, reactivityInitiator) {
+            this.dataObject = dataObject;
+            this.defaultItem = defaultItem;
+            this.reactivityInitiator = reactivityInitiator;
+        }
+    
+        itemAdded(i, item, itemData) {
+            if (itemData === null) {
+                this.dataObject.push(itemData = this.defaultItem());
+            }
+            else {
+                this.dataObject.splice(i, 0, itemData);
+            }
+    
+            this.reactivityInitiator(item, itemData);
+        }
+    
+        itemRemoved(i) {
+            this.dataObject.splice(i, 1);
+        }
+    }
+    
+    ui.weapons.hooks = new ListHook(
+        characterData.weapons, 
+        () => ({ name: "Name", bonus: 0, damage: "0 type" }), 
+        (item, itemData) => {
+            new DataDisplay({
+                element: item.data.name,
+                dataObject: itemData,
+                property: "name",
+            });
+            new DataDisplay({
+                element: item.data.bonus,
+                dataObject: itemData,
+                property: "bonus",
+                dataFromString: util.betterParseInt,
+                dataToString: util.signedIntToStr,
+                listenTo: [stats.Strength.mod, stats.Dexterity.mod, proficiencyBonus],
+            });
+            new DataDisplay({
+                element: item.data.damage,
+                dataObject: itemData,
+                property: "damage",
+                listenTo: [stats.Strength.mod, stats.Dexterity.mod, proficiencyBonus],
+            });
+        }
+    );
+    
+    ui.weapons.setInitialContent(characterData.weapons);
+    //#endregion
 }
 
-// ^ Updated
-// **************************************************************************************
-// v Todo
 
 
 
+//#region Death
 // // Death stuff is complicated and messy so I am going to comment it out for now and come back
 // const newSpellSheetButton = document.getElementById("add-spell-sheet");
 // editing.ui.editingModeInputs.push(newSpellSheetButton);
@@ -434,62 +504,13 @@ export default function({ characterData, ownerDisplayName, title}) {
 // if (characterData.dead && characterData.deathSaves?.fail !== 3) {
 //     die();
 // }
+//#endregion
 
-const otherProficiencies = [];
-for (let [prof, element] of Object.entries(ui.otherProficiencies)) {
-    const display = new DataDisplay({
-        element,
-        dataObject: characterData.otherProficiencies,
-        property: prof,
-        allowNewlines: true,
-    });
-    otherProficiencies.push(display);
-}
 
-const attacksText = new DataDisplay({
-    element: ui.attacksText,
-    property: "attacksText",
-    allowNewlines: true,
-});
+// ^ Updated
+// **************************************************************************************
+// v Todo
 
-class Weapon extends ListItem {
-    constructor(list, weapon) {
-        super(list);
-        
-        const block = <div class="weapon-content">
-            <div class="weapon-name"><span class="weapon-name-value"></span></div>
-            <div class="weapon-bonus"><span class="weapon-bonus-value"></span></div>
-            <div class="weapon-damage"><span class="weapon-damage-value"></span></div>
-        </div>;
-
-        this.value = {
-            name: new DataDisplay({
-                element: block.getElementsByClassName("weapon-name-value")[0],
-                dataObject: weapon,
-                property: "name",
-            }),
-            bonus: new DataDisplay({
-                element: block.getElementsByClassName("weapon-bonus-value")[0],
-                dataObject: weapon,
-                property: "bonus",
-                dataFromString: util.betterParseInt,
-                dataToString: util.signedIntToStr,
-                listenTo: [stats.Strength.mod, stats.Dexterity.mod, proficiencyBonus],
-            }),
-            damage: new DataDisplay({
-                element: block.getElementsByClassName("weapon-damage-value")[0],
-                dataObject: weapon,
-                property: "damage",
-                listenTo: [stats.Strength.mod, stats.Dexterity.mod, proficiencyBonus],
-            }), 
-        };
-
-        this.element.appendChild(block);
-    }
-}
-
-const weapons = new List(document.getElementById("attacks-table"), characterData.weapons, 
-    () => ({ name: "Name", bonus: 0, damage: "0 type" }), Weapon);
 
 const moneyDenominations = ["CP", "SP", "EP", "GP", "PP"];
 const moneyElement = document.getElementById("money");
@@ -589,249 +610,250 @@ class Feature extends ListItem {
 }
 
 const features = new List(document.getElementById("features-list"), characterData.features, () => ({ name: "Name", text: "Description" }), Feature);
-// #endregion
 
+
+// Spell stuff not done yet for new ui themes
 // #region Spellcasting
-class Spell {
-    static counter = 0;
+// class Spell {
+//     static counter = 0;
 
-    constructor(castingClass, level, spellNum) {
-        const checkboxName = "spellPreparedCheckbox" + Spell.counter++;
-        const block = this.block = <div>
-            <label for={checkboxName} class="spell-entry">
-                <input id={checkboxName} type="checkbox" name={`level-${level}-spells`} class="spellPrepared" disabled="true"/>
-                <div class="customCheckbox"></div>
-                <div class="spell-name-container">
-                    <span class="spell-name"></span>
-                </div>
-                <div class="spell-phantom" contentEditable="false">.</div>
-            </label>
-        </div>
+//     constructor(castingClass, level, spellNum) {
+//         const checkboxName = "spellPreparedCheckbox" + Spell.counter++;
+//         const block = this.block = <div>
+//             <label for={checkboxName} class="spell-entry">
+//                 <input id={checkboxName} type="checkbox" name={`level-${level}-spells`} class="spellPrepared" disabled="true"/>
+//                 <div class="customCheckbox"></div>
+//                 <div class="spell-name-container">
+//                     <span class="spell-name"></span>
+//                 </div>
+//                 <div class="spell-phantom" contentEditable="false">.</div>
+//             </label>
+//         </div>
 
-        const dataObject = castingClass.levels[level].spells[spellNum];
+//         const dataObject = castingClass.levels[level].spells[spellNum];
 
-        this.name = new DataDisplay({
-            element: block.getElementsByClassName("spell-name")[0],
-            dataObject,
-            property: "name",
-        });
+//         this.name = new DataDisplay({
+//             element: block.getElementsByClassName("spell-name")[0],
+//             dataObject,
+//             property: "name",
+//         });
 
 
-        if (level > 0) {
-            const checkbox = block.getElementsByClassName("spellPrepared")[0];
-            editing.ui.editingModeInputs.push(checkbox);
+//         if (level > 0) {
+//             const checkbox = block.getElementsByClassName("spellPrepared")[0];
+//             editing.ui.editingModeInputs.push(checkbox);
 
-            checkbox.checked = dataObject.prepared;
+//             checkbox.checked = dataObject.prepared;
 
-            checkbox.addEventListener("input", () => {
-                dataObject.prepared = checkbox.checked;
-                editing.characterChanged();
-            });
-        }
-    }
-}
+//             checkbox.addEventListener("input", () => {
+//                 dataObject.prepared = checkbox.checked;
+//                 editing.characterChanged();
+//             });
+//         }
+//     }
+// }
 
-class SpellLevel {
-    constructor(dataObject, level) {
-        const block = this.block = <div class={`spell-level ${level ? "" : "cantrips"}`}>
-            <div class="spell-level-title">
-                <div class="spell-level-label-container">
-                    <div class="spell-level-label">{level}</div>
-                </div>
-                <div class="slots-total-container">
-                    <div class="slots-total" data-denom></div>
-                </div>
-                <div class="slots-expended-outer-container">   
-                    <div class="slots-expended-inner-container">
-                        <div class="slots-expended" data-numer>{level ? "" : "Cantrips"}</div>
-                    </div>
-                </div>
-            </div>
-            <div class="spell-list"></div>
-        </div>
+// class SpellLevel {
+//     constructor(dataObject, level) {
+//         const block = this.block = <div class={`spell-level ${level ? "" : "cantrips"}`}>
+//             <div class="spell-level-title">
+//                 <div class="spell-level-label-container">
+//                     <div class="spell-level-label">{level}</div>
+//                 </div>
+//                 <div class="slots-total-container">
+//                     <div class="slots-total" data-denom></div>
+//                 </div>
+//                 <div class="slots-expended-outer-container">   
+//                     <div class="slots-expended-inner-container">
+//                         <div class="slots-expended" data-numer>{level ? "" : "Cantrips"}</div>
+//                     </div>
+//                 </div>
+//             </div>
+//             <div class="spell-list"></div>
+//         </div>
 
-        const levelObj = dataObject.levels[level];
+//         const levelObj = dataObject.levels[level];
 
-        if (level > 0) {
-            // new Fraction(
-            //     block.getElementsByClassName("spell-level-title")[0], 
-            //     { dataObject: characterData.spellSlots[level], property: "expended", getDefault: () => 0/*, listenTo: nHub*/ }, 
-            //     { dataObject: characterData.spellSlots[level], property: "total", validate: n => n >= 0/*, listenTo: dHub*/ }
-            // );
-            SpellLevel.getSlotsSpoke(level, block.getElementsByClassName("spell-level-title")[0]);
-        }
+//         if (level > 0) {
+//             // new Fraction(
+//             //     block.getElementsByClassName("spell-level-title")[0], 
+//             //     { dataObject: characterData.spellSlots[level], property: "expended", getDefault: () => 0/*, listenTo: nHub*/ }, 
+//             //     { dataObject: characterData.spellSlots[level], property: "total", validate: n => n >= 0/*, listenTo: dHub*/ }
+//             // );
+//             SpellLevel.getSlotsSpoke(level, block.getElementsByClassName("spell-level-title")[0]);
+//         }
 
-        for (let spell = 0; spell < levelObj.spells.length; spell++) {
-            const spellObj = new Spell(dataObject, level, spell);
-            block.getElementsByClassName("spell-list")[0].appendChild(spellObj.block);
-        }
-    }
+//         for (let spell = 0; spell < levelObj.spells.length; spell++) {
+//             const spellObj = new Spell(dataObject, level, spell);
+//             block.getElementsByClassName("spell-list")[0].appendChild(spellObj.block);
+//         }
+//     }
 
-    static hubs = [];
+//     static hubs = [];
 
-    static getSlotsSpoke(level, element) {
-        let nHub, dHub;
-        if (this.hubs[level]) {
-            nHub = [this.hubs[level].numerDisplay];
-            dHub = [this.hubs[level].denomDisplay];
-        }
-        else {
-            nHub = dHub = [];
-        }
+//     static getSlotsSpoke(level, element) {
+//         let nHub, dHub;
+//         if (this.hubs[level]) {
+//             nHub = [this.hubs[level].numerDisplay];
+//             dHub = [this.hubs[level].denomDisplay];
+//         }
+//         else {
+//             nHub = dHub = [];
+//         }
 
-        const slots = new Fraction(
-            element, 
-            { dataObject: characterData.spellSlots[level], property: "expended", getDefault: () => 0, listenTo: nHub }, 
-            { dataObject: characterData.spellSlots[level], property: "total", validate: n => n >= 0, listenTo: dHub }
-        );
-        if (this.hubs[level]) {
-            this.hubs[level].numerDisplay.listenTo(slots.numerDisplay);
-            this.hubs[level].denomDisplay.listenTo(slots.denomDisplay);
-        }
-        this.hubs[level] ??= slots;
-        return slots;
-    }
-}
+//         const slots = new Fraction(
+//             element, 
+//             { dataObject: characterData.spellSlots[level], property: "expended", getDefault: () => 0, listenTo: nHub }, 
+//             { dataObject: characterData.spellSlots[level], property: "total", validate: n => n >= 0, listenTo: dHub }
+//         );
+//         if (this.hubs[level]) {
+//             this.hubs[level].numerDisplay.listenTo(slots.numerDisplay);
+//             this.hubs[level].denomDisplay.listenTo(slots.denomDisplay);
+//         }
+//         this.hubs[level] ??= slots;
+//         return slots;
+//     }
+// }
 
-class SpellSheet {
-    constructor(i) {
-        const block = this.block = <div class="page spell-page">
-            <header class="page-header">
-                <button class="spellsheet-delete" type="button">
-                    <img src="/static/img/trash.png"/>
-                </button>
-                <div class="left-header-banner">
-                    <div class="header-banner-back"></div>
-                </div>
-                <div class="header-labeled-container">
-                    <div class="header-large-value-box">
-                        <div class="header-large-value-container">
-                            <div class="spellcasting-class-value header-large-value"></div>
-                        </div>
-                    </div>
-                    <div class="header-label header-large-label">Spellcasting Class</div>
-                </div>
-                <div class="header-other spellcasting-header-other">
-                    <div>
-                        <div class="header-other-contents spellcasting-header-other-contents">
-                            <div class="spellcasting-header-value">
-                                <div class="spellcasting-ability"></div>
-                            </div>
-                            <div class="spellcasting-header-value">
-                                <div class="spell-save-dc"></div>
-                            </div>
-                            <div class="spellcasting-header-value">
-                                <div class="spell-atk-bonus"></div>
-                            </div>
-                            <div class="header-label">Spellcasting Ability</div>
-                            <div class="header-label">Spell Save DC</div>
-                            <div class="header-label">Spell Attack Bonus</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="right-header-banner"></div>
-            </header>
-            <div class="spell-columns">
-                <div class="spell-column"></div>
-                <div class="spell-column"></div>
-                <div class="spell-column"></div>
-            </div>
-        </div>
+// class SpellSheet {
+//     constructor(i) {
+//         const block = this.block = <div class="page spell-page">
+//             <header class="page-header">
+//                 <button class="spellsheet-delete" type="button">
+//                     <img src="/static/img/trash.png"/>
+//                 </button>
+//                 <div class="left-header-banner">
+//                     <div class="header-banner-back"></div>
+//                 </div>
+//                 <div class="header-labeled-container">
+//                     <div class="header-large-value-box">
+//                         <div class="header-large-value-container">
+//                             <div class="spellcasting-class-value header-large-value"></div>
+//                         </div>
+//                     </div>
+//                     <div class="header-label header-large-label">Spellcasting Class</div>
+//                 </div>
+//                 <div class="header-other spellcasting-header-other">
+//                     <div>
+//                         <div class="header-other-contents spellcasting-header-other-contents">
+//                             <div class="spellcasting-header-value">
+//                                 <div class="spellcasting-ability"></div>
+//                             </div>
+//                             <div class="spellcasting-header-value">
+//                                 <div class="spell-save-dc"></div>
+//                             </div>
+//                             <div class="spellcasting-header-value">
+//                                 <div class="spell-atk-bonus"></div>
+//                             </div>
+//                             <div class="header-label">Spellcasting Ability</div>
+//                             <div class="header-label">Spell Save DC</div>
+//                             <div class="header-label">Spell Attack Bonus</div>
+//                         </div>
+//                     </div>
+//                 </div>
+//                 <div class="right-header-banner"></div>
+//             </header>
+//             <div class="spell-columns">
+//                 <div class="spell-column"></div>
+//                 <div class="spell-column"></div>
+//                 <div class="spell-column"></div>
+//             </div>
+//         </div>
 
-        const dataObject = characterData.spellcasting[i];
+//         const dataObject = characterData.spellcasting[i];
 
-        new DataDisplay({
-            element: block.getElementsByClassName("spellcasting-class-value")[0],
-            property: "class",
-            dataObject,
-        });
+//         new DataDisplay({
+//             element: block.getElementsByClassName("spellcasting-class-value")[0],
+//             property: "class",
+//             dataObject,
+//         });
 
-        const ability = new DataDisplay({
-            element: block.getElementsByClassName("spellcasting-ability")[0],
-            property: "ability",
-            dataObject: dataObject,
-            dataFromString: v => {
-                if (!v.length) {
-                    throw Error("Empty spellcasting stat");
-                }
+//         const ability = new DataDisplay({
+//             element: block.getElementsByClassName("spellcasting-ability")[0],
+//             property: "ability",
+//             dataObject: dataObject,
+//             dataFromString: v => {
+//                 if (!v.length) {
+//                     throw Error("Empty spellcasting stat");
+//                 }
 
-                v = v.charAt(0).toUpperCase() + v.substring(1).toLowerCase();
+//                 v = v.charAt(0).toUpperCase() + v.substring(1).toLowerCase();
 
-                let j = statNames.indexOf(v);
-                if (j !== -1) {
-                    return v;
-                }
+//                 let j = statNames.indexOf(v);
+//                 if (j !== -1) {
+//                     return v;
+//                 }
                 
-                j = statNames.map(v => v.substring(0, 3)).indexOf(v);
-                if (j !== -1) {
-                    return statNames[j];
-                }
-                else {
-                    throw Error(v + " is not a stat");
-                }
-            },
-            dataToString: v => {
-                return v.substring(0, 3).toUpperCase();
-            }
-        });
+//                 j = statNames.map(v => v.substring(0, 3)).indexOf(v);
+//                 if (j !== -1) {
+//                     return statNames[j];
+//                 }
+//                 else {
+//                     throw Error(v + " is not a stat");
+//                 }
+//             },
+//             dataToString: v => {
+//                 return v.substring(0, 3).toUpperCase();
+//             }
+//         });
 
-        new DataDisplay({
-            element: block.getElementsByClassName("spell-save-dc")[0],
-            getDefault: () => 8 + stats[ability.value].mod.value + proficiencyBonus.value,
-            listenTo: [ability, ...Object.values(stats).map(s => s.mod), proficiencyBonus],
-            editable: Editable.NEVER,
-        });
+//         new DataDisplay({
+//             element: block.getElementsByClassName("spell-save-dc")[0],
+//             getDefault: () => 8 + stats[ability.value].mod.value + proficiencyBonus.value,
+//             listenTo: [ability, ...Object.values(stats).map(s => s.mod), proficiencyBonus],
+//             editable: Editable.NEVER,
+//         });
 
-        new DataDisplay({
-            element: block.getElementsByClassName("spell-atk-bonus")[0],
-            getDefault: () => stats[ability.value].mod.value + proficiencyBonus.value,
-            listenTo: [ability, ...Object.values(stats).map(s => s.mod), proficiencyBonus],
-            editable: Editable.NEVER,
-            dataToString: util.signedIntToStr,
-        });
+//         new DataDisplay({
+//             element: block.getElementsByClassName("spell-atk-bonus")[0],
+//             getDefault: () => stats[ability.value].mod.value + proficiencyBonus.value,
+//             listenTo: [ability, ...Object.values(stats).map(s => s.mod), proficiencyBonus],
+//             editable: Editable.NEVER,
+//             dataToString: util.signedIntToStr,
+//         });
 
-        const delPage = block.getElementsByClassName("spellsheet-delete")[0];
-        editing.ui.editingModeInputs.push(delPage);
-        delPage.addEventListener("click", () => {
-            characterData.spellcasting.splice(characterData.spellcasting.indexOf(dataObject), 1);
-            block.remove();
-        });
+//         const delPage = block.getElementsByClassName("spellsheet-delete")[0];
+//         editing.ui.editingModeInputs.push(delPage);
+//         delPage.addEventListener("click", () => {
+//             characterData.spellcasting.splice(characterData.spellcasting.indexOf(dataObject), 1);
+//             block.remove();
+//         });
 
-        for (let level = 0; level <= 9; level++) {
-            const levelData = new SpellLevel(dataObject, level);
+//         for (let level = 0; level <= 9; level++) {
+//             const levelData = new SpellLevel(dataObject, level);
             
-            const column = level <= 2 ? 0 : level <= 5 ? 1 : 2
-            block.getElementsByClassName("spell-columns")[0].children[column].appendChild(levelData.block);
-        }
-    }
+//             const column = level <= 2 ? 0 : level <= 5 ? 1 : 2
+//             block.getElementsByClassName("spell-columns")[0].children[column].appendChild(levelData.block);
+//         }
+//     }
 
-    static spellsPerLevel = [9, 13, 13, 13, 13, 9, 9, 9, 7, 7];
-    static blank() {
-        let r = {
-            class: "",
-            ability: "Intelligence",
-            levels: [],
-        };
-        for (let level = 0; level <= 9; level++) {
-            const o = r.levels[level] = { spells: [] };
-            // if (level > 0) {
-            //     o.spellSlots = { total: 0, expended: 0 };
-            // }
-            for (let spell = 0; spell < this.spellsPerLevel[level]; spell++) {
-                o.spells.push({ name: "", prepared: false });
-            }
-        }
-        return r;
-    }
-}
+//     static spellsPerLevel = [9, 13, 13, 13, 13, 9, 9, 9, 7, 7];
+//     static blank() {
+//         let r = {
+//             class: "",
+//             ability: "Intelligence",
+//             levels: [],
+//         };
+//         for (let level = 0; level <= 9; level++) {
+//             const o = r.levels[level] = { spells: [] };
+//             // if (level > 0) {
+//             //     o.spellSlots = { total: 0, expended: 0 };
+//             // }
+//             for (let spell = 0; spell < this.spellsPerLevel[level]; spell++) {
+//                 o.spells.push({ name: "", prepared: false });
+//             }
+//         }
+//         return r;
+//     }
+// }
 
-for (let i = 0; i < characterData.spellcasting.length; i++) {
-    const sheet = new SpellSheet(i);
-    document.getElementsByTagName("main")[0].appendChild(sheet.block);
-}
+// for (let i = 0; i < characterData.spellcasting.length; i++) {
+//     const sheet = new SpellSheet(i);
+//     document.getElementsByTagName("main")[0].appendChild(sheet.block);
+// }
 
-newSpellSheetButton.addEventListener("click", () => {
-    const sheet = new SpellSheet(characterData.spellcasting.push(SpellSheet.blank()) - 1);
-    document.getElementsByTagName("main")[0].appendChild(sheet.block);
-});
+// newSpellSheetButton.addEventListener("click", () => {
+//     const sheet = new SpellSheet(characterData.spellcasting.push(SpellSheet.blank()) - 1);
+//     document.getElementsByTagName("main")[0].appendChild(sheet.block);
+// });
 // #endregion

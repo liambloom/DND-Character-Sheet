@@ -1,0 +1,1129 @@
+{
+    "ac": 14,
+    "hp": 0,
+    "xp": 0,
+    "dead": true,
+    "name": "Elanor Thatcher/Amelia",
+    "race": "Human",
+    "maxHp": 70,
+    "money": {
+        "CP": 0,
+        "EP": 0,
+        "GP": 30,
+        "PP": 0,
+        "SP": 0
+    },
+    "speed": 35,
+    "stats": {
+        "Wisdom": 18,
+        "Charisma": 11,
+        "Strength": 15,
+        "Dexterity": 16,
+        "Constitution": 12,
+        "Intelligence": 14
+    },
+    "skills": {
+        "bonuses": {
+            "Stealth": 12
+        },
+        "proficiencies": [
+            "Athletics",
+            "History",
+            "Investigation",
+            "Persuasion",
+            "Stealth"
+        ]
+    },
+    "tempHp": 0,
+    "classes": [
+        {
+            "class": "Ranger",
+            "level": 6
+        },
+        {
+            "class": "Cleric",
+            "level": 5
+        }
+    ],
+    "weapons": [
+        {
+            "name": "2x Quarterstaff",
+            "bonus": 5,
+            "damage": "1d6 (1d8) BLG"
+        },
+        {
+            "name": "Longbow",
+            "bonus": 6,
+            "damage": "1d8 PRC"
+        },
+        {
+            "name": "3x Dagger",
+            "bonus": 5,
+            "damage": "1d4 PRC"
+        }
+    ],
+    "features": [
+        {
+            "name": "Favored Foe",
+            "text": "When you hit a foe, you can mark it, and, once per turn (incl when you mark it) add 1d4 to damage. Duration 1 min concentration",
+            "maxUses": 2,
+            "currentUses": 2
+        },
+        {
+            "name": "War Priest",
+            "text": "One weapon attack as bonus action when you use Attack action",
+            "maxUses": 4,
+            "currentUses": 4
+        },
+        {
+            "name": "Extra Attack",
+            "text": "You can attack twice when you take the Attack action on your turn"
+        },
+        {
+            "name": "Dreadful Strikes",
+            "text": "+1d4 PSY dmg to weapon hit once per turn per enemy"
+        },
+        {
+            "name": "Channel Divinity",
+            "text": "Use your connection to god to do certain things, resets on short rest",
+            "maxUses": 1,
+            "currentUses": 1
+        },
+        {
+            "name": "Channel Divinity: Turn Undead",
+            "text": "Every undead creature within 30 ft. make wis saving throw, on fail they spend 1 min trying to get as far away from me as possible. If they are below CR 1/2, they are instantly destroyed instead"
+        },
+        {
+            "name": "Destroy Undead",
+            "text": "Turn Undead destroys undead below a certain CR rating."
+        },
+        {
+            "name": "Channel Divinity: Guided Strike",
+            "text": "+10 to attack roll. Decided after you roll before you find out if you hit"
+        },
+        {
+            "name": "Channel Divinity: Harness Divine Power",
+            "text": "Once per long rest, us bonus action to restore 1 spell slot of level ≤2",
+            "maxUses": 1,
+            "currentUses": 1
+        },
+        {
+            "name": "War Caster Feat",
+            "text": "Advantage on con saves to maintain concentration, perform somatic spell components while holding weapons, use 1 action spell as reaction opportunity attack"
+        },
+        {
+            "name": "Fighting Style",
+            "text": "Blind Fighting: Blind sight within 10 ft, plus invisible creatures"
+        },
+        {
+            "name": "Roving",
+            "text": "+5 Walking Speed, Climbing/Swimming speed = walking speed"
+        },
+        {
+            "name": "Position of Privilege",
+            "text": "Welcome in high society, common folk"
+        },
+        {
+            "name": "Feywild Gift",
+            "text": "Illusory butterflies flutter around head during rest"
+        },
+        {
+            "name": "Ranger Conclave",
+            "text": "Fey Wanderer"
+        },
+        {
+            "name": "Divine Domain",
+            "text": "War"
+        },
+        {
+            "name": "Deft Explorer",
+            "text": "Certain stat increases"
+        },
+        {
+            "name": "Primal Awareness",
+            "text": "Spells at certain levels"
+        },
+        {
+            "name": "Otherworldly Glamor",
+            "text": "Gain WIS mod as bonus to CHA checks"
+        }
+    ],
+    "alignment": "",
+    "background": "Noble",
+    "deathSaves": {
+        "fail": 0,
+        "success": 0
+    },
+    "perception": {
+        "bonuses": {},
+        "proficiencies": []
+    },
+    "spellSlots": [
+        {
+            "total": 0,
+            "expended": 0
+        },
+        {
+            "total": 4,
+            "expended": 1
+        },
+        {
+            "total": 3
+        },
+        {
+            "total": 3,
+            "expended": 1
+        },
+        {
+            "total": 2
+        },
+        {
+            "total": 0,
+            "expended": 0
+        },
+        {
+            "total": 0,
+            "expended": 0
+        },
+        {
+            "total": 0,
+            "expended": 0
+        },
+        {
+            "total": 0,
+            "expended": 0
+        },
+        {
+            "total": 0,
+            "expended": 0
+        }
+    ],
+    "attacksText": "Longbow Range: 150/600\\n20 arrows\\nLeather armor\\n1st quarterstaff is spellcasting focus\\n2-handed quarterstaff can also be used as shield (+2 AC) for flavor, currently NOT counted in AC",
+    "inspiration": false,
+    "savingThrows": {
+        "bonuses": {
+            "Charisma": 4
+        },
+        "proficiencies": [
+            "Strength",
+            "Dexterity"
+        ]
+    },
+    "spellcasting": [
+        {
+            "class": "Ranger",
+            "levels": [
+                {
+                    "spells": [
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        }
+                    ]
+                },
+                {
+                    "spells": [
+                        {
+                            "name": "Alarm (30 ft, VSM, 8 hr)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "Fog Cloud (1 action, 120 ft, VS, Conc. 1 hr)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "Ensnaring Strike (1 b action, Self, V, C 1m)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "Speak w/ Animals (1 action, Self, VS, 10m)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "Charm Person (1 action, 30 ft, VS, 1 hr)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        }
+                    ]
+                },
+                {
+                    "spells": [
+                        {
+                            "name": "Beast Sense (1 action, Touch, S, Conc. 1hr)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "Pass Without Trace (1 a, Touch, VSM, C1h)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "Misty Step (1 bonus action, Self, V, Inst.)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        }
+                    ]
+                },
+                {
+                    "spells": [
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        }
+                    ]
+                },
+                {
+                    "spells": [
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        }
+                    ]
+                },
+                {
+                    "spells": [
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        }
+                    ]
+                },
+                {
+                    "spells": [
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        }
+                    ]
+                },
+                {
+                    "spells": [
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        }
+                    ]
+                },
+                {
+                    "spells": [
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        }
+                    ]
+                },
+                {
+                    "spells": [
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        }
+                    ]
+                }
+            ],
+            "ability": "Wisdom"
+        },
+        {
+            "class": "Cleric",
+            "levels": [
+                {
+                    "spells": [
+                        {
+                            "name": "Toll the Dead (1 action, 60ft. VS, Instant)",
+                            "prepared": false
+                        },
+                        {
+                            "name": "Thaumaturgy (1 action, 30ft, V, 1 min)",
+                            "prepared": false
+                        },
+                        {
+                            "name": "Guidance (1 action, Touch, VS, Conc 1 min)",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        }
+                    ]
+                },
+                {
+                    "spells": [
+                        {
+                            "name": "Divine Favor (Self, VS, Conc. 1 min)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "Shield of Faith (1 bonus, 60 ft, VSM, C10m)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "Inflict Wounds (1 action, Touch, VS, Inst)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "Command (1 action, 60 ft, V, 1 round)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        }
+                    ]
+                },
+                {
+                    "spells": [
+                        {
+                            "name": "Magic Weapon (1 b, Touch, VS, Conc 1 hr)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "Spiritual Weapon (1 b, 60 ft, VS, 1 min)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "Locate Object (1 a, Self, VSM, C 10 min)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "Hold Person (1 a, 60 ft, VSM, C 1 min)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "Aid (1 a, 60 ft, VSM, 8 hr)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        }
+                    ]
+                },
+                {
+                    "spells": [
+                        {
+                            "name": "Crusader's Mantle (1 act, Self, V, Conc 1m)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "Spirit Guardians (1 act, Self, VSM, C10m) ",
+                            "prepared": true
+                        },
+                        {
+                            "name": "Bestow Curse (1 a, Touch, VS, C 1 min)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "Glyph of Warding (1 hr, Touch, VSM,∞)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "Magic Circle (1 min, 10 ft, VSM, 1 hr)",
+                            "prepared": true
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        }
+                    ]
+                },
+                {
+                    "spells": [
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        }
+                    ]
+                },
+                {
+                    "spells": [
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        }
+                    ]
+                },
+                {
+                    "spells": [
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        }
+                    ]
+                },
+                {
+                    "spells": [
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        }
+                    ]
+                },
+                {
+                    "spells": [
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        }
+                    ]
+                },
+                {
+                    "spells": [
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        },
+                        {
+                            "name": "",
+                            "prepared": false
+                        }
+                    ]
+                }
+            ],
+            "ability": "Wisdom"
+        }
+    ],
+    "equipmentText": "Fine Clothing (Think Hunger Games district 1)\\nSignet Ring\\nScroll of Pedigree\\n111 PP in bank in Omnium",
+    "otherProficiencies": {
+        "armor": "Light, Medium, Sheild",
+        "tools": "Cards",
+        "weapons": "Simple, Martial",
+        "languages": "Common, Undercommon, Theives' Cant, Celestial, Primordial"
+    }
+}
