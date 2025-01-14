@@ -3,7 +3,6 @@ import { DataDisplay, Fraction, List, ListItem, util, editing } from "./reactive
 import { controlButtons } from "./characterControls.js";
 import { statNames, statToSkillMap, skillToStatMap, skillNames, hitDiceTable, contentEditableValue } from "./globalConsts.js";
 import { ui } from "./characterUiLayer.js";
-import { characterData } from "../static/scripts/loadCharacter.js";
 
 export default function({ characterData, ownerDisplayName, title}) {
     // document.getElementById("title").innerText = title;
