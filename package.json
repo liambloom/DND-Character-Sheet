@@ -10,7 +10,7 @@
     "listen-scripts": "npx nodemon -e jsx --watch scripts --exec npm run build",
     "listen-server": "npx nodemon --watch server --exec npm start",
     "db-dump-schema": "pg_dump -f db.sql --schema-only dnd5e",
-    "start-dev-win": "wt -w 0 nt -d . -c Powershell ; nt -d . --title \"Database\" -c psql -U liamr -d dnd5e ; nt -d . --title \"Script Nodemon\" --suppressApplicationTitle -c cmd /c npm run listen-scripts ; nt -d . --title \"Server Nodemon\" --suppressApplicationTitle -c cmd /c npm run listen-server"
+    "dev": "wt -w 0 nt -d . -c Powershell ; nt -d . --title \"Database\" -c psql -U liamr -d dnd5e ; nt -d . --title \"Script Nodemon\" --suppressApplicationTitle -c cmd /c npm run listen-scripts ; nt -d . --title \"Server Nodemon\" --suppressApplicationTitle -c cmd /c npm run listen-server"
   },
   "author": "Liam Bloom",
   "dependencies": {

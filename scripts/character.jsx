@@ -1,6 +1,6 @@
 import React from "./jsx.js";
-import { DataDisplay, Fraction, List, ListItem, util, editing } from "./reactiveDisplay.js";
-import { controlButtons } from "./characterControls.js";
+import { DataDisplay, Fraction, util, editing, Editable } from "./reactiveDisplay.js";
+// import { controlButtons } from "./characterControls.js";
 import { statNames, statToSkillMap, skillToStatMap, skillNames, hitDiceTable, contentEditableValue } from "./globalConsts.js";
 import { ui } from "./characterUiLayer.js";
 
@@ -25,7 +25,7 @@ export default function({ characterData, ownerDisplayName, title}) {
     const characterLevel = classes => classes.reduce((total, c) => total + c.level, 0);
     
     const classAndLvl = new DataDisplay({
-        element: ui.classAndLvl,
+        element: ui.classAndLevel,
         property: "classes",
         dataFromString: str => {
             const regex = /^\s*([^\n/]+?)\s+(1?[1-9]|[12]0)\s*$/;
@@ -66,10 +66,10 @@ export default function({ characterData, ownerDisplayName, title}) {
         property: "race",
     });
     
-    const alignment = new DataDisplay({
-        element: ui.alignment,
-        property: "alignment",
-    })
+    // const alignment = new DataDisplay({
+    //     element: ui.alignment,
+    //     property: "alignment",
+    // })
 
     // TODO More`
     
@@ -294,9 +294,26 @@ export default function({ characterData, ownerDisplayName, title}) {
         otherProficiencies.push(display);
     }
 
-    const attacksText = new DataDisplay({
+    const attackText = new DataDisplay({
         element: ui.attacksText,
         property: "attacksText",
+        allowNewlines: true,
+    });
+
+    const money = [];
+    for (let [denom, uiElement] of Object.entries(ui.money)) {
+        money.push(new DataDisplay({
+            element: uiElement,
+            dataObject: characterData.money,
+            property: denom,
+            dataFromString: util.unsignedParseInt,
+            editable: Editable.ALWAYS,
+        }));
+    }
+
+    const equipmentText = new DataDisplay({
+        element: ui.equipmentText,
+        property: "equipmentText",
         allowNewlines: true,
     });
     //#endregion
@@ -328,15 +345,15 @@ export default function({ characterData, ownerDisplayName, title}) {
     ui.weapons.hooks = new ListHook(
         characterData.weapons, 
         () => ({ name: "Name", bonus: 0, damage: "0 type" }), 
-        (item, itemData) => {
+        (item, dataObject) => {
             new DataDisplay({
                 element: item.data.name,
-                dataObject: itemData,
+                dataObject,
                 property: "name",
             });
             new DataDisplay({
                 element: item.data.bonus,
-                dataObject: itemData,
+                dataObject,
                 property: "bonus",
                 dataFromString: util.betterParseInt,
                 dataToString: util.signedIntToStr,
@@ -344,7 +361,7 @@ export default function({ characterData, ownerDisplayName, title}) {
             });
             new DataDisplay({
                 element: item.data.damage,
-                dataObject: itemData,
+                dataObject,
                 property: "damage",
                 listenTo: [stats.Strength.mod, stats.Dexterity.mod, proficiencyBonus],
             });
@@ -352,11 +369,52 @@ export default function({ characterData, ownerDisplayName, title}) {
     );
     
     ui.weapons.setInitialContent(characterData.weapons);
+
+    ui.features.hooks = new ListHook(
+        characterData.features,
+        () => ({ name: "Name", text: "Description" }),
+        ({ data: uiItem }, dataObject) => {
+            new DataDisplay({
+                element: uiItem.name,
+                dataObject,
+                property: "name",
+            });
+            new DataDisplay({
+                element: uiItem.text,
+                dataObject,
+                property: "text",
+                allowNewlines: true,
+            });
+
+            uiItem.checkbox.checked = "maxUses" in dataObject;
+
+            function updateFeatureUses() {
+                if (uiItem.checkbox.checked) {
+                    if (!dataObject.maxUses) {
+                        dataObject.currentUses = 1;
+                        dataObject.maxUses = 1;
+                    }
+                    new Fraction({ dataObject: this.data, property: "currentUses" }, { dataObject: this.data, property: "maxUses" });
+                }
+                else {
+                    delete dataObject.currentUses;
+                    delete dataObject.maxUses;
+                }
+            }
+
+            updateFeatureUses();
+
+            uiItem.checkbox.addEventListener("change", () => updateFeatureUses());
+        }
+    );
+
+    ui.features.setInitialContent(characterData.features);
     //#endregion
 }
 
-
-
+// ^ Updated
+// **************************************************************************************
+// v Todo
 
 //#region Death
 // // Death stuff is complicated and messy so I am going to comment it out for now and come back
@@ -505,113 +563,6 @@ export default function({ characterData, ownerDisplayName, title}) {
 // }
 //#endregion
 
-
-// ^ Updated
-// **************************************************************************************
-// v Todo
-
-
-const moneyDenominations = ["CP", "SP", "EP", "GP", "PP"];
-const moneyElement = document.getElementById("money");
-const money = [];
-for (let denom of moneyDenominations) {
-    const block = <div id={"money-" + denom.toLowerCase()} class="money-denom">
-        <div class="money-denom-label-container">
-            <div class="money-denom-label">{denom.toUpperCase()}</div>
-        </div>
-        <div class="money-value-container">
-            <div class="money-value"></div>
-        </div>
-    </div>;
-
-    money.push(new DataDisplay({
-        element: block.getElementsByClassName("money-value")[0],
-        dataObject: characterData.money,
-        property: denom,
-        dataFromString: util.unsignedParseInt,
-        editable: Editable.ALWAYS,
-    }));
-
-    moneyElement.appendChild(block);
-}
-
-const equipmentText = new DataDisplay({
-    element: document.getElementById("equipment-text"),
-    property: "equipmentText",
-    allowNewlines: true,
-});
-
-class Feature extends ListItem {
-    constructor(list, data) {
-        super(list);
-        const block = <div class="feature multi-line-text">
-            <span class="feature-name multi-line-text">
-                <span class="feature-name-text multi-line-text"></span><span class="feature-uses">
-                    <input type="checkbox" class="feature-uses-checkbox default-checkbox"></input>
-                    <span class="feature-uses-blank">(_ / _)</span><span class="feature-uses-value-container">(<span class="feature-uses-value"></span>)</span>
-                </span>:</span> <span class="feature-text multi-line-text"></span>
-        </div>;
-
-        this.data = data;
-
-        this.name = new DataDisplay({
-            element: block.getElementsByClassName("feature-name-text")[0],
-            dataObject: data,
-            property: "name",
-        });
-
-        this.text = new DataDisplay({
-            element: block.getElementsByClassName("feature-text")[0],
-            dataObject: data,
-            property: "text",
-            allowNewlines: true,
-        });
-
-        this.checkbox = block.getElementsByClassName("feature-uses-checkbox")[0];
-        // this.usesBlank = block.getElementsByClassName("feature-uses-blank")[0];
-        this.usesValue = block.getElementsByClassName("feature-uses-value")[0];
-        this.usesContainer = block.getElementsByClassName("feature-uses")[0];
-        
-        this.checkbox.checked = "maxUses" in data;
-        this.updateFeatureUses();
-        this.checkbox.addEventListener("change", () => this.updateFeatureUses());
-
-        editing.ui.editingModeInputs.push(this.checkbox);
-        this.checkbox.disabled = !editing.isEditing;
-
-        this.element.appendChild(block);
-    }
-
-    updateFeatureUses() {
-        if (this.checkbox.checked) {
-            if (!this.data.maxUses) {
-                this.data.currentUses = 1;
-                this.data.maxUses = 1;
-            }
-            this.uses = new Fraction(this.usesValue, { dataObject: this.data, property: "currentUses" }, { dataObject: this.data, property: "maxUses" });
-            this.uses.numerElement.classList.add("multi-line-text");
-            this.uses.denomElement.classList.add("multi-line-text");
-        }
-        else {
-            delete this.data.currentUses;
-            delete this.data.maxUses;
-            if (this.uses) {
-                for (let display of [ this.uses.numerDisplay, this.uses.denomDisplay ]) {
-                    const index = editing.invalid.indexOf(display);
-                    if (index >= 0) {
-                        editing.invalid.splice(display, 1);
-                    }
-                }
-            }
-            this.usesValue.innerHTML = "";
-        }
-    }
-}
-
-const features = new List(document.getElementById("features-list"), characterData.features, () => ({ name: "Name", text: "Description" }), Feature);
-
-
-// Spell stuff not done yet for new ui themes
 // #region Spellcasting
 // class Spell {
 //     static counter = 0;

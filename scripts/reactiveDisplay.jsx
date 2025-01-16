@@ -392,150 +392,17 @@ export class DataDisplay {
 export class Fraction {
     constructor(numerArgs, denomArgs) {
         this.denomDisplay = new DataDisplay({
-            element: this.denomElement,
             validate: n => n > 0,
             dataFromString: util.unsignedParseInt,
             ...denomArgs,
         });
 
         this.numerDisplay = new DataDisplay({
-            element: this.numerElement,
             validate: n => n >= 0 && n <= this.denomDisplay.value,
             dataFromString: util.unsignedParseInt,
             listenTo: [ this.denomDisplay ],
             editable: Editable.ALWAYS,
             ...numerArgs,
         });
-    }
-}
-
-export class List {
-    constructor(element, data, newValue, ThisListItem) {
-        element.classList.add("list");
-
-        this.element = element;
-        this.data = data;
-        this.contents = [];
-        
-        const addButton = this.addButton = <button class="list-add" type="button">
-            <div class="list-add-line"></div>
-            <div class="list-plus">
-                <div class="list-plus-h"></div>
-                <div class="list-plus-v"></div>
-            </div>
-            <div class="list-add-line"></div>
-        </button>
-
-        element.appendChild(addButton);
-
-        addButton.addEventListener("click", () => {
-            const value = newValue();
-            this.contents.push(new ThisListItem(this, value));
-            data.push(value);
-        });
-
-        for (let value of data) {
-            this.contents.push(new ThisListItem(this, value));
-        }
-    }
-}
-
-export class ListItem {
-    constructor(list) {
-        const block = this.element = <div class="list-row">
-            <div class="list-move">
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-            </div>
-            <button class="list-delete" type="button"><img src="/static/img/trash.png"></img></button>
-        </div>;
-
-        block.getElementsByClassName("list-delete")[0].addEventListener("click", () => {
-            block.remove();
-            const index = list.contents.indexOf(this);
-            list.contents.splice(index, 1);
-            list.data.splice(index, 1);
-        });
-
-        const handle = block.getElementsByClassName("list-move")[0];
-        let dragging = false;
-        let startY;
-        handle.addEventListener("mousedown", e => {
-            dragging = true;
-            block.classList.add("dragging");
-            document.body.classList.add("dragHappening");
-            startY = e.screenY;
-        });
-        window.addEventListener("mousemove", e => {
-            if (dragging) {
-                let dy = e.screenY - startY;
-
-                if (this === list.contents[0] && dy < 0) {
-                    dy = 0;
-                }
-                if (this === list.contents[list.contents.length - 1] && dy > 0) {
-                    dy = 0;
-                }
-
-                block.style.setProperty("translate", `0 ${dy}px`);
-
-                const midpoint = block.offsetTop + block.clientHeight / 2 + dy;
-                let colliding;
-                let collidingIndex;
-                for (let i = 0; i < list.contents.length; i++) {
-                    const other = list.contents[i];
-                    if (this === other) {
-                        continue;
-                    }
-
-                    const otherMidpoint = other.element.offsetTop + other.element.clientHeight / 2;
-
-                    if (other.element.offsetTop <= midpoint && midpoint <= other.element.offsetTop + other.element.clientHeight
-                            && this.element.offsetTop + dy <= otherMidpoint && otherMidpoint <= this.element.offsetTop + dy + this.element.clientHeight) {
-                        colliding = other;
-                        collidingIndex = i;
-                        break;
-                    }
-                }
-
-                if (colliding) {
-                    const ownIndex = list.contents.indexOf(this);
-                    const prevY = block.offsetTop;
-
-                    block.remove();
-                    if (ownIndex > collidingIndex) {
-                        list.element.insertBefore(block, colliding.element);
-                    }
-                    else {
-                        list.element.insertBefore(block, colliding.element.nextElementSibling);
-                    }
-
-                    list.contents.splice(ownIndex, 1);
-                    list.contents.splice(collidingIndex, 0, this);
-
-                    const jsonValue = list.data[ownIndex];
-                    list.data.splice(ownIndex, 1);
-                    list.data.splice(collidingIndex, 0, jsonValue);
-
-                    startY += block.offsetTop - prevY;
-                    dy = e.screenY - startY;
-                    block.style.setProperty("translate", `0 ${dy}px`);
-                }
-            }
-        });
-        function endDrag() {
-            dragging = false;
-            block.classList.remove("dragging");
-            block.style.removeProperty("translate");
-            document.body.classList.remove("dragHappening");
-        }
-        window.addEventListener("mouseup", endDrag);
-        window.addEventListener("mouseleave", endDrag);
-
-        list.element.insertBefore(block, list.addButton);
     }
 }

@@ -183,7 +183,7 @@ const mainContent = <div id="mainpage" class="page">
             <ListAddButton />
         </div>
         <div id="attacks-text-container">
-            <span id="attacks-text" data-character="attackText"></span>
+            <span id="attacks-text" data-character="attacksText"></span>
         </div>
         <div class="sectionTitle">Attacks & Spellcasting</div>
     </div>

@@ -10,6 +10,7 @@ export const contentEditableValue = supportsPlaintextOnly ? "plaintext-only" : "
 export const statToSkillMap = {
     "Strength": ["Athletics"],
     "Dexterity": ["Acrobatics", "Slight of Hand", "Stealth"],
+    "Constitution": [],
     "Intelligence": ["Arcana", "History", "Investigation", "Nature", "Religion"],
     "Wisdom": ["Animal Handling", "Insight", "Medicine", "Perception", "Survival"],
     "Charisma": ["Deception", "Intimidation", "Performance", "Persuasion"],

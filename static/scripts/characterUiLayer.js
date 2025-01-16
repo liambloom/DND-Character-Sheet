@@ -54,11 +54,11 @@ class CustomDOMTokenList {
 
     set element(element) {
         if (this.innerElement) {
-            this.innerElement.classList.remove(...values);
+            this.innerElement.classList.remove(...this.values);
         }
         this.innerElement = element;
         console.debug(element);
-        this.innerElement.classList.add(...values);
+        this.innerElement.classList.add(...this.values);
     }
 }
 
@@ -75,7 +75,7 @@ class UISimpleElement {
         this.dataset = new Proxy(this.innerDataset, {
             set(target, key, value) {
                 self.inner.dataset[key] = value;
-                Reflect.set(...arguments);
+                return Reflect.set(...arguments);
             }
         });
     }
@@ -161,6 +161,10 @@ class UITextElement extends UISimpleElement {
         this.onValueChanged();
     }
 
+    get inner() {
+        return super.inner;
+    }
+
     set inner(value) {
         const isInitial = this.isUnset;
         const oldTextValue = isInitial ? null : this.textValue;
@@ -219,6 +223,10 @@ class UIBooleanElement extends UISimpleElement {
 
     set boolValue(value) {
         this.inner.checked = value;
+    }
+
+    get inner() {
+        return super.inner;
     }
 
     set inner(value) {
@@ -425,13 +433,13 @@ function proficiencyUiBuilder(props) {
 
 export const ui = {
     ...textListUiBuilder("name", "classAndLevel", "background", "playerName",
-    "race", "xp", "proficiencyBonus", "ac", "initiative", "speed", "attackText","equipmentText"),
+    "race", "xp", "proficiencyBonus", "ac", "initiative", "speed", "attacksText","equipmentText"),
     inspiration: new UIBooleanElement(),
     stats: Object.fromEntries(statNames.map(stat => 
         [stat, { value: new UITextElement(), modifier: new UITextElement() }])),
     savingThrows: proficiencyUiBuilder(statNames),
     skills: proficiencyUiBuilder(skillNames),
-    passiveSkills: textListUiBuilder(skillNames),
+    passiveSkills: textListUiBuilder(...skillNames),
     otherProficiencies: textListUiBuilder("armor", "weapons", "tools", "languages"),
     hp: textListUiBuilder("current", "max", "temp"),
     hitDice: textListUiBuilder("current", "max"),
@@ -470,10 +478,15 @@ for (let e of uiElements) {
 export function setTheme(newTheme) {
     theme = newTheme;
     for (let e of uiElements) {
-        const domElements = [...theme.mainContent.querySelector(`[data-character="${e.name}"]`)];
+        const domElements = [...theme.mainContent.querySelectorAll(`[data-character="${e.name}"]`)];
         e.inner = domElements.find(e => e.dataset.mirrorType !== "readonly") ?? document.createElement("div");
     }
     for (let listener of themeChangeListeners) {
         listener();
     }
+
+    const newMain = document.createElement("main");
+    newMain.id = "main";
+    newMain.appendChild(newTheme.mainContent);
+    document.getElementById("main").replaceWith(newMain)
 }
