@@ -24,10 +24,10 @@ console.log(app.get("env"));
 export const pool = new pg.Pool(app.get("env") === "production" ? prodPoolConfig : testPoolConfig);
 const PGSession = pgConnect(session);
 
-app.use((req, res, next) => {
-    console.log("foo");
-    next();
-})
+// app.use((req, res, next) => {
+//     console.log("foo");
+//     next();
+// })
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({

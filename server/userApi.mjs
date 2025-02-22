@@ -127,8 +127,10 @@ userApi.post("/login", async (req, res) => {
         else if (crypto.timingSafeEqual(await util.promisify(crypto.scrypt)(password, user.salt, 32), Buffer.from(user.password))) {
             req.session.userId = user.user_id;
 
-            client.query(`INSERT INTO notification_responses (notif_id, user_id) 
-                VALUES ($1, $2) ON CONFLICT DO NOTHING`, [ KOFI_NOTIF_ID, req.session.userId ]);
+            if ((await client.query(`SELECT 1 FROM characters WHERE owner=$1 LIMIT 1`, [ req.session.userId ])).rows.length) {
+                client.query(`INSERT INTO notification_responses (notif_id, user_id) 
+                    VALUES ($1, $2) ON CONFLICT DO NOTHING`, [ KOFI_NOTIF_ID, req.session.userId ]);
+            }
 
             res.status(200).json({
                 username: user.username,
@@ -204,7 +206,7 @@ class NotificationResponses {
     }
 
     isValidResponse(value) {
-        this.allChoices.includes(value);
+        return this.allChoices.includes(value);
     }
 }
 
@@ -212,7 +214,7 @@ const OPTIONAL_NOTIFICATIONS = {
     [KOFI_NOTIF_ID]: new NotificationResponses(),
 }
 
-const OPTIONAL_NOTIFICATION_IDS = new Set([ Object.keys(OPTIONAL_NOTIFICATIONS) ]);
+// const OPTIONAL_NOTIFICATION_IDS = new Set(Object.keys(OPTIONAL_NOTIFICATIONS));
 
 userApi.get("/notifications", async (req, res) => {
     const return_notifs = {
@@ -220,12 +222,10 @@ userApi.get("/notifications", async (req, res) => {
     };
 
     if (req.session.userId) {
-        const dismissed = new Set((await pool.query("SELECT notif_id FROM notification_responses WHERE user_id=$1 AND dismissed=false", [ req.session.userId ]))
-            .rows.map(({ notif_id }) => notif_id));
+        const dismissed = (await pool.query("SELECT notif_id FROM notification_responses WHERE user_id=$1 AND dismissed=false", [ req.session.userId ]))
+            .rows.map(({ notif_id }) => notif_id);
 
-        console.log(OPTIONAL_NOTIFICATION_IDS);
-
-        return_notifs.optional.push(...OPTIONAL_NOTIFICATION_IDS.difference(dismissed))
+        return_notifs.optional.push(...dismissed)
     }
 
     res.status(200).json(return_notifs);
@@ -242,7 +242,9 @@ userApi.post("/dismiss-notification", async (req, res) => {
     }
     else {
         await pool.query(`INSERT INTO notification_responses (notif_id, user_id, dismissed, last_dismissed_on, choice) 
-            VALUES ($1, $2, true, current_timestamp, $3`, [ notif_id, req.session.userId, choice ]);
+            VALUES ($1, $2, true, current_timestamp, $3) ON CONFLICT (notif_id, user_id) DO UPDATE
+            SET dismissed=true, last_dismissed_on=current_timestamp, choice=$3`, 
+            [ notif_id, req.session.userId, choice ]);
 
         res.status(204).end();
     }

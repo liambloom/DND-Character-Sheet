@@ -53,13 +53,13 @@ function notifDismissed(choice) {
   });
 }
 let dismissed = false;
-kofiNotif.getElementById("kofi-link").addEventListener("click", () => {
-  kofiNotif.getElementById("kofi-link").remove();
-  kofiNotif.getElementById("kofi-text").innerText = "Thank you for the support!";
+kofiNotif.querySelector("#kofi-link").addEventListener("click", () => {
+  kofiNotif.querySelector("#kofi-link").remove();
+  kofiNotif.querySelector("#kofi-text").innerText = "Thank you for the support!";
   dismissed = true;
   notifDismissed("accept");
 });
-kofiNotif.getElementById("kofi-dismiss").addEventListener("click", () => {
+kofiNotif.querySelector("#kofi-dismiss").addEventListener("click", () => {
   kofiNotif.remove();
   document.body.style.setProperty("margin-bottom", "0px");
   if (isCharacterSheet) {
