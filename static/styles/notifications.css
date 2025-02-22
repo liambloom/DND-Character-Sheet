@@ -1,0 +1,38 @@
+.bottomNotif {
+    background-color: #eee;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    padding: 20px 10%;
+    gap: 20px;
+    align-items: center;
+    z-index: 10;
+    font-size: 16px;
+}
+
+.bottomNotif .text {
+    flex: 2;
+}
+
+/* .bottomNotif .text {
+    grid-area: accept;
+}
+
+.bottomNotif .text {
+    grid-area: reject;
+} */
+
+.bottomNotif :is(input:is([type="button"], [type="submit"]), button) {
+    padding: 0 10px;
+    border-radius: 10px;
+    border: 2px solid black;
+    outline: none;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.bottomNotif :is(input:is([type="button"], [type="submit"]), button, .bottom-button-min) {
+    height: 35px;
+}

@@ -1,6 +1,7 @@
 body {
     /* counter-reset: footnote; */
     background-color: #eee;
+    height: 100vh;
 }
 
 .footnote {

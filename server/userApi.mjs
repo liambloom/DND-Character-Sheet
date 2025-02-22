@@ -4,6 +4,8 @@ import validator from "validator";
 
 import { userApi, pool, bindPromisify, ui, sendFileOptions }  from "./init.mjs";
 
+const KOFI_NOTIF_ID = "1401a2b3-1366-4f64-bd0a-98451409ee1d";
+
 userApi.get("/amILoggedIn", async (req, res) => {
     res.status(200).json(!!req.session.userId);
 })
@@ -124,6 +126,10 @@ userApi.post("/login", async (req, res) => {
         }
         else if (crypto.timingSafeEqual(await util.promisify(crypto.scrypt)(password, user.salt, 32), Buffer.from(user.password))) {
             req.session.userId = user.user_id;
+
+            client.query(`INSERT INTO notification_responses (notif_id, user_id) 
+                VALUES ($1, $2) ON CONFLICT DO NOTHING`, [ KOFI_NOTIF_ID, req.session.userId ]);
+
             res.status(200).json({
                 username: user.username,
                 characterList: `/${user.username}/c/`,
@@ -187,4 +193,57 @@ ui.get("/signup", async (req, res) => {
     else {
         await res.status(200).sendFileAsync("./views/signup.html", sendFileOptions);
     }
-})
+});
+
+// const REQUIRED_NOTIFICATIONS = new Set();
+class NotificationResponses {
+    constructor(accept = "accept", reject = "reject", otherChoices = []) {
+        this.accept = accept;
+        this.reject = reject;
+        this.allChoices = [accept, reject, ...otherChoices];
+    }
+
+    isValidResponse(value) {
+        this.allChoices.includes(value);
+    }
+}
+
+const OPTIONAL_NOTIFICATIONS = {
+    [KOFI_NOTIF_ID]: new NotificationResponses(),
+}
+
+const OPTIONAL_NOTIFICATION_IDS = new Set([ Object.keys(OPTIONAL_NOTIFICATIONS) ]);
+
+userApi.get("/notifications", async (req, res) => {
+    const return_notifs = {
+        optional: [],
+    };
+
+    if (req.session.userId) {
+        const dismissed = new Set((await pool.query("SELECT notif_id FROM notification_responses WHERE user_id=$1 AND dismissed=false", [ req.session.userId ]))
+            .rows.map(({ notif_id }) => notif_id));
+
+        console.log(OPTIONAL_NOTIFICATION_IDS);
+
+        return_notifs.optional.push(...OPTIONAL_NOTIFICATION_IDS.difference(dismissed))
+    }
+
+    res.status(200).json(return_notifs);
+});
+
+userApi.post("/dismiss-notification", async (req, res) => {
+    const { notif_id, choice } = req.body;
+
+    if (!OPTIONAL_NOTIFICATIONS[notif_id].isValidResponse(choice)) {
+        res.status(422).end();
+    }
+    else if (!req.session.userId) {
+        res.status(401).end();
+    }
+    else {
+        await pool.query(`INSERT INTO notification_responses (notif_id, user_id, dismissed, last_dismissed_on, choice) 
+            VALUES ($1, $2, true, current_timestamp, $3`, [ notif_id, req.session.userId, choice ]);
+
+        res.status(204).end();
+    }
+});
