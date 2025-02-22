@@ -443,7 +443,7 @@ export const ui = {
     otherProficiencies: textListUiBuilder("armor", "weapons", "tools", "languages"),
     hp: textListUiBuilder("current", "max", "temp"),
     hitDice: textListUiBuilder("current", "max"),
-    money: textListUiBuilder(moneyDenominations),
+    money: textListUiBuilder(...moneyDenominations),
     // deathSaves = { success: [bool, bool, bool], fail: (same) }
     deathSaves: Object.fromEntries(["success", "fail"].map(k => 
         [k, Array.apply(null, Array(3)).map(() => new UIBooleanElement())])),

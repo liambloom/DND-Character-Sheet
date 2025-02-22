@@ -55,9 +55,9 @@ const mainContent = <div id="mainpage" class="page">
                 <div id="main-header-other-contents" class="header-other-contents">
                     <div id="hr1"></div>
                     <div id="hr2"></div>
-                    <div id="classAndLvl" data-character="classAndLvl"></div>
+                    <div id="classAndLvl" data-character="classAndLevel"></div>
                     <div id="background" data-character="background"></div>
-                    <div id="playerName" data-character=""></div>
+                    <div id="playerName" data-character="playerName"></div>
                     <div class="header-label">Class & Level</div>
                     <div class="header-label">Background</div>
                     <div class="header-label">Player Name</div>
@@ -78,7 +78,7 @@ const mainContent = <div id="mainpage" class="page">
             <label for="inspiration" id="inspiration-label" class="standaloneLabeledValue">
                 <div>
                     <input type="checkbox" id="inspiration" data-character="inspiration" />
-                    <div>&check;</div>
+                    <div>{"\u2713"}</div>
                 </div>
                 <div>
                     <div>

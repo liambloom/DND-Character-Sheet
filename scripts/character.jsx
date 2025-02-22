@@ -92,16 +92,16 @@ export default function({ characterData, ownerDisplayName, title}) {
             dataFromString: util.betterParseInt,
         });
         const mod = stats[statName].mod = new DataDisplay({
-            element: ui.stats[statName].value,
+            element: ui.stats[statName].modifier,
             getDefault: () => Math.floor((stat.value - 10) / 2),
             dataToString: util.signedIntToStr,
             listenTo: [ stat ],
             editable: Editable.NEVER,
         });
 
-        stat.addInvalidationListener((_, isValid) => {
-            block.classList[isValid ? "remove" : "add"]("invalid");
-        });
+        // stat.addInvalidationListener((_, isValid) => {
+        //     block.classList[isValid ? "remove" : "add"]("invalid");
+        // });
     }
 
     const proficiencyBonus = new DataDisplay({
@@ -111,6 +111,12 @@ export default function({ characterData, ownerDisplayName, title}) {
         listenTo: [ classAndLvl ],
         editable: Editable.NEVER,
     });
+
+    proficiencyBonus.addChangeListener(() => {
+        console.log("proficiency bonus changed");
+    });
+
+    console.log(proficiencyBonus.changeListeners);
 
     class Proficiency {
         constructor(group, name, stat) {
@@ -126,15 +132,19 @@ export default function({ characterData, ownerDisplayName, title}) {
                 validate: n => !isNaN(n),
                 listenTo: [ statMod, proficiencyBonus ],
             });
+
+            bonus.addChangeListener(() => {
+                console.log(`Proficiency ${name} changed`);
+            })
     
             const checkbox = this.checkbox = ui[group][name].proficiencyCheckbox;
     
-            editing.ui.editingModeInputs.push(checkbox);
+            editing.ui.editingMode.push(checkbox);
     
-            checkbox.checked = characterData[group].proficiencies.indexOf(name) >= 0;
+            checkbox.boolValue = characterData[group].proficiencies.indexOf(name) >= 0;
     
             checkbox.addEventListener("input", () => {
-                if (checkbox.checked) {
+                if (checkbox.boolValue) {
                     characterData[group].proficiencies.push(name);
                 }
                 else {
@@ -176,7 +186,7 @@ export default function({ characterData, ownerDisplayName, title}) {
         characterData.inspiration = inspiration.boolValue;
         editing.characterChanged();
     });
-    editing.ui.alwaysEditingInputs.push(inspiration);
+    editing.ui.alwaysEditing.push(inspiration);
 
     const ac = new DataDisplay({
         element: ui.ac,
@@ -277,11 +287,11 @@ export default function({ characterData, ownerDisplayName, title}) {
         }
     );
     
-    for (let display of [ac, speed, hp.numerDisplay, hp.denomDisplay, tempHp, hitDice, totalHitDice]) {
-        display.addInvalidationListener((_, isValid) => {
-            display.element.parentElement.classList[isValid ? "remove" : "add"]("invalid");
-        });
-    }
+    // for (let display of [ac, speed, hp.numerDisplay, hp.denomDisplay, tempHp, hitDice, totalHitDice]) {
+    //     display.addInvalidationListener((_, isValid) => {
+    //         display.element.parentElement.classList[isValid ? "remove" : "add"]("invalid");
+    //     });
+    // }
 
     const otherProficiencies = [];
     for (let [prof, element] of Object.entries(ui.otherProficiencies)) {

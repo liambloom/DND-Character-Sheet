@@ -34,9 +34,7 @@ export const editing = {
     isSaving: false,
     ui: {
         editingMode: [],
-        editingModeInputs: [],
         alwaysEditing: [],
-        alwaysEditingInputs: [],
         special: [],
     },
     invalid: [],
@@ -66,14 +64,12 @@ export const editing = {
         this.isSaving = false;
     },
     startEditing() {
+        console.log("start editing");
         this.isEditing = true;
         document.body.dataset.editing = "true";
     
         for (let element of editing.ui.editingMode) {
-            element.contentEditable = contentEditableValue;
-        }
-        for (let element of editing.ui.editingModeInputs) {
-            element.disabled = false;
+            element.editable = true;
         }
     },
     stopEditing() {
@@ -88,10 +84,7 @@ export const editing = {
         this.save();
     
         for (let element of editing.ui.editingMode) {
-            element.contentEditable = "false";
-        }
-        for (let element of editing.ui.editingModeInputs) {
-            element.disabled = true;
+            element.editable = false;
         }
         let changed = document.getElementsByClassName("changed");
         while (changed.length) {
@@ -105,9 +98,9 @@ export const editing = {
     },
     viewOnlyMode() {
         for (let element of editing.ui.alwaysEditing) {
-            element.contentEditable = "false";
+            element.editable = false;
         }
-        for (let element of [...editing.ui.alwaysEditingInputs, ...editing.ui.special]) {
+        for (let element of [...editing.ui.special]) {
             element.disabled = true;
         }
     }
@@ -335,6 +328,7 @@ export class DataDisplay {
         const value = valueExists ? this.value : undefined;
         const str = valueExists ? this.dataToString(this.value) : "";
         this.element.textValue = str;
+        let publicValue, publicValueString;
         
         if (this.getDefault) {
             const defaultVal = this.getDefault();
@@ -342,7 +336,9 @@ export class DataDisplay {
                 delete this.element.dataset.default;
             }
             else {
-                this.element.dataset.default = this.dataToString(defaultVal);
+                // this.element.dataset.default = this.dataToString(defaultVal);
+                publicValue = defaultVal;
+                publicValueString = this.element.dataset.default = this.dataToString(defaultVal);
             }
         }
 
@@ -362,12 +358,21 @@ export class DataDisplay {
 
         this.maybeResizeFont();
 
-        const changed = value !== this.oldValue;
-        this.oldValue = value;
+        if (valueExists) {
+            publicValue = value;
+            publicValueString = str;
+        }
+
+        const changed = publicValue !== this.oldValue;
+        this.oldValue = publicValue;
+
+        // const changed = value !== this.oldValue;
+        // this.oldValue = value;
 
         if (doListeners && changed) {
             for (let listener of this.changeListeners) {
-                listener(value, str, valueExists);
+                // listener(value, str, valueExists);
+                listener(publicValue, publicValueString, valueExists);
             }
         }
     }
