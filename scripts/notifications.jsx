@@ -5,7 +5,7 @@ const notifsPromise = fetch("/api/user/notifications");
 const isCharacterSheet = /\/[^\/]+\/c\/[^\/]+/.test(new URL(location.href).pathname);
 
 const kofiNotif = <div class="bottomNotif">
-    <div id="kofi-text">
+    <div id="kofi-text" class="notifText">
         Hi! I pay about $10/month, or $120/year, for the servers, database, and domain needed to host this site. If
         you find the site useful and want to help support me in continuing to provide this site, consider donating
         to me on Ko-fi!

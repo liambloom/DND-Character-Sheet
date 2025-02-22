@@ -6,4 +6,5 @@ static/scripts/characterList.js
 static/scripts/characterControls.js
 static/scripts/printTheme.js
 static/scripts/reactiveDisplay.js
+static/scripts/notifications.js
 **/*.js.map
