@@ -64,6 +64,21 @@ CREATE TABLE public.characters (
 ALTER TABLE public.characters OWNER TO liamr;
 
 --
+-- Name: notification_responses; Type: TABLE; Schema: public; Owner: liamr
+--
+
+CREATE TABLE public.notification_responses (
+    notif_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    dismissed boolean DEFAULT false NOT NULL,
+    last_dismissed_on timestamp without time zone,
+    choice character varying
+);
+
+
+ALTER TABLE public.notification_responses OWNER TO liamr;
+
+--
 -- Name: session; Type: TABLE; Schema: public; Owner: liamr
 --
 
@@ -136,6 +151,14 @@ ALTER TABLE ONLY public.characters
 
 ALTER TABLE ONLY public.session
     ADD CONSTRAINT session_pkey PRIMARY KEY (sid);
+
+
+--
+-- Name: notification_responses user_notif_unique; Type: CONSTRAINT; Schema: public; Owner: liamr
+--
+
+ALTER TABLE ONLY public.notification_responses
+    ADD CONSTRAINT user_notif_unique UNIQUE (notif_id, user_id);
 
 
 --
