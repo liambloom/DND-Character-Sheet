@@ -214,7 +214,7 @@ for (let denom of moneyDenominations) {
             <div class="money-denom-label">{denom.toUpperCase()}</div>
         </div>
         <div class="money-value-container">
-            <div class="money-value" data-character={"money." + denom.toLowerCase()}></div>
+            <div class="money-value" data-character={"money." + denom.toUpperCase()}></div>
         </div>
     </div>;
 

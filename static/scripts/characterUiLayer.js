@@ -2,6 +2,7 @@ import { statNames, moneyDenominations, skillNames, contentEditableValue } from 
 
 const initialInnerElement = Symbol("Initial Element")
 export const isUiElement = Symbol("Is UI Element?");
+const isOptional = Symbol("Is Optional?")
 
 let theme;
 
@@ -74,7 +75,9 @@ class UISimpleElement {
         const self = this;
         this.dataset = new Proxy(this.innerDataset, {
             set(target, key, value) {
-                self.inner.dataset[key] = value;
+                if (!this.isUnset) {
+                    self.inner.dataset[key] = value;
+                }                
                 return Reflect.set(...arguments);
             }
         });
@@ -108,12 +111,12 @@ class UISimpleElement {
             for (let prop of ["editable"]) {
                 this[prop] = this[prop];
             }
-            for (let {type, listener} of this.eventListeners) {
-                this.inner.addEventListener(type, listener);
-            }
-            for (let [key, value] of Object.entries(this.dataset)) {
-                this.inner.dataset[key] = value;
-            }
+        }
+        for (let {type, listener} of this.eventListeners) {
+            this.inner.addEventListener(type, listener);
+        }
+        for (let [key, value] of Object.entries(this.dataset)) {
+            this.inner.dataset[key] = value;
         }
     }
 
@@ -247,22 +250,26 @@ class UIList {
     constructor(listItemType) {
         this.listItemType = listItemType;
         const self = this;
+        console.log(this.listItemType);
+        console.log(this.addButton);
         this.addButton.addEventListener("click", () => {
+            console.log(self);
             self.addListItem();
         });
     }
 
     addListItem(itemData = null) {
         const item = new UIListItem(this);
+        console.log(item);
         const i = this.content.push(item);
-        this.hooks.itemAdded(i - 1, item, itemData);
-        this.inner.insertBefore(item.inner, this.addButton.inner);
+        this.hooks.itemAdded?.(i - 1, item, itemData);
+        this.inner.insertBefore(item.element.inner, this.addButton.inner);
     }
 
     removeListItem(index) {
         this.content.splice(index, 1);
         this.inner.remove();
-        this.hooks.itemRemoved(index);
+        this.hooks.itemRemoved?.(index);
     }
 
     setInitialContent(content) {
@@ -314,78 +321,94 @@ class UIListItem {
             }
         }
 
+        const self = this;
         this.deleteButton.addEventListener("click", () => {
-            list.removeListItem(this.index);
+            list.removeListItem(self.index);
         });
 
-        let dragging = false;
-        let startY;
         this.moveHandle.addEventListener("mousedown", e => {
-            dragging = true;
-            this.element.classList.add("dragging");
-            document.body.classList.add("dragHappening");
-            startY = e.screenY;
+            self.startDrag(e);
         });
         window.addEventListener("mousemove", e => {
-            if (dragging) {
-                let dy = e.screenY - startY;
-                if (this.index === 0 && dy < 0 || this.index + 1 === this.list.content.length && dy > 0) {
-                    dy = 0;
-                }
-
-                this.dy = dy;
-
-                let colliding;
-                let collidingIndex;
-                for (let i = 0; i < this.list.contents.length; i++) {
-                    const other = this.list.contents[i];
-                    if (this === other) {
-                        continue;
-                    }
-
-                    if (other.top <= this.midpoint && this.midpoint <= other.bottom && this.top <= other.midpoint && other.midpoint <= this.bottom) {
-                        colliding = other;
-                        break;
-                    }
-                }
-
-                if (colliding) {
-                    const prevY = this.element.inner.offsetTop;
-                    const prevIndex = this.index;
-                    const prevCollidingIndex = colliding.index;
-
-                    this.element.inner.remove();
-                    if (this.index > colliding.index) {
-                        this.list.element.insertBefore(this.element.inner, colliding.element.inner);
-                    }
-                    else {
-                        list.element.insertBefore(this.element.inner, colliding.element.inner.nextElementSibling);
-                    }
-
-
-                    this.list.contents.splice(prevIndex, 1);
-                    this.list.contents.splice(prevCollidingIndex, 0, this);
-
-                    startY += this.element.inner.offsetTop - prevY;
-                    this.dy = e.screeY - startY;
-
-                    this.list.hooks.itemMoved(prevIndex, this.index);
-                }
-            } 
+            self.dragMove(e);
         });
-        function endDrag() {
-            dragging = false;
-            this.element.classList.remove("dragging");
-            document.body.classList.remove("dragHappening");
-            this.dy = 0;
-        }
+
+        const endDragWrapper = () => self.endDrag();
         
-        window.addEventListener("mouseup", endDrag);
-        window.addEventListener("mouseleave", endDrag);
-        addThemeChangeListener(endDrag);
+        window.addEventListener("mouseup", endDragWrapper);
+        window.addEventListener("mouseleave", endDragWrapper);
+        addThemeChangeListener(endDragWrapper);
 
 
         this.inner = new theme.templates[type]();
+    }
+
+    dragging = false;
+
+    startDrag(e) {
+        this.dragging = true;
+        this.element.classList.add("dragging");
+        document.body.classList.add("dragHappening");
+        this.startY = e.screenY;
+    }
+
+    endDrag() {
+        this.dragging = false;
+        this.element.classList.remove("dragging");
+        document.body.classList.remove("dragHappening");
+        this.dy = 0;
+    }
+
+    dragMove(e) {
+        if (this.dragging) {
+            let dy = e.screenY - this.startY;
+            if (this.index === 0 && dy < 0 || this.index + 1 === this.list.content.length && dy > 0) {
+                dy = 0;
+            }
+
+            this.dy = dy;
+
+            let colliding;
+            // let collidingIndex;
+            for (let i = 0; i < this.list.content.length; i++) {
+                const other = this.list.content[i];
+                if (this === other) {
+                    continue;
+                }
+
+                console.table({
+                    "this": {top: this.top, midpoint: this.midpoint, bottom: this.bottom}, 
+                    other: {top: other.top, midpoint: other.midpoint, bottom: other.bottom}
+                });
+                if (other.top <= this.midpoint && this.midpoint <= other.bottom && this.top <= other.midpoint && other.midpoint <= this.bottom) {
+                    colliding = other;
+                    break;
+                }
+            }
+
+            if (colliding) {
+                const prevY = this.element.inner.offsetTop;
+                const prevIndex = this.index;
+                const prevCollidingIndex = colliding.index;
+
+                this.element.inner.remove();
+                if (this.index > colliding.index) {
+                    this.list.inner.insertBefore(this.element.inner, colliding.element.inner);
+                }
+                else {
+                    this.list.inner.insertBefore(this.element.inner, colliding.element.inner.nextElementSibling);
+                }
+
+
+                this.list.content.splice(prevIndex, 1);
+                this.list.content.splice(prevCollidingIndex, 0, this);
+
+                this.startY += this.element.inner.offsetTop - prevY;
+                this.dy = e.screenY - this.startY;
+
+                this.list.hooks.itemMoved?.(prevIndex, this.index);
+            }
+        } 
     }
 
     get dy() {
@@ -393,12 +416,12 @@ class UIListItem {
     }
 
     set dy(value) {
-        this.element.inner.style.setProperty("translate", `0 ${dy}px`);
+        this.element.inner.style.setProperty("translate", `0 ${value}px`);
         this.dyInner = value;
     }
 
     get index() {
-        return this.list.contents.indexOf(this);
+        return this.list.content.indexOf(this);
     }
 
     get top() {
@@ -410,14 +433,15 @@ class UIListItem {
     }
 
     get bottom() {
-        return this.top + this.element.clientHeight;
+        return this.top + this.element.inner.clientHeight;
     }
 
-    get inner() {
-        return this.innerValue;
-    }
+    // get inner() {
+    //     return this.innerValue;
+    // }
 
     set inner(value) {
+        console.log("Set listitem inner");
         setUiValues(value, this, ["element", "deleteButton", "moveHandle"]);
         setUiValues(value.data, this.data, Object.keys(this.data));
     }
@@ -450,6 +474,11 @@ export const ui = {
     features: new UIList("Feature"),
     weapons: new UIList("Weapon"),
 }
+window.ui = ui;
+
+for (let skill of Object.values(ui.passiveSkills)) {
+    skill[isOptional] = true;
+}
 
 function getUiElements(root, path) {
     if (Array.isArray(root)) {
@@ -478,8 +507,17 @@ for (let e of uiElements) {
 export function setTheme(newTheme) {
     theme = newTheme;
     for (let e of uiElements) {
+        // console.log("%c" + e.name, e.name.substring(0, 5) === "money" ? "background-color: yellow;": "");
+        // console.log(e.inner)
+        // console.log(theme.mainContent.querySelectorAll(`[data-character="${e.name}"]`));
         const domElements = [...theme.mainContent.querySelectorAll(`[data-character="${e.name}"]`)];
-        e.inner = domElements.find(e => e.dataset.mirrorType !== "readonly") ?? document.createElement("div");
+        e.inner = domElements.find(e => e.dataset.mirrorType !== "readonly") ?? (() => {
+            if (!e[isOptional]) {
+                console.warn("No DOM element found in theme for " + e.name);
+            }
+            return document.createElement("div");
+        })();
+        // console.log(e.inner);
     }
     for (let listener of themeChangeListeners) {
         listener();

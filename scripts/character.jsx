@@ -112,12 +112,6 @@ export default function({ characterData, ownerDisplayName, title}) {
         editable: Editable.NEVER,
     });
 
-    proficiencyBonus.addChangeListener(() => {
-        console.log("proficiency bonus changed");
-    });
-
-    console.log(proficiencyBonus.changeListeners);
-
     class Proficiency {
         constructor(group, name, stat) {
             const statMod = stats[stat].mod;
@@ -132,10 +126,6 @@ export default function({ characterData, ownerDisplayName, title}) {
                 validate: n => !isNaN(n),
                 listenTo: [ statMod, proficiencyBonus ],
             });
-
-            bonus.addChangeListener(() => {
-                console.log(`Proficiency ${name} changed`);
-            })
     
             const checkbox = this.checkbox = ui[group][name].proficiencyCheckbox;
     
@@ -332,6 +322,7 @@ export default function({ characterData, ownerDisplayName, title}) {
     class ListHook {
         constructor(dataObject, defaultItem, reactivityInitiator) {
             this.dataObject = dataObject;
+            this.initiatorFilter = dataObject.length;
             this.defaultItem = defaultItem;
             this.reactivityInitiator = reactivityInitiator;
         }
@@ -340,7 +331,7 @@ export default function({ characterData, ownerDisplayName, title}) {
             if (itemData === null) {
                 this.dataObject.push(itemData = this.defaultItem());
             }
-            else {
+            else if (this.initiatorFilter-- <= 0) { // !this.dataObject.includes(itemData)
                 this.dataObject.splice(i, 0, itemData);
             }
     
@@ -349,6 +340,10 @@ export default function({ characterData, ownerDisplayName, title}) {
     
         itemRemoved(i) {
             this.dataObject.splice(i, 1);
+        }
+
+        itemMoved(from, to) {
+            this.dataObject.splice(to, 0, this.dataObject.splice(from, 1)[0]);
         }
     }
     

@@ -64,7 +64,6 @@ export const editing = {
         this.isSaving = false;
     },
     startEditing() {
-        console.log("start editing");
         this.isEditing = true;
         document.body.dataset.editing = "true";
     
