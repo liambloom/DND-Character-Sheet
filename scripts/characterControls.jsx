@@ -7,6 +7,7 @@ let linkSharing = initialLinkSharing;
 
 export const controlButtons = {
     map: new Map(),
+    // enabledByDefault: Symbol(), // currently unused
     enabledWhileViewing: Symbol(),
     enabledWhileDead: Symbol(),
 
@@ -15,7 +16,7 @@ export const controlButtons = {
             [this.enabledWhileViewing]: enabledWhileViewing, 
             [this.enabledWhileDead]: enabledWhileDead
         });
-        editing.ui.special.push(button);
+        // editing.ui.special.push(button);
     },
 
     get all() {
@@ -30,8 +31,18 @@ export const controlButtons = {
             }
         }
         return r;
+    },
+
+    setButtonStates(state) { // intended to enable/disable all buttons as appropriate
+        for (let [button, { [state]: enabledValue }] of this.map) {
+            button.enabled = enabledValue; // this would require all buttons to be SimpleUIElements
+        }
     }
 };
+if (!editPermission) {
+    setTimeout(() => controlButtons.(), 0);
+}
+window.controlButtons = controlButtons;
 
 const savingIndicator = document.getElementById("saving");
 editing.handlers.beforeSave = () => savingIndicator.style.display = "initial";

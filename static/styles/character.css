@@ -1275,7 +1275,7 @@ body.dead #kill {
     display: none;
 }
 
-body.unconscious #heartbeat-overlay {
+body.unstable #heartbeat-overlay {
     display: initial;
     z-index: 3;
     animation: 1s ease infinite heartbeat;

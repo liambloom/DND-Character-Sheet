@@ -35,7 +35,7 @@ export const editing = {
     ui: {
         editingMode: [],
         alwaysEditing: [],
-        special: [],
+        // special: [],
     },
     invalid: [],
     handlers: {
@@ -95,19 +95,17 @@ export const editing = {
             this.save();
         }
     },
-    viewOnlyMode() {
+    stopAndDisableEditing() {
+        this.stopEditing();
         for (let element of editing.ui.alwaysEditing) {
             element.editable = false;
         }
-        for (let element of [...editing.ui.special]) {
-            element.disabled = true;
-        }
-    }
+    },
 }
 window.editing = editing;
 
 if (!editPermission) {
-    setTimeout(() => editing.viewOnlyMode(), 0);
+    setTimeout(() => editing.stopAndDisableEditing(), 0);
 }
 
 export class DataDisplay {

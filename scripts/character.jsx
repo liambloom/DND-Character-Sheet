@@ -3,6 +3,7 @@ import { DataDisplay, Fraction, util, editing, Editable } from "./reactiveDispla
 // import { controlButtons } from "./characterControls.js";
 import { statNames, statToSkillMap, skillToStatMap, skillNames, hitDiceTable, contentEditableValue } from "./globalConsts.js";
 import { ui } from "./characterUiLayer.js";
+import { controlButtons } from "./characterControls.jsx";
 
 export default function({ characterData, ownerDisplayName, title}) {
     // document.getElementById("title").innerText = title;
@@ -415,157 +416,241 @@ export default function({ characterData, ownerDisplayName, title}) {
 
     ui.features.setInitialContent(characterData.features);
     //#endregion
+
+    //#region Death
+    // currently characterChanged() is not run anywhere in this code
+
+    editing.ui.special.push(...ui.deathSaves.success);
+    editing.ui.special.push(...ui.deathSaves.fail);
+    const killButton = document.getElementById("kill");
+    controlButtons.addButton(killButton, true, false);
+
+    class DeathSaves {
+        constructor(type) {
+            this.type = type;
+    
+            this.checkboxes = ui.deathSaves[type];
+    
+            for (let i = 0; i < this.checkboxes.length; i++) {
+                const checkbox = this.checkboxes[i];
+                checkbox.addEventListener("click", () => {
+                    if (characterData.lifeState !== "unstable") {
+                        return;
+                    }
+    
+                    let value = i + 1;//this.checkboxes.findLastIndex(box => box.checked) + 1;
+                    if (value === characterData.deathSaves[type]) {
+                        value--;
+                    }
+                    characterData.deathSaves[type] = value;
+
+                    this.update();
+                });
+            }
+    
+            this.update();
+        }
+    
+        update() {
+            for (let i = 0; i < characterData.deathSaves[this.type]; i++) {
+                this.checkboxes[i].checked = true;
+            }
+            for (let i = characterData.deathSaves[this.type]; i < this.checkboxes.length; i++) {
+                this.checkboxes[i].checked = false;
+            }
+            if (characterData.lifeState === "unstable") {
+                if (this.type === "fail") {
+                    if (characterData.deathSaves.fail === 3) {
+                        die();
+                        // currently trying to figure out if editing or controlButtons should control what happens to special
+                        //  inputs during things like death and view only mode.
+                        editing.stopEditingAndDisableAllNormal();
+                        controlButtons.
+                    }
+                    else {  
+                        document.documentElement.dataset.failedDeathSaves = characterData.deathSaves.fail;
+                    }
+                }
+                if (this.type === "success" && characterData.deathSaves.success === 3) {
+                    this.lifeState = "stable";
+                    document.body.classList.remove("unstable");
+                    delete document.documentElement.dataset.failedDeathSaves;
+                }
+            }
+        }
+    }
+
+    function die() {
+        characterData.lifeState = "dead"
+
+        // old death deleted hit dice. I imagine that was meant to be death saves, but I am leaving a note just in case that was on purpose
+    
+        document.body.classList.add("death-animation");
+        const animations = document.getElementById("death-overlay").getAnimations();
+        animations[0].onfinish = () => {
+            document.body.classList.remove("unstable");
+            document.body.classList.add("dead");
+        };
+        animations[1].onfinish = () => {
+            document.body.classList.remove("death-animation");
+        }
+    }
+    //#endregion
 }
 
 // ^ Updated
 // **************************************************************************************
 // v Todo
 
-//#region Death
+//#region OldDeath
 // // Death stuff is complicated and messy so I am going to comment it out for now and come back
+throw "This is the old death code and isn't supposed to run";
+
 // const newSpellSheetButton = document.getElementById("add-spell-sheet");
 // editing.ui.editingModeInputs.push(newSpellSheetButton);
 
-// const deathSaveBoxes = Array.from(document.getElementById("death-saves").getElementsByTagName("input"));
-// editing.ui.special.push(...ui.deathSaves.success);
-// editing.ui.special.push(...ui.deathSaves.fail);
-// const killButton = document.getElementById("kill");
-// controlButtons.addButton(killButton, true, false);
+const deathSaveBoxes = Array.from(document.getElementById("death-saves").getElementsByTagName("input"));
+editing.ui.special.push(...ui.deathSaves.success);
+editing.ui.special.push(...ui.deathSaves.fail);
+const killButton = document.getElementById("kill");
+controlButtons.addButton(killButton, true, false);
 
-// function die() {
-//     if (!characterData.dead) {
-//         characterData.dead = true;
+function die() {
+    if (!characterData.dead) {
+        characterData.dead = true;
 
-//         delete characterData.hitDice;
-//         hitDice.update();
+        delete characterData.hitDice;
+        hitDice.update();
 
-//         document.body.classList.add("death-animation");
-//         const animations = document.getElementById("death-overlay").getAnimations();
-//         animations[0].onfinish = () => {
-//             document.body.classList.remove("unconscious");
-//             document.body.classList.add("dead");
-//         };
-//         animations[1].onfinish = () => {
-//             document.body.classList.remove("death-animation");
-//         }
-//     }
-//     else {
-//         document.body.classList.add("dead");
-//     }
+        document.body.classList.add("death-animation");
+        const animations = document.getElementById("death-overlay").getAnimations();
+        animations[0].onfinish = () => {
+            document.body.classList.remove("unconscious");
+            document.body.classList.add("dead");
+        };
+        animations[1].onfinish = () => {
+            document.body.classList.remove("death-animation");
+        }
+    }
+    else {
+        document.body.classList.add("dead");
+    }
 
-//     characterData.hp = 0;
-//     hp.numerDisplay.update();
-//     editing.stopEditing();
+    characterData.hp = 0;
+    hp.numerDisplay.update();
+    editing.stopEditing();
 
-//     editing.viewOnlyMode();
+    editing.stopAndDisableEditing();
 
-//     for (let element of controlButtons.getList(controlButtons.enabledWhileDead, true)) {
-//         element.disabled = false;
-//     }
-// }
+    for (let element of controlButtons.getList(controlButtons.enabledWhileDead, true)) {
+        element.disabled = false;
+    }
+}
 
-// function revive() {
-//     characterData.dead = false;
-//     document.body.classList.remove("dead");
+function revive() {
+    characterData.dead = false;
+    document.body.classList.remove("dead");
 
-//     characterData.hp = 1;
-//     hp.numerDisplay.update();
-//     editing.characterChanged();
+    characterData.hp = 1;
+    hp.numerDisplay.update();
+    editing.characterChanged();
 
-//     for (let element of editing.ui.alwaysEditing) {
-//         element.contentEditable = contentEditableValue;
-//     }
-//     for (let element of [...editing.ui.alwaysEditingInputs, ...controlButtons.all]) {
-//         element.disabled = false;
-//     }
-// }
+    for (let element of editing.ui.alwaysEditing) {
+        element.contentEditable = contentEditableValue;
+    }
+    for (let element of [...editing.ui.alwaysEditingInputs, ...controlButtons.all]) {
+        element.disabled = false;
+    }
+}
 
-// const reviveButton = document.getElementById("revive");
-// reviveButton.addEventListener("click", revive);
-// controlButtons.addButton(reviveButton, true, true);
-// killButton.addEventListener("click", die);
+const reviveButton = document.getElementById("revive");
+reviveButton.addEventListener("click", revive);
+controlButtons.addButton(reviveButton, true, true);
+killButton.addEventListener("click", die);
 
-// function updateConsciousness() {
-//     const unconscious = hp.numerDisplay.value === 0;
-//     for (let checkbox of deathSaveBoxes) {
-//         checkbox.disabled = !unconscious;
-//         if (!unconscious) {
-//             checkbox.checked = false;
-//         }
-//     }
+function updateConsciousness() {
+    const unconscious = hp.numerDisplay.value === 0;
+    for (let checkbox of deathSaveBoxes) {
+        checkbox.disabled = !unconscious;
+        if (!unconscious) {
+            checkbox.checked = false;
+        }
+    }
 
-//     if (unconscious) {
-//         if (!("deathSaves" in characterData)) {
-//             characterData.deathSaves = { success: 0, fail: 0 };
-//             editing.characterChanged();
-//         }
-//         document.documentElement.dataset.failedDeathSaves = characterData.deathSaves.fail;
-//     }
-//     else {
-//         if ("deathSaves" in characterData) {
-//             delete characterData.deathSaves;
-//             editing.characterChanged();
-//         }
-//         delete document.documentElement.dataset.failedDeathSaves
-//     }
+    if (unconscious) {
+        if (!("deathSaves" in characterData)) {
+            characterData.deathSaves = { success: 0, fail: 0 };
+            editing.characterChanged();
+        }
+        document.documentElement.dataset.failedDeathSaves = characterData.deathSaves.fail;
+    }
+    else {
+        if ("deathSaves" in characterData) {
+            delete characterData.deathSaves;
+            editing.characterChanged();
+        }
+        delete document.documentElement.dataset.failedDeathSaves
+    }
 
-//     document.body.classList[unconscious && characterData.deathSaves?.success !== 3 && !characterData.dead 
-//         ? "add" : "remove"]("unconscious");
-// };
-// hp.numerDisplay.addChangeListener(updateConsciousness);
-// updateConsciousness();
+    document.body.classList[unconscious && characterData.deathSaves?.success !== 3 && !characterData.dead 
+        ? "add" : "remove"]("unconscious");
+};
+hp.numerDisplay.addChangeListener(updateConsciousness);
+updateConsciousness();
 
-// class DeathSaves {
-//     constructor(type) {
-//         this.type = type;
+class DeathSaves {
+    constructor(type) {
+        this.type = type;
 
-//         this.checkboxes = Array.from(document.getElementById(`ds-${this.type}-counter`).getElementsByTagName("input"));
+        this.checkboxes = Array.from(document.getElementById(`ds-${this.type}-counter`).getElementsByTagName("input"));
 
-//         for (let i = 0; i < this.checkboxes.length; i++) {
-//             const checkbox = this.checkboxes[i];
-//             checkbox.addEventListener("click", () => {
-//                 let value = i + 1;//this.checkboxes.findLastIndex(box => box.checked) + 1;
-//                 if (value === characterData.deathSaves[type]) {
-//                     value--;
-//                 }
-//                 characterData.deathSaves[type] = value;
-//                 editing.characterChanged();
-//                 this.update();
-//             });
-//         }
+        for (let i = 0; i < this.checkboxes.length; i++) {
+            const checkbox = this.checkboxes[i];
+            checkbox.addEventListener("click", () => {
+                if (characterData.lifeState !== "unstable") {
+                    return;
+                }
 
-//         this.update();
-//     }
+                let value = i + 1;//this.checkboxes.findLastIndex(box => box.checked) + 1;
+                if (value === characterData.deathSaves[type]) {
+                    value--;
+                }
+                characterData.deathSaves[type] = value;
+                editing.characterChanged();
+                this.update();
+            });
+        }
 
-//     update() {
-//         if ("deathSaves" in characterData) {
-//             for (let i = 0; i < characterData.deathSaves[this.type]; i++) {
-//                 this.checkboxes[i].checked = true;
-//             }
-//             for (let i = characterData.deathSaves[this.type]; i < this.checkboxes.length; i++) {
-//                 this.checkboxes[i].checked = false;
-//             }
-//             if (this.type === "fail") {
-//                 if (characterData.deathSaves.fail === 3) {
-//                     die();
-//                 }
-//                 else {  
-//                     document.documentElement.dataset.failedDeathSaves = characterData.deathSaves.fail;
-//                 }
-//             }
-//             if (this.type === "success") {
-//                 updateConsciousness();
-//             }
-//         }
-//     }
-// }
-// 
-// 
-// const successfulDeathSaves = new DeathSaves("success");
-// const failedDeathSaves = new DeathSaves("fail");
-// if (characterData.dead && characterData.deathSaves?.fail !== 3) {
-//     die();
-// }
+        this.update();
+    }
+
+    update() {
+        for (let i = 0; i < characterData.deathSaves[this.type]; i++) {
+            this.checkboxes[i].boolValue = true;
+        }
+        for (let i = characterData.deathSaves[this.type]; i < this.checkboxes.length; i++) {
+            this.checkboxes[i].boolValue = false;
+        }
+        if (this.type === "fail") {
+            if (characterData.deathSaves.fail === 3) {
+                die();
+            }
+            else {  
+                document.documentElement.dataset.failedDeathSaves = characterData.deathSaves.fail;
+            }
+        }
+        if (this.type === "success") {
+            updateConsciousness();
+        }
+    }
+}
+
+
+const successfulDeathSaves = new DeathSaves("success");
+const failedDeathSaves = new DeathSaves("fail");
+if (characterData.dead && characterData.deathSaves?.fail !== 3) {
+    die();
+}
 //#endregion
 
 // #region Spellcasting

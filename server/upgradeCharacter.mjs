@@ -11,4 +11,7 @@ export default function(c) {
             delete sheet.levels[i].spellSlots;
         }
     }
+    c.lifeState ??= c.dead ? "dead" : c.hp > 0 ? "alive" : c.deathSaves.success === 3 ? "stable" : "unstable";
+    delete c.dead;
+    c.deathSaves ??= { fail: 0, success: 0 };
 }
